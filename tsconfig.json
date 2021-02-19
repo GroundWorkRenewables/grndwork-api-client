@@ -9,7 +9,7 @@
     "outDir": "./lib",
     "sourceMap": true,
     "strict": true,
-    "target": "es2015",
+    "target": "es2019",
   },
   "include": [
     "src/**/*"
