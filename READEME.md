@@ -1,93 +1,101 @@
 # Groundwork API Client
+
 ## Installation
+
 ```
 $ npm install @grndwork/api-client
 ```
 
-# Create a client
-## Factory Method Configuration
-The `createClient` factory method uses environment variables to configure the client. There are two ways to set these configuration environment variables:
-- To load the token file provided by Groundwork:
+## Usage
 
-  `GROUNDWORK_TOKEN_PATH` - Full path to the refresh token file.
+```js
+import {createClient} from '@grndwork/api-client';
 
-- Set the coniguration using the values in the refresh token file:
+const client = createClient();
 
-  `GROUNDWORK_TOKEN` - Token value from the refresh token file
-
-  `GROUNDWORK_SUBJECT` - Subject value from the refresh token file
-> If all 3 variables are set the client will be configured using `GROUNDWORK_TOKEN_PATH`.
-
-```ts
-import {createClient, LOGGERNET_PLATFORM} from '@grndwork/api-client';
-
-const client = createClient(LOGGERNET_PLATFORM);
+const data = await client.getData();
 ```
 
-## Direct Configuration
-Using the values for subject and token from the token file.
-```ts
-import {Client} from '@grndwork/api-client';
+In order to access https://api.grndwork.com you must first obtain a refresh token from GroundWork Renewables.
 
-const client = new Client({
-  subject: 'client:id',
-  token: 'token',
+The path to this file can be provided to the client using the `GROUNDWORK_TOKEN_PATH` environment variable.
+
+Or the subject and token values from this file can be provided using the `GROUNDWORK_SUBJECT` and `GROUNDWORK_TOKEN` environment variables.
+
+When providing subject and token values `GROUNDWORK_TOKEN_PATH` must not be set.
+
+## API
+
+### `getData()`
+
+Takes an optional query object as an argument and returns a list of data files.
+
+#### Query Parameters
+
+  | Param | Type | Description |
+  |---|---|---|
+  | filename | string | Only return data files with name or name matching pattern |
+  | station | string|  Only return data files for station with UUID, name, or name matching pattern |
+  | site | string | Only return data files for site with UUID, name, or name matching pattern |
+  | client | string | Only return data files for client with UUID, name, or name matching pattern |
+  | limit | number | Number of files to return ( min: 1, max: 1000, default: 100 ) |
+  | offset | number | Number of files to skip over when paging results ( default: 0 ) |
+  | records_limit | number | Number of records to return per file ( min: 1, max: 5000, default: 1 ) |
+  | records_before | timestamp | Only return records at or before timestamp ( format: `yyyy-mm-dd hh:mm:ss` ) |
+  | records_after | timestamp | Only return records at or after timestamp ( format: `yyyy-mm-dd hh:mm:ss` ) |
+
+##### Pattern Matching
+
+Parameters that support patterns can use a wildcard `*` at the beginning and/or end of the string.
+
+Pattern matching is case insensitive.
+
+For example:
+
+```js
+const data = await client.getData({
+  filename: '*_OneMin.dat',
 });
 ```
 
-# API Access
-## Get Data
-The data endpoint returns a list of `DataFiles`. Each data file will contain 1 `DataRecord`. To obtain more than 1 `DataRecord` for a file the `limit` query parameter must not be set or be set to 1.
+Would return all one minute data files.
 
-Default:
-```ts
-await client.getData();
+#### Return Values
+
+Data files are returned in alphabetical order by filename.
+
+Records are returned in reverse chronological order starting at the most recent timestamp.
+
+By default each data file includes the most recent data record.
+
+Only a single data file will be returned at a time when requesting multiple data records.
+
+For example:
+
+```js
+const data = await client.getData({
+  records_limit: 100,
+});
 ```
 
-## Get Multiple DataRecords for a single file
-  Set the query parameters:
-```ts
-await client.getData({
-  query: {
-    filename='myfile.dat',
-    records_limit=10,
+Would return the most recent 100 records from the first file alphabetically.
+
+##### Sample Output
+
+```json
+[
+  {
+    "station_uuid": "9a8ebbee-ddd1-4071-b17f-356f42867b5e",
+    "filename": "Test_OneMin.dat",
+    "records": [
+      {
+        "timestamp": "2020-01-01 00:00:00",
+        "record_num": 1000,
+        "data": {
+          "Ambient_Temp": 50
+        }
+      }
+    ]
   }
-})
+]
 ```
-
-### Query Parameters
-  |  |  |
-  |---|---|
-  | client | Client UUID or Client Name pattern match |
-  | site | Site UUID or Site Name pattern match |
-  | gateway | Gateway UUID or Gateway Name pattern match |
-  | station |  Station UUID or Station Name pattern match |
-  | filename | Name of the file with pattern match |
-  | limit | Limit the number of files returned. |
-  | offset | File or Record offset for paging |
-  | records_before | UTC Timestamp ( `yyyy-mm-dd hh:mm:ss` ) |
-  | records_after | UTC Timestamp ( `yyyy-mm-dd hh:mm:ss` ) |
-  | records_limit | Limit the number of records returned for a file.
-
-### Patern Matching
-  Query parameters that support pattern matching can use a wildcard operator (`*`) at the beginning and or end of the string. These fields are not case sensitive.
-  | Property | Pattern | Result |
-  | -------- | ------- | ------ |
-  | filename | *.dat | will find files ending with "dat". |
-  | filename | \*OneMin* | will find one minute files. |
-  | site | Grndwork | will find sites starting with Grndwork. |
-
-### `limit` & `records_limit`
-| limit | records_limit | Result |
-| --- | --- | --- |
-| default | default or 1 | multiple `DataFiles` with 1 `DataRecord`|
-| >1 | default or 1 | multiple `DataFiles` with 1 `DataRecord` |
-| default or 1 | >1 | 1 `DataFile` with multiple `DataRecord`|
-| 1 | >1 | 1 `DataFile` with multiple `DataRecord`|
-| >1 | >1 | Error
-
-
-
-
-
-
