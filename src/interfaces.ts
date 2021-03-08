@@ -43,10 +43,10 @@ export interface PostDataRecord {
 }
 
 export interface RequestOptions {
-  method: string,
   url: string,
-  body?: {[key:string]: any},
-  headers?: {[key: string]: any},
+  method?: string,
   query?: {[key: string]: any},
+  headers?: {[key: string]: any},
+  body?: {[key:string]: any},
   token?: string,
 }

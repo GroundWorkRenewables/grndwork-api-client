@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import {TOKENS_URL} from './config';
-import {RefreshToken} from './interfaces';
 import {makeRequest} from './makeRequest';
+import {RefreshToken} from './interfaces';
 
 let accessTokenCache: {[key: string]: string} = {};
 
@@ -19,7 +19,7 @@ export async function getAccessToken(
   let accessToken: string = accessTokenCache[cacheKey];
 
   if (!accessToken || hasExpired(accessToken)) {
-    accessToken = await createAccessToken(refreshToken, scope, platform);
+    accessToken = await createAccessToken(refreshToken, platform, scope);
     accessTokenCache[cacheKey] = accessToken;
   }
 

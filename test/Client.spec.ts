@@ -1,37 +1,46 @@
-import {LOGGERNET_PLATFORM} from '../src';
 import {Client} from '../src/Client';
-import {makeRequest} from '../src/makeRequest';
 import {getAccessToken} from '../src/accessTokens';
+import {makeRequest} from '../src/makeRequest';
 
 jest.mock('../src/makeRequest');
 jest.mock('../src/accessTokens');
-jest.mock('jsonwebtoken');
 
 describe('GroundworkClient', () => {
   let client: Client;
+
   const refreshToken = {
+    subject: 'uuid',
     token: 'refresh_token',
-    subject: 'client:uuid',
   };
 
   beforeEach(() => {
-    client = new Client(refreshToken, LOGGERNET_PLATFORM);
+    client = new Client(refreshToken, 'platform');
 
-    (getAccessToken as jest.Mock).mockResolvedValue('token');
+    (getAccessToken as jest.Mock).mockResolvedValue('access_token');
     (makeRequest as jest.Mock).mockReturnValue([]);
   });
 
   afterEach(() => jest.clearAllMocks());
 
-  describe('getData', () => {
+  describe('#getData', () => {
+    it('gets access token', async () => {
+      await client.getData();
+
+      expect(getAccessToken).toHaveBeenCalledWith(
+        refreshToken,
+        'platform',
+        'read:data',
+      );
+    });
+
     it('makes get data request with default options', async () => {
       await client.getData();
 
       expect(makeRequest).toHaveBeenCalledWith({
+        url: 'https://api.grndwork.com/v1/data',
         method: 'GET',
         query: undefined,
-        token: 'token',
-        url: 'https://api.grndwork.com/v1/data',
+        token: 'access_token',
       });
     });
 
@@ -39,23 +48,33 @@ describe('GroundworkClient', () => {
       await client.getData({limit: 10});
 
       expect(makeRequest).toHaveBeenCalledWith({
+        url: 'https://api.grndwork.com/v1/data',
         method: 'GET',
         query: {limit: 10},
-        token: 'token',
-        url: 'https://api.grndwork.com/v1/data',
+        token: 'access_token',
       });
     });
+  });
 
-    describe('postData', () => {
-      it('posts data with default options', async () => {
-        await client.postData([]);
+  describe('#postData', () => {
+    it('posts data with default options', async () => {
+      await client.postData([]);
 
-        expect(makeRequest).toHaveBeenCalledWith({
-          method: 'POST',
-          body: [],
-          token: 'token',
-          url: 'https://api.grndwork.com/v1/data',
-        });
+      expect(getAccessToken).toHaveBeenCalledWith(
+        refreshToken,
+        'platform',
+        'write:data',
+      );
+    });
+
+    it('posts data with default options', async () => {
+      await client.postData([]);
+
+      expect(makeRequest).toHaveBeenCalledWith({
+        url: 'https://api.grndwork.com/v1/data',
+        method: 'POST',
+        body: [],
+        token: 'access_token',
       });
     });
   });

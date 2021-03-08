@@ -12,11 +12,11 @@ import {ServerError} from './ServerError';
 const LOGGERNET_PLATFORM = 'loggernet';
 const TRACE_PLATFORM = 'trace';
 
-async function createClient(platform = LOGGERNET_PLATFORM): Promise<Client> {
+function createClient(platform = LOGGERNET_PLATFORM): Client {
   const refreshToken = getRefreshToken();
 
   if (!refreshToken) {
-    throw new Error('Could not get refresh token from environment.');
+    throw new Error('Could not get refresh token from environment');
   }
 
   return new Client(refreshToken, platform);

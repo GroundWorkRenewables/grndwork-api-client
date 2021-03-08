@@ -1,13 +1,13 @@
+import {DATA_URL} from './config';
+import {getAccessToken} from './accessTokens';
+import {makeRequest} from './makeRequest';
 import {
   RefreshToken,
   GetDataQuery,
-  PostDataRecord,
   LoggernetDataFile,
   TraceDataFile,
+  PostDataRecord,
 } from './interfaces';
-import {makeRequest} from './makeRequest';
-import {getAccessToken} from './accessTokens';
-import {DATA_URL} from './config';
 
 export class Client {
   constructor(

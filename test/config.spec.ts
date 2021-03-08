@@ -4,60 +4,62 @@ import {getRefreshToken} from '../src/config';
 jest.mock('fs');
 
 describe('getRefreshToken', () => {
+  const refreshToken = {
+    subject: 'uuid',
+    token: 'refresh_token',
+  };
+
   beforeEach(() => {
-    (readFileSync as jest.Mock).mockReturnValue(JSON.stringify({token: 'refresh_token', subject: 'client:uuid'}));
+    (readFileSync as jest.Mock).mockReturnValue(JSON.stringify(refreshToken));
   });
 
   afterEach(() => {
     jest.resetAllMocks();
+
     delete process.env.GROUNDWORK_TOKEN_PATH;
-    delete process.env.GROUNDWORK_TOKEN;
     delete process.env.GROUNDWORK_SUBJECT;
+    delete process.env.GROUNDWORK_TOKEN;
   });
 
-  it('returns null when environment variables are not set', async (): Promise<void> => {
+  it('returns null when environment variables are not set', () => {
     expect(getRefreshToken()).toBeNull();
   });
-  describe('when GROUNDWORK_TOKEN_PATH is set', () => {
-    it('returns token', async () => {
-      process.env.GROUNDWORK_TOKEN_PATH = 'test/path';
-      expect(getRefreshToken()).toEqual({token: 'refresh_token', subject: 'client:uuid'});
-      expect(readFileSync).toBeCalledWith('test/path', 'utf8');
-    });
+
+  it('returns token when GROUNDWORK_TOKEN_PATH is set', () => {
+    process.env.GROUNDWORK_TOKEN_PATH = 'test/path';
+
+    expect(getRefreshToken()).toEqual(refreshToken);
+    expect(readFileSync).toBeCalledWith('test/path', 'utf8');
   });
 
-  describe('when only GROUNDWORK_TOKEN is set', () => {
-    it('returns null', async (): Promise<void> => {
-      process.env.GROUNDWORK_TOKEN = 'token';
-      expect(getRefreshToken()).toBeNull();
-    });
+  it('returns null when only GROUNDWORK_SUBJECT is set', () => {
+    process.env.GROUNDWORK_SUBJECT = refreshToken.subject;
+
+    expect(getRefreshToken()).toBeNull();
+    expect(readFileSync).not.toBeCalled();
   });
 
-  describe('when only GROUNDWORK_SUBJECT is set', () => {
-    it('returns null', async (): Promise<void> => {
-      process.env.GROUNDWORK_SUBJECT = 'client:uuid';
-      expect(getRefreshToken()).toBeNull();
-    });
+  it('returns null when only GROUNDWORK_TOKEN is set', () => {
+    process.env.GROUNDWORK_TOKEN = refreshToken.token;
+
+    expect(getRefreshToken()).toBeNull();
+    expect(readFileSync).not.toBeCalled();
   });
 
-  describe('when when GROUNDWORK_TOKEN and GROUNDWORK_SUBJECT are set', () => {
-    it('returns token', async (): Promise<void> => {
-      process.env.GROUNDWORK_TOKEN = 'token';
-      process.env.GROUNDWORK_SUBJECT = 'client:uuid';
+  it('returns token when GROUNDWORK_SUBJECT and GROUNDWORK_TOKEN are set', () => {
+    process.env.GROUNDWORK_SUBJECT = refreshToken.subject;
+    process.env.GROUNDWORK_TOKEN = refreshToken.token;
 
-      expect(getRefreshToken()).toEqual({subject: 'client:uuid', token: 'token'});
-      expect(readFileSync).not.toBeCalled();
-    });
+    expect(getRefreshToken()).toEqual(refreshToken);
+    expect(readFileSync).not.toBeCalled();
   });
 
-  describe('when GROUNDWORK_TOKEN_PATH, GROUNDWORK_TOKEN, and GROUNDWORK_SUBJECT are set', () => {
-    it('returns token using the GROUNDWORK_TOKEN_PATH', async () => {
-      process.env.GROUNDWORK_TOKEN_PATH = 'test/path';
-      process.env.GROUNDWORK_TOKEN = 'token';
-      process.env.GROUNDWORK_SUBJECT = 'client:uuid';
+  it('returns token using the GROUNDWORK_TOKEN_PATH when all are set', () => {
+    process.env.GROUNDWORK_TOKEN_PATH = 'test/path';
+    process.env.GROUNDWORK_SUBJECT = refreshToken.subject;
+    process.env.GROUNDWORK_TOKEN = refreshToken.token;
 
-      expect(getRefreshToken()).toEqual({token: 'refresh_token', subject: 'client:uuid'});
-      expect(readFileSync).toBeCalled();
-    });
+    expect(getRefreshToken()).toEqual(refreshToken);
+    expect(readFileSync).toBeCalled();
   });
 });

@@ -29,7 +29,14 @@ export async function makeRequest<T>(options: RequestOptions): Promise<T> {
   }
 
   const resp = await fetch(url, fetchOptions);
-  const payload = await resp.json();
+
+  let payload;
+
+  try {
+    payload = await resp.json();
+  } catch (err) {
+    throw new ServerError('Invalid response payload', resp.status);
+  }
 
   if (resp.status >= 400) {
     throw new ServerError(payload.message, resp.status, payload.errors);

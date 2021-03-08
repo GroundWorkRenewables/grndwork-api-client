@@ -1,133 +1,173 @@
 import fetch from 'node-fetch';
 import {makeRequest} from '../src/makeRequest';
-import {DATA_URL} from '../src/config';
+import {ServerError} from '../src/ServerError';
 
 jest.mock('node-fetch');
+
 const {Response} = jest.requireActual('node-fetch');
 
 describe('makeRequest', () => {
+  const API_URL = 'https://api.grndwork.com/v1/tokens';
+
   beforeEach(() => {
-    (fetch as unknown as jest.Mock).mockReturnValue(
-      new Response(
-        JSON.stringify([{response_param: 'response_value'}]),
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-      ),
-    );
-  });
-
-  it('makes request with token', () => {
-    makeRequest({token: 'token', url: DATA_URL, method: 'GET'});
-
-    expect(fetch).toHaveBeenCalledWith(
-      new URL(DATA_URL),
-      {
-        body: '',
-        headers: {
-          Authorization: 'Bearer token',
-        },
-        method: 'GET',
+    (fetch as unknown as jest.Mock).mockReturnValue(new Response(JSON.stringify({
+      token: 'access_token',
+    }), {
+      headers: {
+        'Content-Type': 'application/json',
       },
-    );
+    }));
   });
 
-  it('makes request with query params', () => {
-    makeRequest({
+  it('makes request', async () => {
+    await makeRequest({
+      url: API_URL,
+    });
+
+    expect(fetch).toHaveBeenCalledWith(new URL(API_URL), {
       method: 'GET',
+      headers: {},
+      body: '',
+    });
+  });
+
+  it('makes request with query params', async () => {
+    await makeRequest({
+      url: API_URL,
       query: {
         limit: 10,
       },
-      token: 'token',
-      url: DATA_URL,
     });
 
-    expect(fetch).toHaveBeenCalledWith(
-      new URL(`${ DATA_URL }?limit=10`),
-      {
-        body: '',
-        headers: {
-          Authorization: 'Bearer token',
-        },
-        method: 'GET',
-      },
-    );
-  });
-
-  it('makes request with headers', () => {
-    makeRequest({
-      headers: {
-        test_header: 'test_value',
-      },
+    expect(fetch).toHaveBeenCalledWith(new URL(`${ API_URL }?limit=10`), {
       method: 'GET',
-      token: 'token',
-      url: DATA_URL,
+      headers: {},
+      body: '',
     });
-
-    expect(fetch).toHaveBeenCalledWith(
-      new URL(DATA_URL),
-      {
-        body: '',
-        headers: {
-          Authorization: 'Bearer token',
-          test_header: 'test_value',
-        },
-        method: 'GET',
-      },
-    );
   });
 
-  it('makes request with body', () => {
-    makeRequest({
-      body: {test: 'test'},
+  it('makes request with method', async () => {
+    await makeRequest({
+      url: API_URL,
       method: 'POST',
-      url: DATA_URL,
-      token: 'token',
     });
 
-    expect(fetch).toHaveBeenCalledWith(
-      new URL(DATA_URL),
-      {
-        body: JSON.stringify({test: 'test'}),
-        headers: {
-          Authorization: 'Bearer token',
-          'Content-Type': 'application/json',
-        },
-        method: 'POST',
+    expect(fetch).toHaveBeenCalledWith(new URL(API_URL), {
+      method: 'POST',
+      headers: {},
+      body: '',
+    });
+  });
+
+  it('makes request with body', async () => {
+    await makeRequest({
+      url: API_URL,
+      method: 'POST',
+      body: {
+        test: 'test',
       },
-    );
+    });
+
+    expect(fetch).toHaveBeenCalledWith(new URL(API_URL), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        test: 'test',
+      }),
+    });
+  });
+
+  it('makes request with auth token', async () => {
+    await makeRequest({
+      url: API_URL,
+      method: 'POST',
+      body: {
+        test: 'test',
+      },
+      token: 'refresh_token',
+    });
+
+    expect(fetch).toHaveBeenCalledWith(new URL(API_URL), {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer refresh_token',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        test: 'test',
+      }),
+    });
+  });
+
+  it('makes request with additional headers', async () => {
+    await makeRequest({
+      url: API_URL,
+      method: 'POST',
+      headers: {
+        'X-Test': 'test_value',
+      },
+      body: {
+        test: 'test',
+      },
+      token: 'refresh_token',
+    });
+
+    expect(fetch).toHaveBeenCalledWith(new URL(API_URL), {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer refresh_token',
+        'Content-Type': 'application/json',
+        'X-Test': 'test_value',
+      },
+      body: JSON.stringify({
+        test: 'test',
+      }),
+    });
   });
 
   it('parses the response body', async () => {
-    const result = await makeRequest({
-      body: {test: 'test'},
+    expect(await makeRequest({
+      url: API_URL,
       method: 'POST',
-      token: 'token',
-      url: DATA_URL,
+      token: 'refresh_token',
+    })).toStrictEqual({
+      token: 'access_token',
     });
-
-    expect(result).toStrictEqual([{response_param: 'response_value'}]);
   });
 
   it('handles bad response body', async () => {
-    (fetch as unknown as jest.Mock).mockReturnValue(
-      new Response(
-        'bad json',
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-      ),
-    );
+    (fetch as unknown as jest.Mock).mockReturnValue(new Response('bad json', {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }));
 
     await expect(() => makeRequest({
-      body: {test: 'test'},
+      url: API_URL,
       method: 'POST',
-      token: 'token',
-      url: DATA_URL,
-    })).rejects.toBeTruthy();
+      token: 'refresh_token',
+    })).rejects.toThrow(ServerError);
+  });
+
+  it('handles bad response', async () => {
+    (fetch as unknown as jest.Mock).mockReturnValue(new Response(JSON.stringify({
+      errors: [{
+        field: 'test',
+        message: 'error message',
+      }],
+    }), {
+      status: 400,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }));
+
+    await expect(() => makeRequest({
+      url: API_URL,
+      method: 'POST',
+      token: 'refresh_token',
+    })).rejects.toThrow(ServerError);
   });
 });

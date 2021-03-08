@@ -1,64 +1,78 @@
 import jwt from 'jsonwebtoken';
-import {LOGGERNET_PLATFORM} from '../src';
 import {makeRequest} from '../src/makeRequest';
 import {getAccessToken, resetAccessTokenCache} from '../src/accessTokens';
 
 jest.mock('jsonwebtoken');
 jest.mock('../src/makeRequest');
 
-describe('tokens', () => {
-  const refreshToken = {token: 'refresh_token', subject: 'client:uuid'};
+describe('getAccessToken', () => {
+  const refreshToken = {
+    subject: 'uuid',
+    token: 'refresh_token',
+  };
 
   beforeEach(() => {
     resetAccessTokenCache();
-    (jwt.decode as jest.Mock).mockReturnValue({exp: new Date().getTime() + 1000});
-    (makeRequest as jest.Mock).mockResolvedValue({token: 'access_token'});
+
+    (jwt.decode as jest.Mock).mockReturnValue({
+      exp: new Date().getTime() + 1000,
+    });
+
+    (makeRequest as jest.Mock).mockResolvedValue({
+      token: 'access_token',
+    });
   });
 
   afterEach(() => jest.clearAllMocks());
 
-  describe('getToken', () => {
-    it('requests a new token for unknown scope', async () => {
-      const accessToken = await getAccessToken(refreshToken, 'read:data', LOGGERNET_PLATFORM);
+  it('requests a new access token', async () => {
+    const accessToken = await getAccessToken(refreshToken, 'platform', 'read:data');
 
-      expect(makeRequest).toHaveBeenCalledTimes(1);
-      expect(makeRequest).toHaveBeenCalledWith(
-        {
-          body: {
-            platform: 'loggernet',
-            scope: 'read:data',
-            subject: 'client:uuid',
-          },
-          method: 'POST',
-          token: 'refresh_token',
-          url: 'https://api.grndwork.com/v1/tokens',
-        },
-      );
-      expect(accessToken).toBe('access_token');
+    expect(accessToken).toEqual('access_token');
+
+    expect(makeRequest).toHaveBeenCalledWith({
+      url: 'https://api.grndwork.com/v1/tokens',
+      method: 'POST',
+      body: {
+        subject: 'uuid',
+        platform: 'platform',
+        scope: 'read:data',
+      },
+      token: 'refresh_token',
     });
 
-    it('uses existing token for known scope', async () => {
-      await getAccessToken(refreshToken, 'read:data', LOGGERNET_PLATFORM);
+    expect(makeRequest).toHaveBeenCalledTimes(1);
+  });
 
-      expect(await getAccessToken(refreshToken, 'read:data', LOGGERNET_PLATFORM)).toBe('access_token');
+  it('does not request new access token when using cache', async () => {
+    await getAccessToken(refreshToken, 'platform', 'read:data');
+    await getAccessToken(refreshToken, 'platform', 'read:data');
 
-      expect(makeRequest).toHaveBeenCalledTimes(1);
+    expect(makeRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it('requests a new access token for other platform', async () => {
+    await getAccessToken(refreshToken, 'platform', 'read:data');
+    await getAccessToken(refreshToken, 'other', 'read:data');
+
+    expect(makeRequest).toHaveBeenCalledTimes(2);
+  });
+
+  it('requests a new access token for other scope', async () => {
+    await getAccessToken(refreshToken, 'platform', 'read:data');
+    await getAccessToken(refreshToken, 'platform', 'write:data');
+
+    expect(makeRequest).toHaveBeenCalledTimes(2);
+  });
+
+  it('requests a new access token when existing has expired', async () => {
+    (jwt.decode as jest.Mock).mockReturnValueOnce({
+      exp: Math.floor(Date.now() / 1000),
     });
 
-    it('requests a new token when existing is expired', async () => {
-      (makeRequest as jest.Mock).mockReturnValueOnce({token: 'expired_token'});
-      (jwt.decode as jest.Mock).mockReturnValueOnce({exp: 1});
+    await getAccessToken(refreshToken, 'platform', 'read:data');
+    await getAccessToken(refreshToken, 'platform', 'read:data');
 
-      expect(await getAccessToken(refreshToken, 'read:data', LOGGERNET_PLATFORM)).toBe('expired_token');
-      expect(await getAccessToken(refreshToken, 'read:data', LOGGERNET_PLATFORM)).toBe('access_token');
-      expect(makeRequest).toHaveBeenCalledTimes(2);
-    });
-
-    it('uses existing token if it does not expire', async () => {
-      (jwt.decode as jest.Mock).mockReturnValueOnce({});
-      expect(await getAccessToken(refreshToken, 'read:data', LOGGERNET_PLATFORM)).toBe('access_token');
-      expect(await getAccessToken(refreshToken, 'read:data', LOGGERNET_PLATFORM)).toBe('access_token');
-      expect(makeRequest).toHaveBeenCalledTimes(1);
-    });
+    expect(makeRequest).toHaveBeenCalledTimes(2);
   });
 });
