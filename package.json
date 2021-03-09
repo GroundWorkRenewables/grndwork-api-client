@@ -8,8 +8,8 @@
     "node": ">=10"
   },
   "scripts": {
-    "update": "updates --update --minor && npm install",
-    "postupdate": "git diff-files --quiet package-lock.json || npm test",
+    "update": "updates --update --minor && (git diff-files --quiet package.json || (rimraf package-lock.json node_modules && npm install))",
+    "postupdate": "git diff-files --quiet package-lock.json || (npm test -- --reporters=jest-simple-dot-reporter && npm run build)",
     "prebuild": "rimraf lib",
     "build": "tsc -p tsconfig.json",
     "pretest": "eslint ./",
@@ -19,22 +19,22 @@
   "devDependencies": {
     "@types/jest": "26.0.20",
     "@types/jsonwebtoken": "8.5.0",
-    "@types/node": "14.14.20",
+    "@types/node": "14.14.33",
     "@types/node-fetch": "2.5.8",
-    "@typescript-eslint/eslint-plugin": "4.13.0",
-    "@typescript-eslint/parser": "4.13.0",
-    "eslint": "7.17.0",
-    "eslint-config-airbnb-typescript": "12.0.0",
+    "@typescript-eslint/eslint-plugin": "4.17.0",
+    "@typescript-eslint/parser": "4.17.0",
+    "eslint": "7.21.0",
+    "eslint-config-airbnb-typescript": "12.3.1",
     "eslint-plugin-import": "2.22.1",
     "jest": "26.6.3",
     "jest-junit": "12.0.0",
     "jest-simple-dot-reporter": "1.0.5",
     "nodemon": "2.0.7",
     "rimraf": "3.0.2",
-    "ts-jest": "26.4.4",
+    "ts-jest": "26.5.3",
     "ts-node": "9.1.1",
-    "typescript": "4.2.2",
-    "updates": "11.4.2"
+    "typescript": "4.2.3",
+    "updates": "11.4.3"
   },
   "dependencies": {
     "jsonwebtoken": "8.5.1",

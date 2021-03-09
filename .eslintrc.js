@@ -36,7 +36,6 @@ module.exports = {
     ],
     'no-this-before-super': 'error',
     'no-underscore-dangle': 'off',
-    'object-curly-spacing': ['error', 'never'],
     'prefer-destructuring': ['error', {
       'VariableDeclarator': {
         array: false,
@@ -108,6 +107,7 @@ module.exports = {
       ignoreRestSiblings: true,
     }],
     '@typescript-eslint/no-use-before-define': ['error', 'nofunc'],
+    '@typescript-eslint/object-curly-spacing': ['error', 'never'],
     '@typescript-eslint/prefer-function-type': 'error',
     '@typescript-eslint/restrict-plus-operands': 'error',
     '@typescript-eslint/unbound-method': 'error',
