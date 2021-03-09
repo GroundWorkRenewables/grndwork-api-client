@@ -55,7 +55,20 @@ jobs:
           name: Publish When Tagged Release
           command: |
             if [[ $CIRCLE_TAG =~ ^v[0-9].* ]]; then
-              npm publish
+              case $CIRCLE_TAG in
+                *alpha*)
+                  npm publish --access public --tag alpha
+                  ;;
+                *beta*)
+                  npm publish --access public --tag beta
+                  ;;
+                *rc*)
+                  npm publish --access public --tag next
+                  ;;
+                *)
+                  npm publish --access public --tag latest
+                  ;;
+              esac
             fi
 
 workflows:
