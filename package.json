@@ -1,6 +1,7 @@
 {
   "name": "@grndwork/api-client",
   "version": "0.1.0",
+  "license": "MIT",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "repository": "https://github.com/GroundWorkRenewables/grndwork-api-client",
