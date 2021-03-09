@@ -2,7 +2,7 @@ src
 test
 coverage
 jest.config.js
-tsconfig.json
-.vscode
+tsconfig*
+.circleci
 .eslintignore
 .eslintrc.js

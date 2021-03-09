@@ -1,5 +1,7 @@
 # Groundwork API Client
 
+API client for [GroundWork Renewables](grndwork.com)
+
 ## Installation
 
 ```
