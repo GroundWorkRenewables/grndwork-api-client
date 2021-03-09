@@ -6,7 +6,6 @@ import {
   GetDataQuery,
   LoggernetDataFile,
   TraceDataFile,
-  PostDataRecord,
 } from './interfaces';
 
 export class Client {
@@ -28,16 +27,5 @@ export class Client {
     });
 
     return result;
-  }
-
-  public async postData(body: Array<PostDataRecord>): Promise<void> {
-    const accessToken = await getAccessToken(this.refreshToken, this.platform, 'write:data');
-
-    await makeRequest<void>({
-      url: DATA_URL,
-      method: 'POST',
-      body,
-      token: accessToken,
-    });
   }
 }

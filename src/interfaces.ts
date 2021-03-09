@@ -34,14 +34,6 @@ interface DataRecord {
   data: {[key: string]: any};
 }
 
-export interface PostDataRecord {
-  filename: string;
-  headers?: {[key: string]: any};
-  timestamp: string;
-  record_num: number;
-  data: {[key: string]: any};
-}
-
 export interface RequestOptions {
   url: string,
   method?: string,

@@ -5,7 +5,6 @@ import {
   GetDataQuery,
   LoggernetDataFile,
   TraceDataFile,
-  PostDataRecord,
 } from './interfaces';
 import {ServerError} from './ServerError';
 
@@ -31,6 +30,5 @@ export {
   GetDataQuery,
   LoggernetDataFile,
   TraceDataFile,
-  PostDataRecord,
   ServerError,
 };

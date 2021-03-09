@@ -55,27 +55,4 @@ describe('GroundworkClient', () => {
       });
     });
   });
-
-  describe('#postData', () => {
-    it('posts data with default options', async () => {
-      await client.postData([]);
-
-      expect(getAccessToken).toHaveBeenCalledWith(
-        refreshToken,
-        'platform',
-        'write:data',
-      );
-    });
-
-    it('posts data with default options', async () => {
-      await client.postData([]);
-
-      expect(makeRequest).toHaveBeenCalledWith({
-        url: 'https://api.grndwork.com/v1/data',
-        method: 'POST',
-        body: [],
-        token: 'access_token',
-      });
-    });
-  });
 });
