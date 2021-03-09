@@ -1,4 +1,34 @@
-import dotenv from 'dotenv';
+import {Client} from './Client';
+import {getRefreshToken} from './config';
+import {
+  RefreshToken,
+  GetDataQuery,
+  LoggernetDataFile,
+  TraceDataFile,
+} from './interfaces';
+import {ServerError} from './ServerError';
 
-const NODE_ENV = process.env.NODE_ENV || 'development';
-if (NODE_ENV === 'development') dotenv.config();
+const LOGGERNET_PLATFORM = 'loggernet';
+const TRACE_PLATFORM = 'trace';
+
+function createClient(platform = LOGGERNET_PLATFORM): Client {
+  const refreshToken = getRefreshToken();
+
+  if (!refreshToken) {
+    throw new Error('Could not get refresh token from environment');
+  }
+
+  return new Client(refreshToken, platform);
+}
+
+export {
+  LOGGERNET_PLATFORM,
+  TRACE_PLATFORM,
+  createClient,
+  Client,
+  RefreshToken,
+  GetDataQuery,
+  LoggernetDataFile,
+  TraceDataFile,
+  ServerError,
+};

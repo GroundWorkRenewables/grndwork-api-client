@@ -1,2 +1,18 @@
-node_modules
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+# Node files
+node_modules/
+npm-debug.log
+
+# Compiled files
 lib
+
+# Secret files
+.env
