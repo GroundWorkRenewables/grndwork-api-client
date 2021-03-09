@@ -14,8 +14,7 @@
     "build": "tsc -p tsconfig.json",
     "pretest": "eslint ./",
     "test": "jest",
-    "test:watch": "nodemon -w ./ -e ts -x 'npm test -- --reporters=jest-simple-dot-reporter'",
-    "prepublishOnly": "npm test && npm run build"
+    "test:watch": "nodemon -w ./ -e ts -x 'npm test -- --reporters=jest-simple-dot-reporter'"
   },
   "devDependencies": {
     "@types/jest": "26.0.20",
