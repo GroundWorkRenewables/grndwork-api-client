@@ -4,41 +4,43 @@ export interface RefreshToken {
 }
 
 export interface GetDataQuery {
-  client?: string,
-  site?: string,
-  gateway?: string,
-  station?: string,
-  filename?: string,
-  limit?: number,
-  offset?: number,
-  records_before?: string,
-  records_after?: string,
-  records_limit?: number,
+  client?: string;
+  site?: string;
+  gateway?: string;
+  station?: string;
+  filename?: string;
+  limit?: number;
+  offset?: number;
+  records_before?: string;
+  records_after?: string;
+  records_limit?: number;
 }
 
-export interface LoggernetDataFile {
-  station_uuid: string;
+export interface DataFile {
+  source?: string;
   filename: string;
-  records: Array<DataRecord>;
+  headers?: DataFileHeaders;
+  records?: Array<DataRecord>;
 }
 
-export interface TraceDataFile {
-  gateway_uuid: string;
-  filename: string;
-  records: Array<DataRecord>;
+export interface DataFileHeaders {
+  meta?: Record<string, string>;
+  columns: Array<string>;
+  units: Array<string>;
+  processing?: Array<string>;
 }
 
-interface DataRecord {
+export interface DataRecord {
   timestamp: string;
   record_num: number;
-  data: {[key: string]: any};
+  data: Record<string, any>;
 }
 
 export interface RequestOptions {
-  url: string,
-  method?: string,
-  query?: {[key: string]: any},
-  headers?: {[key: string]: any},
-  body?: {[key:string]: any},
-  token?: string,
+  url: string;
+  method?: string;
+  query?: Record<string, any>;
+  headers?: Record<string, any>;
+  body?: Record<string, any>;
+  token?: string;
 }

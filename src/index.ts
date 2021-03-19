@@ -3,8 +3,9 @@ import {getRefreshToken} from './config';
 import {
   RefreshToken,
   GetDataQuery,
-  LoggernetDataFile,
-  TraceDataFile,
+  DataFile,
+  DataFileHeaders,
+  DataRecord,
 } from './interfaces';
 import {ServerError} from './ServerError';
 
@@ -28,7 +29,8 @@ export {
   Client,
   RefreshToken,
   GetDataQuery,
-  LoggernetDataFile,
-  TraceDataFile,
+  DataFile,
+  DataFileHeaders,
+  DataRecord,
   ServerError,
 };
