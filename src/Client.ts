@@ -4,8 +4,7 @@ import {makeRequest} from './makeRequest';
 import {
   RefreshToken,
   GetDataQuery,
-  LoggernetDataFile,
-  TraceDataFile,
+  DataFile,
 } from './interfaces';
 
 export class Client {
@@ -14,12 +13,10 @@ export class Client {
     private readonly platform: string,
   ) {}
 
-  public async getData<T extends LoggernetDataFile | TraceDataFile>(
-    query?: GetDataQuery,
-  ): Promise<Array<T>> {
+  public async getData(query?: GetDataQuery): Promise<Array<DataFile>> {
     const accessToken = await getAccessToken(this.refreshToken, this.platform, 'read:data');
 
-    const result = await makeRequest<Array<T>>({
+    const result = await makeRequest<Array<DataFile>>({
       url: DATA_URL,
       method: 'GET',
       query,

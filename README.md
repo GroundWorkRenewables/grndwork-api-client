@@ -28,11 +28,11 @@ When providing subject and token values `GROUNDWORK_TOKEN_PATH` must not be set.
 
 ## API
 
-### `getData()`
+### `getData(query?: GetDataQuery): Promise<Array<DataFile>>`
 
-Takes an optional query object as an argument and returns a list of data files.
+Takes optional data query as an argument and returns a list of data files from the cloud.
 
-#### Query Parameters
+#### GetDataQuery
 
   | Param | Type | Description |
   |---|---|---|
@@ -40,9 +40,9 @@ Takes an optional query object as an argument and returns a list of data files.
   | station | string|  Only return data files for station with UUID, name, or name matching pattern |
   | site | string | Only return data files for site with UUID, name, or name matching pattern |
   | client | string | Only return data files for client with UUID, name, or name matching pattern |
-  | limit | number | Number of files to return ( min: 1, max: 1000, default: 100 ) |
+  | limit | number | Number of files to return ( min: 1, max: 100, default: 20 ) |
   | offset | number | Number of files to skip over when paging results ( default: 0 ) |
-  | records_limit | number | Number of records to return per file ( min: 1, max: 5000, default: 1 ) |
+  | records_limit | number | Number of records to return per file ( min: 1, max: 1500, default: 1 ) |
   | records_before | timestamp | Only return records at or before timestamp ( format: `yyyy-mm-dd hh:mm:ss` ) |
   | records_after | timestamp | Only return records at or after timestamp ( format: `yyyy-mm-dd hh:mm:ss` ) |
 
@@ -87,8 +87,13 @@ Would return the most recent 100 records from the first file alphabetically.
 ```json
 [
   {
-    "station_uuid": "9a8ebbee-ddd1-4071-b17f-356f42867b5e",
+    "source": "station:9a8ebbee-ddd1-4071-b17f-356f42867b5e",
     "filename": "Test_OneMin.dat",
+    "headers": {
+      "columns": "Ambient_Temp",
+      "units": "Deg_C",
+      "processing": "Avg"
+    },
     "records": [
       {
         "timestamp": "2020-01-01 00:00:00",
