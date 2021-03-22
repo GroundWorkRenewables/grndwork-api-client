@@ -16,6 +16,12 @@ export interface GetDataQuery {
   records_limit?: number;
 }
 
+export interface PostDataPayload {
+  source: string;
+  files: Array<DataFile>;
+  overwrite?: boolean;
+}
+
 export interface DataFile {
   source?: string;
   filename: string;

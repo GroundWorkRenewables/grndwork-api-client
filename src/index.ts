@@ -3,6 +3,7 @@ import {getRefreshToken} from './config';
 import {
   RefreshToken,
   GetDataQuery,
+  PostDataPayload,
   DataFile,
   DataFileHeaders,
   DataRecord,
@@ -29,6 +30,7 @@ export {
   Client,
   RefreshToken,
   GetDataQuery,
+  PostDataPayload,
   DataFile,
   DataFileHeaders,
   DataRecord,
