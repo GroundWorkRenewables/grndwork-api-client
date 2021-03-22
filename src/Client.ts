@@ -4,6 +4,7 @@ import {makeRequest} from './makeRequest';
 import {
   RefreshToken,
   GetDataQuery,
+  PostDataPayload,
   DataFile,
 } from './interfaces';
 
@@ -24,5 +25,16 @@ export class Client {
     });
 
     return result;
+  }
+
+  public async postData(payload: PostDataPayload): Promise<void> {
+    const accessToken = await getAccessToken(this.refreshToken, this.platform, 'write:data');
+
+    await makeRequest<void>({
+      url: DATA_URL,
+      method: 'POST',
+      body: payload,
+      token: accessToken,
+    });
   }
 }

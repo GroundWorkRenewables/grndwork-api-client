@@ -106,3 +106,25 @@ Would return the most recent 100 records from the first file alphabetically.
   }
 ]
 ```
+
+### `postData(payload: PostDataPayload): Promise<void>`
+
+Takes data payload as an argument and uploads it to the cloud.
+
+#### PostDataPayload
+
+  | Param | Type | Description |
+  |---|---|---|
+  | source | string | The station that collected the data |
+  | files | Array<DataFile> | List of data files ( min length: 1, max length: 20 ) |
+  | files[].filename | string | Filename using the format `<client prefix>_<station>_<OneMin|Hourly|Meta>.dat` |
+  | files[].headers | DataFileHeaders | Optional headers for the file |
+  | files[].headers.meta | Record<string, string> | User defined meta data for the file |
+  | files[].headers.columns | Array<string> | List of column names matching the data keys |
+  | files[].headers.units | Array<string> | List of units for the columns |
+  | files[].headers.processing | Array<string> | List of processing used for column data (Min, Max, Avg) |
+  | files[].records | Array<DataRecord> | List of data records for file ( max length: 100 combined across all files ) |
+  | files[].records[].timestamp | timestamp | The timestamp of the data record in UTC |
+  | files[].records[].record_num | number | Positive sequential number for records in file |
+  | files[].records[].data | Record<string, any> | Data for record, keys should match `header.columns` |
+  | overwrite | boolean | Whether to overwrite existing data records when timestamps match |

@@ -55,4 +55,35 @@ describe('GroundworkClient', () => {
       });
     });
   });
+
+  describe('#postData', () => {
+    const payload = {
+      source: 'station:uuid',
+      files: [{
+        filename: 'Test_OneMin.dat',
+        records: [],
+      }],
+    };
+
+    it('gets access token', async () => {
+      await client.postData(payload);
+
+      expect(getAccessToken).toHaveBeenCalledWith(
+        refreshToken,
+        'platform',
+        'write:data',
+      );
+    });
+
+    it('makes post data request with payload', async () => {
+      await client.postData(payload);
+
+      expect(makeRequest).toHaveBeenCalledWith({
+        url: 'https://api.grndwork.com/v1/data',
+        method: 'POST',
+        body: payload,
+        token: 'access_token',
+      });
+    });
+  });
 });
