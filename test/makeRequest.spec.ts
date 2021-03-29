@@ -27,7 +27,6 @@ describe('makeRequest', () => {
     expect(fetch).toHaveBeenCalledWith(new URL(API_URL), {
       method: 'GET',
       headers: {},
-      body: '',
     });
   });
 
@@ -42,7 +41,6 @@ describe('makeRequest', () => {
     expect(fetch).toHaveBeenCalledWith(new URL(`${ API_URL }?limit=10`), {
       method: 'GET',
       headers: {},
-      body: '',
     });
   });
 
@@ -55,7 +53,6 @@ describe('makeRequest', () => {
     expect(fetch).toHaveBeenCalledWith(new URL(API_URL), {
       method: 'POST',
       headers: {},
-      body: '',
     });
   });
 
