@@ -11,12 +11,15 @@ export async function makeRequest<T>(options: RequestOptions): Promise<T> {
     });
   }
 
-  const fetchOptions = {
+  const fetchOptions: {
+    method:string,
+    headers: any,
+    body?:string,
+  } = {
     method: options.method || 'GET',
     headers: {
       ...options.headers,
     },
-    body: '',
   };
 
   if (options.token) {
