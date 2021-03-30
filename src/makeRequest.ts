@@ -12,9 +12,9 @@ export async function makeRequest<T>(options: RequestOptions): Promise<T> {
   }
 
   const fetchOptions: {
-    method:string,
-    headers: any,
-    body?:string,
+    method: string,
+    headers: Record<string, any>,
+    body?: string,
   } = {
     method: options.method || 'GET',
     headers: {
