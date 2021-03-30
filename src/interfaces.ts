@@ -3,6 +3,14 @@ export interface RefreshToken {
   token: string;
 }
 
+export interface GetStationsQuery {
+  client?: string;
+  site?: string;
+  station?: string;
+  limit?: number;
+  offset?: number;
+}
+
 export interface GetDataQuery {
   client?: string;
   site?: string;
@@ -18,15 +26,34 @@ export interface GetDataQuery {
 
 export interface PostDataPayload {
   source: string;
-  files: Array<DataFile>;
+  files: Array<Partial<DataFile>>;
   overwrite?: boolean;
 }
 
+export interface Station {
+  client_name: string;
+  client_uuid: string;
+  site_name: string;
+  site_uuid: string;
+  station_name: string;
+  station_uuid: string;
+  description: string;
+  latitude: number;
+  longitude: number;
+  altitude: number;
+  timezone_offset: number | null;
+  start_timestamp: string| null;
+  end_timestamp: string | null;
+  data_file_prefix: string;
+  data_files: Array<Omit<DataFile, 'source' | 'records'>>;
+}
+
 export interface DataFile {
-  source?: string;
+  source: string;
   filename: string;
-  headers?: DataFileHeaders;
-  records?: Array<DataRecord>;
+  is_stale: boolean;
+  headers: DataFileHeaders;
+  records: Array<DataRecord>;
 }
 
 export interface DataFileHeaders {

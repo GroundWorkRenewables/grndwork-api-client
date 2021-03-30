@@ -1,10 +1,12 @@
-import {DATA_URL} from './config';
+import {STATIONS_URL, DATA_URL} from './config';
 import {getAccessToken} from './accessTokens';
 import {makeRequest} from './makeRequest';
 import {
   RefreshToken,
+  GetStationsQuery,
   GetDataQuery,
   PostDataPayload,
+  Station,
   DataFile,
 } from './interfaces';
 
@@ -13,6 +15,19 @@ export class Client {
     private readonly refreshToken: RefreshToken,
     private readonly platform: string,
   ) {}
+
+  public async getStations(query?: GetStationsQuery): Promise<Array<Station>> {
+    const accessToken = await getAccessToken(this.refreshToken, this.platform, 'read:stations');
+
+    const result = await makeRequest<Array<Station>>({
+      url: STATIONS_URL,
+      method: 'GET',
+      query,
+      token: accessToken,
+    });
+
+    return result;
+  }
 
   public async getData(query?: GetDataQuery): Promise<Array<DataFile>> {
     const accessToken = await getAccessToken(this.refreshToken, this.platform, 'read:data');

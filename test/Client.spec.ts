@@ -22,6 +22,40 @@ describe('GroundworkClient', () => {
 
   afterEach(() => jest.clearAllMocks());
 
+  describe('#getStations', () => {
+    it('gets access token', async () => {
+      await client.getStations();
+
+      expect(getAccessToken).toHaveBeenCalledWith(
+        refreshToken,
+        'platform',
+        'read:stations',
+      );
+    });
+
+    it('makes get stations request with default options', async () => {
+      await client.getStations();
+
+      expect(makeRequest).toHaveBeenCalledWith({
+        url: 'https://api.grndwork.com/v1/stations',
+        method: 'GET',
+        query: undefined,
+        token: 'access_token',
+      });
+    });
+
+    it('makes get stations request with query', async () => {
+      await client.getStations({limit: 10});
+
+      expect(makeRequest).toHaveBeenCalledWith({
+        url: 'https://api.grndwork.com/v1/stations',
+        method: 'GET',
+        query: {limit: 10},
+        token: 'access_token',
+      });
+    });
+  });
+
   describe('#getData', () => {
     it('gets access token', async () => {
       await client.getData();

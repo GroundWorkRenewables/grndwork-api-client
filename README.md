@@ -28,16 +28,84 @@ When providing subject and token values `GROUNDWORK_TOKEN_PATH` must not be set.
 
 ## API
 
+### `getStations(query?: GetStationsQuery): Promise<Array<Station>>`
+
+Takes optional stations query as an argument and returns a list of stations.
+
+#### GetStationsQuery
+
+  | Param | Type | Description |
+  |---|---|---|
+  | station | string | Only return stations with UUID, name, or name matching pattern |
+  | site | string | Only return stations for site with UUID, name, or name matching pattern |
+  | client | string | Only return stations for client with UUID, name, or name matching pattern |
+  | limit | number | Number of stations to return ( min: 1, max: 100, default: 20 ) |
+  | offset | number | Number of stations to skip over when paging results ( default: 0 ) |
+
+##### Pattern Matching
+
+Parameters that support patterns can use a wildcard `*` at the beginning and/or end of the string.
+
+Pattern matching is case insensitive.
+
+For example:
+
+```js
+const data = await client.getStations({
+  station: 'Test*',
+});
+```
+
+Would return all stations whose name starts with `Test`.
+
+#### Return Values
+
+Stations are returned in alphabetical order by station name.
+
+##### Sample Output
+
+```json
+[
+  {
+    "client_name": "TestClient",
+    "client_uuid": "286dfd7a-9bfa-41f4-a5d0-87cb62fac452",
+    "site_name": "TestSite",
+    "site_uuid": "007bb682-476e-4844-b67c-82ece91a9b09",
+    "station_name": "TestStation",
+    "station_uuid": "9a8ebbee-ddd1-4071-b17f-356f42867b5e",
+    "description": "",
+    "latitude": 0,
+    "longitude": 0,
+    "altitude": 0,
+    "timezone_offset": -5,
+    "start_timestamp": "2020-01-01 00:00:00",
+    "end_timestamp": "2020-12-31 23:59:59",
+    "data_file_prefix": "Test_",
+    "data_files": [
+      {
+        "filename": "Test_OneMin.dat",
+        "is_stale": false,
+        "headers": {
+          "columns": "Ambient_Temp",
+          "units": "Deg_C",
+          "processing": "Avg"
+        }
+      }
+    ]
+  }
+]
+```
+
 ### `getData(query?: GetDataQuery): Promise<Array<DataFile>>`
 
-Takes optional data query as an argument and returns a list of data files from the cloud.
+Takes optional data query as an argument and returns a list of data files.
 
 #### GetDataQuery
 
   | Param | Type | Description |
   |---|---|---|
   | filename | string | Only return data files with name or name matching pattern |
-  | station | string|  Only return data files for station with UUID, name, or name matching pattern |
+  | station | string | Only return data files for station with UUID, name, or name matching pattern |
   | site | string | Only return data files for site with UUID, name, or name matching pattern |
   | client | string | Only return data files for client with UUID, name, or name matching pattern |
   | limit | number | Number of files to return ( min: 1, max: 100, default: 20 ) |
@@ -89,6 +157,7 @@ Would return the most recent 100 records from the first file alphabetically.
   {
     "source": "station:9a8ebbee-ddd1-4071-b17f-356f42867b5e",
     "filename": "Test_OneMin.dat",
+    "is_stale": false,
     "headers": {
       "columns": "Ambient_Temp",
       "units": "Deg_C",
@@ -124,7 +193,7 @@ Takes data payload as an argument and uploads it to the cloud.
   | files[].headers.units | Array<string> | List of units for the columns |
   | files[].headers.processing | Array<string> | List of processing used for column data (Min, Max, Avg) |
   | files[].records | Array<DataRecord> | List of data records for file ( max length: 100 combined across all files ) |
-  | files[].records[].timestamp | timestamp | The timestamp of the data record in UTC |
+  | files[].records[].timestamp | timestamp | The timestamp of the data record in UTC ( format: `yyyy-mm-dd hh:mm:ss` ) |
   | files[].records[].record_num | number | Positive sequential number for records in file |
   | files[].records[].data | Record<string, any> | Data for record, keys should match `header.columns` |
   | overwrite | boolean | Whether to overwrite existing data records when timestamps match |
