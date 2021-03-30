@@ -2,8 +2,10 @@ import {Client} from './Client';
 import {getRefreshToken} from './config';
 import {
   RefreshToken,
+  GetStationsQuery,
   GetDataQuery,
   PostDataPayload,
+  Station,
   DataFile,
   DataFileHeaders,
   DataRecord,
@@ -29,8 +31,10 @@ export {
   createClient,
   Client,
   RefreshToken,
+  GetStationsQuery,
   GetDataQuery,
   PostDataPayload,
+  Station,
   DataFile,
   DataFileHeaders,
   DataRecord,
