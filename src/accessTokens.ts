@@ -3,7 +3,7 @@ import {TOKENS_URL} from './config';
 import {makeRequest} from './makeRequest';
 import {RefreshToken} from './interfaces';
 
-let accessTokenCache: {[key: string]: string} = {};
+let accessTokenCache: Record<string, string> = {};
 
 export function resetAccessTokenCache(): void {
   accessTokenCache = {};
