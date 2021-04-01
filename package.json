@@ -1,7 +1,7 @@
 {
   "name": "@grndwork/api-client",
   "description": "API client for GroundWork Renewables Inc",
-  "version": "1.0.0-alpha.3",
+  "version": "1.0.0-alpha.4",
   "license": "MIT",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
