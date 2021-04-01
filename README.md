@@ -28,11 +28,15 @@ When providing subject and token values `GROUNDWORK_TOKEN_PATH` must not be set.
 
 ## API
 
-### `getStations(query?: GetStationsQuery): Promise<Array<Station>>`
+### Get Stations
 
-Takes optional stations query as an argument and returns a list of stations.
+```typescript
+client.getStations(query?: GetStationsQuery): Promise<Array<Station>>
+```
 
-#### GetStationsQuery
+Takes an optional get stations query object as an argument and returns an array of stations.
+
+#### Get Stations Query Parameters
 
   | Param | Type | Description |
   |---|---|---|
@@ -96,11 +100,15 @@ Stations are returned in alphabetical order by station name.
 ]
 ```
 
-### `getData(query?: GetDataQuery): Promise<Array<DataFile>>`
+### Get Data
 
-Takes optional data query as an argument and returns a list of data files.
+```typescript
+client.getData(query?: GetDataQuery): Promise<Array<DataFile>>
+```
 
-#### GetDataQuery
+Takes an optional get data query object as an argument and returns an array of data files.
+
+#### Get Data Query Parameters
 
   | Param | Type | Description |
   |---|---|---|
@@ -176,23 +184,27 @@ Would return the most recent 100 records from the first file alphabetically.
 ]
 ```
 
-### `postData(payload: PostDataPayload): Promise<void>`
+### Post Data
 
-Takes data payload as an argument and uploads it to the cloud.
+```typescript
+client.postData(payload: PostDataPayload): Promise<void>
+```
 
-#### PostDataPayload
+Takes a post data payload object as an argument and uploads it to the cloud.
+
+#### Post Data Payload
 
   | Param | Type | Description |
   |---|---|---|
   | source | string | The station that collected the data |
-  | files | Array<DataFile> | List of data files ( min length: 1, max length: 20 ) |
+  | files | Array<DataFile> | Array of data files ( min length: 1, max length: 20 ) |
   | files[].filename | string | Filename using the format `<client prefix>_<station>_<OneMin|Hourly|Meta>.dat` |
   | files[].headers | DataFileHeaders | Optional headers for the file |
   | files[].headers.meta | Record<string, string> | User defined meta data for the file |
-  | files[].headers.columns | Array<string> | List of column names matching the data keys |
-  | files[].headers.units | Array<string> | List of units for the columns |
-  | files[].headers.processing | Array<string> | List of processing used for column data (Min, Max, Avg) |
-  | files[].records | Array<DataRecord> | List of data records for file ( max length: 100 combined across all files ) |
+  | files[].headers.columns | Array<string> | Array of column names matching the data keys |
+  | files[].headers.units | Array<string> | Array of units for the columns |
+  | files[].headers.processing | Array<string> | Array of processing used for column data (Min, Max, Avg) |
+  | files[].records | Array<DataRecord> | Array of data records for file ( max length: 100 combined across all files ) |
   | files[].records[].timestamp | timestamp | The timestamp of the data record in UTC ( format: `yyyy-mm-dd hh:mm:ss` ) |
   | files[].records[].record_num | number | Positive sequential number for records in file |
   | files[].records[].data | Record<string, any> | Data for record, keys should match `header.columns` |
