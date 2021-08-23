@@ -31,12 +31,13 @@ export interface PostDataPayload {
 }
 
 export interface Station {
-  client_name: string;
   client_uuid: string;
-  site_name: string;
+  client_full_name: string;
+  client_short_name: string;
   site_uuid: string;
-  station_name: string;
+  site_full_name: string;
   station_uuid: string;
+  station_full_name: string;
   description: string;
   latitude: number;
   longitude: number;
