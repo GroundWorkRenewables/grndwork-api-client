@@ -71,12 +71,13 @@ Stations are returned in alphabetical order by station name.
 ```json
 [
   {
-    "client_name": "TestClient",
     "client_uuid": "286dfd7a-9bfa-41f4-a5d0-87cb62fac452",
-    "site_name": "TestSite",
+    "client_full_name": "TestClient",
+    "client_short_name": "TEST",
     "site_uuid": "007bb682-476e-4844-b67c-82ece91a9b09",
-    "station_name": "TestStation",
+    "site_full_name": "TestSite",
     "station_uuid": "9a8ebbee-ddd1-4071-b17f-356f42867b5e",
+    "station_full_name": "TestStation",
     "description": "",
     "latitude": 0,
     "longitude": 0,
