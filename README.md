@@ -91,9 +91,9 @@ Stations are returned in alphabetical order by station name.
         "filename": "Test_OneMin.dat",
         "is_stale": false,
         "headers": {
-          "columns": "Ambient_Temp",
-          "units": "Deg_C",
-          "processing": "Avg"
+          "columns": ["Ambient_Temp"],
+          "units": ["Deg_C"],
+          "processing": ["Avg]"
         }
       }
     ]
@@ -210,3 +210,134 @@ Takes a post data payload object as an argument and uploads it to the cloud.
   | files[].records[].record_num | number | Positive sequential number for records in file |
   | files[].records[].data | Record<string, any> | Data for record, keys should match `header.columns` |
   | overwrite | boolean | Whether to overwrite existing data records when timestamps match |
+
+### Get Reports
+
+```typescript
+client.getReports(query?: GetReportsQuery): Promise<Array<Report>>
+```
+
+Takes an optional get reports query object as an argument and returns an array of reports.
+
+#### Get Reports Query Parameters
+
+  | Param | Type | Description |
+  |---|---|---|
+  | station | string | Only return reports for station with UUID, name, or name matching pattern |
+  | site | string | Only return reports for site with UUID, name, or name matching pattern |
+  | client | string | Only return reports for client with UUID, name, or name matching pattern |
+  | limit | number | Number of reports to return ( min: 1, max: 100, default: 20 ) |
+  | offset | number | Number of reports to skip over when paging results ( default: 0 ) |
+  | date | string | Only return report for the month the date occurs in ( format: `yyyy-mm-dd` )
+
+##### Pattern Matching
+
+Parameters that support patterns can use a wildcard `*` at the beginning and/or end of the string.
+
+Pattern matching is case insensitive.
+
+For example:
+
+```js
+const data = await client.getReports({
+  station: 'Test*',
+});
+```
+
+Would return all reports whose station name starts with `Test`.
+
+#### Return Values
+
+Reports are returned in the order they were created starting with the latest.
+
+##### Sample Output
+
+```json
+[
+  {
+    "key": "reportkey",
+    "kind": "legacy-monthly-station-report",
+    "station_uuid": "9a8ebbee-ddd1-4071-b17f-356f42867b5e",
+    "status": "COMPLETE",
+    "data_exports": [
+      {
+        "key": "dataexportkey",
+        "filename": "Test_OneMin.dat",
+        "format": "TOA5",
+        "format_options": {},
+        "headers": {
+          "columns": ["Ambient_Temp"],
+          "units": ["Deg_C"],
+          "processing": ["Avg"]
+        },
+        "start_timestamp": "2021-01-01 00:00:00",
+        "end_timestamp": "2021-01-31 23:59:00",
+      }
+    ],
+    "published_at": "2021-02-01 00:00:00"
+  }
+]
+```
+
+### Get Report
+
+```typescript
+client.getReport(reportKey: string): Promise<Report>
+```
+
+Takes a report key as an argument and returns the report with a url to the report artifact.
+
+##### Sample Output
+
+```json
+{
+  "key": "reportkey",
+  "kind": "legacy-monthly-station-report",
+  "station_uuid": "9a8ebbee-ddd1-4071-b17f-356f42867b5e",
+  "status": "COMPLETE",
+  "data_exports": [
+    {
+      "key": "dataexportkey",
+      "filename": "Test_OneMin.dat",
+      "format": "TOA5",
+      "format_options": {},
+      "headers": {
+        "columns": ["Ambient_Temp"],
+        "units": ["Deg_C"],
+        "processing": ["Avg"]
+      },
+      "start_timestamp": "2021-01-01 00:00:00",
+      "end_timestamp": "2021-01-31 23:59:00",
+    }
+  ],
+  "published_at": "2021-02-01 00:00:00",
+  "url": "https://reports.grndwork.com/GR_MonthlySummary_Test_Station_2021-01.pdf"
+}
+```
+
+### Get Data Export
+
+```typescript
+client.getDataExport(dataExportKey: string): Promise<DataExport>
+```
+
+Takes an export key as an argument and returns the export with a url to the export artifact.
+
+##### Sample Output
+
+```json
+{
+  "key": "dataexportkey",
+  "filename": "Test_OneMin.dat",
+  "format": "TOA5",
+  "format_options": {},
+  "headers": {
+    "columns": ["Ambient_Temp"],
+    "units": ["Deg_C"],
+    "processing": ["Avg"]
+  },
+  "start_timestamp": "2021-01-01 00:00:00",
+  "end_timestamp": "2021-01-31 23:59:00",
+  "url": "https://exports.grndwork.com/Test_OneMin.dat"
+}
+```

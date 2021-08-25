@@ -5,6 +5,8 @@ export const API_URL = process.env.GROUNDWORK_API_URL || 'https://api.grndwork.c
 export const TOKENS_URL = `${ API_URL }/v1/tokens`;
 export const STATIONS_URL = `${ API_URL }/v1/stations`;
 export const DATA_URL = `${ API_URL }/v1/data`;
+export const REPORTS_URL = `${ API_URL }/v1/reports`;
+export const EXPORTS_URL = `${ API_URL }/v1/exports`;
 
 export function getRefreshToken(): RefreshToken | null {
   const {
