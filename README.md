@@ -1,3 +1,5 @@
+![GroundView](https://user-images.githubusercontent.com/7266242/151395564-54000ba1-f7a4-4ea8-84b4-66367e14cc90.png)
+
 # Groundwork API Client
 
 API client for [GroundWork Renewables](grndwork.com)
