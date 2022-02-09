@@ -1,4 +1,4 @@
-import {ServerError} from '../src/ServerError';
+import {ServerError} from '../../src/grndwork_js_client/ServerError';
 
 describe('ServerError', () => {
   it('uses defaults', () => {

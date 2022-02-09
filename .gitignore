@@ -16,3 +16,5 @@ lib
 
 # Secret files
 .env
+
+.DS_Store

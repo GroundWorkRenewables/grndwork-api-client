@@ -1,9 +1,9 @@
 import jwt from 'jsonwebtoken';
-import {makeRequest} from '../src/makeRequest';
-import {getAccessToken, resetAccessTokenCache} from '../src/accessTokens';
+import {makeRequest} from '../../src/grndwork_js_client/makeRequest';
+import {getAccessToken, resetAccessTokenCache} from '../../src/grndwork_js_client/accessTokens';
 
 jest.mock('jsonwebtoken');
-jest.mock('../src/makeRequest');
+jest.mock('../../src/grndwork_js_client/makeRequest');
 
 describe('getAccessToken', () => {
   const refreshToken = {

@@ -3,7 +3,7 @@ version: 2
 jobs:
   test:
     docker:
-      - image: circleci/node:14
+      - image: cimg/python:3.9-node
     steps:
       - checkout
       - restore_cache:
@@ -31,7 +31,7 @@ jobs:
 
   build:
     docker:
-      - image: circleci/node:14
+      - image: cimg/python:3.9-node
     steps:
       - checkout
       - restore_cache:
@@ -48,11 +48,16 @@ jobs:
           paths:
             - ~/.npm/
       - run:
-          name: Run Build
+          name: Run javascript Build
           command: |
-            npm run build
+            npm run build:js
       - run:
-          name: Publish When Tagged Release
+          name: Run python Build
+          command: |
+            npm run build:py
+
+      - run:
+          name: Publish javascript to npm When Tagged Release
           command: |
             if [[ $CIRCLE_TAG =~ ^v[0-9].* ]]; then
               case $CIRCLE_TAG in
@@ -69,6 +74,13 @@ jobs:
                   npm publish --access public --tag latest
                   ;;
               esac
+            fi
+
+      - run:
+          name: Publish python to pypi When Tagged Release
+          command: |
+            if [[ $CIRCLE_TAG =~ ^v[0-9].* ]]; then
+              npm run publish:py
             fi
 
 workflows:

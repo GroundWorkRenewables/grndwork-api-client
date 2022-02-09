@@ -12,6 +12,6 @@
     "target": "es2019",
   },
   "include": [
-    "src/**/*"
+    "src/grndwork_js_client/**/*"
   ],
 }

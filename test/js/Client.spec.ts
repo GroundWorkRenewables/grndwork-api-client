@@ -1,9 +1,9 @@
-import {Client} from '../src/Client';
-import {getAccessToken} from '../src/accessTokens';
-import {makeRequest} from '../src/makeRequest';
+import {Client} from '../../src/grndwork_js_client/Client';
+import {getAccessToken} from '../../src/grndwork_js_client/accessTokens';
+import {makeRequest} from '../../src/grndwork_js_client/makeRequest';
 
-jest.mock('../src/makeRequest');
-jest.mock('../src/accessTokens');
+jest.mock('../../src/grndwork_js_client/makeRequest');
+jest.mock('../../src/grndwork_js_client/accessTokens');
 
 describe('GroundworkClient', () => {
   let client: Client;

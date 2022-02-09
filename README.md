@@ -2,12 +2,19 @@
 
 # Groundwork API Client
 
-API client for [GroundWork Renewables](grndwork.com)
+API client for [GroundWork Renewables](https://grndwork.com)
+
 
 ## Installation
+JavaScript:
 
 ```
 $ npm install @grndwork/api-client
+```
+
+Python:
+```
+pip install grndwork_python_client
 ```
 
 ## Usage
@@ -20,6 +27,15 @@ const client = createClient();
 const data = await client.getData();
 ```
 
+```py
+from grndwork_python_client.client import Client
+
+client = Client()
+
+data = client.get_data()
+
+```
+
 In order to access https://api.grndwork.com you must first obtain a refresh token from GroundWork Renewables.
 
 The path to this file can be provided to the client using the `GROUNDWORK_TOKEN_PATH` environment variable.
@@ -28,12 +44,23 @@ Or the subject and token values from this file can be provided using the `GROUND
 
 When providing subject and token values `GROUNDWORK_TOKEN_PATH` must not be set.
 
+You can set the environment variable using your OS or in code. For example in Python you can include:
+```
+import os
+os.environ['GROUNDWORK_TOKEN_PATH'] = '/Users/my_user/my_groundwork-api-token.json'
+```
+
+
 ## API
 
 ### Get Stations
 
 ```typescript
 client.getStations(query?: GetStationsQuery): Promise<Array<Station>>
+```
+
+```py
+client.get_stations(query={'station': '<station-uuid>'})
 ```
 
 Takes an optional get stations query object as an argument and returns an array of stations.
@@ -61,6 +88,11 @@ const data = await client.getStations({
   station: 'Test*',
 });
 ```
+
+```py
+data = client.get_stations(query={'station': 'Test*'})
+```
+
 
 Would return all stations whose name starts with `Test`.
 
@@ -109,6 +141,10 @@ Stations are returned in alphabetical order by station name.
 client.getData(query?: GetDataQuery): Promise<Array<DataFile>>
 ```
 
+```py
+client.get_data(query={'filename': '<>'})
+```
+
 Takes an optional get data query object as an argument and returns an array of data files.
 
 #### Get Data Query Parameters
@@ -139,6 +175,10 @@ const data = await client.getData({
 });
 ```
 
+```py
+data = client.get_data(query={'filename':'*_OneMin.dat'})
+```
+
 Would return all one minute data files.
 
 #### Return Values
@@ -157,6 +197,10 @@ For example:
 const data = await client.getData({
   records_limit: 100,
 });
+```
+
+```py
+data = client.get_data(query={'records_limit': 100})
 ```
 
 Would return the most recent 100 records from the first file alphabetically.
@@ -192,6 +236,11 @@ Would return the most recent 100 records from the first file alphabetically.
 ```typescript
 client.postData(payload: PostDataPayload): Promise<void>
 ```
+
+```py
+client.post_data(payload={})
+```
+
 
 Takes a post data payload object as an argument and uploads it to the cloud.
 
