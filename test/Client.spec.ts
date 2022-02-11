@@ -120,4 +120,82 @@ describe('GroundworkClient', () => {
       });
     });
   });
+
+  describe('#getReports', () => {
+    it('gets access token', async () => {
+      await client.getReports();
+
+      expect(getAccessToken).toHaveBeenCalledWith(
+        refreshToken,
+        'platform',
+        'read:reports',
+      );
+    });
+
+    it('makes get reports request with default options', async () => {
+      await client.getReports();
+
+      expect(makeRequest).toHaveBeenCalledWith({
+        url: 'https://api.grndwork.com/v1/reports',
+        method: 'GET',
+        query: undefined,
+        token: 'access_token',
+      });
+    });
+
+    it('makes get reports request with query', async () => {
+      await client.getReports({limit: 10});
+
+      expect(makeRequest).toHaveBeenCalledWith({
+        url: 'https://api.grndwork.com/v1/reports',
+        method: 'GET',
+        query: {limit: 10},
+        token: 'access_token',
+      });
+    });
+  });
+
+  describe('#getReport', () => {
+    it('gets access token', async () => {
+      await client.getReport('reportkey');
+
+      expect(getAccessToken).toHaveBeenCalledWith(
+        refreshToken,
+        'platform',
+        'read:reports',
+      );
+    });
+
+    it('makes get report request', async () => {
+      await client.getReport('reportkey');
+
+      expect(makeRequest).toHaveBeenCalledWith({
+        url: 'https://api.grndwork.com/v1/reports/reportkey',
+        method: 'GET',
+        token: 'access_token',
+      });
+    });
+  });
+
+  describe('#getExport', () => {
+    it('gets access token', async () => {
+      await client.getDataExport('exportkey');
+
+      expect(getAccessToken).toHaveBeenCalledWith(
+        refreshToken,
+        'platform',
+        'read:reports',
+      );
+    });
+
+    it('makes get export request', async () => {
+      await client.getDataExport('exportkey');
+
+      expect(makeRequest).toHaveBeenCalledWith({
+        url: 'https://api.grndwork.com/v1/exports/exportkey',
+        method: 'GET',
+        token: 'access_token',
+      });
+    });
+  });
 });

@@ -1,13 +1,18 @@
-import {STATIONS_URL, DATA_URL} from './config';
+import {
+  STATIONS_URL, DATA_URL, REPORTS_URL, EXPORTS_URL,
+} from './config';
 import {getAccessToken} from './accessTokens';
 import {makeRequest} from './makeRequest';
 import {
+  GetReportsQuery,
   RefreshToken,
   GetStationsQuery,
   GetDataQuery,
   PostDataPayload,
   Station,
   DataFile,
+  Report,
+  DataExport,
 } from './interfaces';
 
 export class Client {
@@ -51,5 +56,42 @@ export class Client {
       body: payload,
       token: accessToken,
     });
+  }
+
+  public async getReports(query?: GetReportsQuery): Promise<Array<Report>> {
+    const accessToken = await getAccessToken(this.refreshToken, this.platform, 'read:reports');
+
+    const result = await makeRequest<Array<Report>>({
+      url: REPORTS_URL,
+      method: 'GET',
+      query,
+      token: accessToken,
+    });
+
+    return result;
+  }
+
+  public async getReport(reportKey: string): Promise<Required<Report>> {
+    const accessToken = await getAccessToken(this.refreshToken, this.platform, 'read:reports');
+
+    const result = await makeRequest<Required<Report>>({
+      url: `${ REPORTS_URL }/${ reportKey }`,
+      method: 'GET',
+      token: accessToken,
+    });
+
+    return result;
+  }
+
+  public async getDataExport(dataExportKey: string): Promise<Required<DataExport>> {
+    const accessToken = await getAccessToken(this.refreshToken, this.platform, 'read:reports');
+
+    const result = await makeRequest<Required<DataExport>>({
+      url: `${ EXPORTS_URL }/${ dataExportKey }`,
+      method: 'GET',
+      token: accessToken,
+    });
+
+    return result;
   }
 }

@@ -30,6 +30,15 @@ export interface PostDataPayload {
   overwrite?: boolean;
 }
 
+export interface GetReportsQuery {
+  client?: string;
+  site?: string;
+  station?: string;
+  limit?: number;
+  offset?: number;
+  date?: string;
+}
+
 export interface Station {
   client_uuid: string;
   client_full_name: string;
@@ -68,6 +77,27 @@ export interface DataRecord {
   timestamp: string;
   record_num: number;
   data: Record<string, any>;
+}
+
+export interface Report {
+  key: string;
+  kind: string;
+  station_uuid: string;
+  status: string;
+  data_exports: Array<DataExport>;
+  published_at: string;
+  url?: string;
+}
+
+export interface DataExport {
+  key: string;
+  filename: string;
+  format: string;
+  format_options: Record<string, any>;
+  headers: DataFileHeaders;
+  start_timestamp: string;
+  end_timestamp: string;
+  url?: string
 }
 
 export interface RequestOptions {
