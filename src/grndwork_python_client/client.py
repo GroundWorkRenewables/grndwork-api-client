@@ -1,10 +1,10 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Generator, List, Optional
 
 from .access_tokens import get_access_token
 from .config import DATA_URL, STATIONS_URL
 from .config import get_refresh_token
 from .dtos import DataFile, Station
-from .make_request import make_request
+from .make_request import get_offsets, make_request
 
 
 LOGGERNET_PLATFORM = 'loggernet'
@@ -26,7 +26,7 @@ class Client():
     def get_stations(
         self,
         query: Dict[str, Any],
-    ) -> List[Station]:
+    ) -> Generator[List[Station], None, None]:
         access_token = get_access_token(
             refresh_token=self.refresh_token,
             platform=self.platform,
@@ -38,29 +38,34 @@ class Client():
             query=query,
             token=access_token,
         )
-        return result
+        yield result
 
     def get_data(
         self,
         query: Dict[str, Any],
-    ) -> List[DataFile]:
+    ) -> Generator[List[DataFile], None, None]:
         access_token = get_access_token(
             refresh_token=self.refresh_token,
             platform=self.platform,
             scope='read:data',
         )
-        result: List[DataFile] = make_request(
-            url=DATA_URL,
-            method='GET',
-            query=query,
-            token=access_token,
-        )
-        return result
+
+        offsets: List[int] = get_offsets(url=DATA_URL, query=query)
+
+        for offset in offsets:
+            query['offset'] = offset
+            result: List[DataFile] = make_request(
+                url=DATA_URL,
+                method='GET',
+                query=query,
+                token=access_token,
+            )
+            yield result
 
     def post_data(
         self,
         payload: Dict[str, Any],
-    ) -> Any:
+    ) -> Generator[Any, None, None]:
         access_token = get_access_token(
             refresh_token=self.refresh_token,
             platform=self.platform,
@@ -72,4 +77,4 @@ class Client():
             body=payload,
             token=access_token,
         )
-        return result
+        yield result

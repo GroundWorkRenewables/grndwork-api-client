@@ -17,7 +17,35 @@ def fixture_requests(mocker):
     response.status_code = 200
     response.json.return_value = {}
     req_mock.request.return_value = response
+    req_mock.head.return_value = mocker.MagicMock()
+
     return req_mock
+
+
+def describe_get_offsets():
+    def it_parses_no_range(requests):
+        query = {'filename': 'Test_OneMin.dat'}
+        requests.head.return_value.headers = {'Content-Range': 'items 1-1/1'}
+        offsets = make_request.get_offsets(url=API_URL, query=query)
+        (_, kwargs) = requests.head.call_args
+        assert kwargs['params'] == query
+        assert offsets == [0]
+
+    def it_parses_range(requests):
+        query = {'filename': 'Test_OneMin.dat'}
+        requests.head.return_value.headers = {'Content-Range': 'items 1-20/65'}
+        offsets = make_request.get_offsets(url=API_URL, query=query)
+        (_, kwargs) = requests.head.call_args
+        assert kwargs['params'] == query
+        assert offsets == [0, 20, 40, 60]
+
+    def it_parses_range_with_offset(requests):
+        query = {'filename': 'Test_OneMin.dat'}
+        requests.head.return_value.headers = {'Content-Range': 'items 6-25/65'}
+        offsets = make_request.get_offsets(url=API_URL, query=query)
+        (_, kwargs) = requests.head.call_args
+        assert kwargs['params'] == query
+        assert offsets == [5, 25, 45]
 
 
 def describe_make_request():
