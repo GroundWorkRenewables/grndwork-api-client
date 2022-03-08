@@ -15,7 +15,7 @@
     "postupdate": "git diff-files --quiet package-lock.json || (npm test -- --reporters=jest-simple-dot-reporter && npm run build:js)",
     "prebuild": "rimraf lib",
     "build:js": "tsc -p tsconfig.json",
-    "build:py": "rm -f dist/* && pipenv run python3 sync_version.py && pipenv run python3 -m build",
+    "build:py": "rm -f dist/* && npm run syncversion && pipenv run python3 -m build",
     "install": "pipenv sync --dev",
     "pretest": "pipenv run flake8 && pipenv run mypy src_py/grndwork_api_client && eslint src_js/grndwork_api_client ",
     "publish:py": "pipenv run python3 -m twine upload dist/* && rm dist/*",
@@ -25,7 +25,8 @@
     "test:pytest": "pipenv run pytest",
     "test:watch": "nodemon -w ./ -e ts -x 'npm test -- --reporters=jest-simple-dot-reporter'",
     "preversion": "npm test -- --reporters=jest-simple-dot-reporter && npm run build:js",
-    "postversion": "git push && git push --tags"
+    "postversion": "git push && git push --tags",
+    "syncversion": "replace \"version.=.[0-9]+[.0-9]+[-a-z.0-9]*\" \"version = $npm_package_version\" setup.cfg"
   },
   "dependencies": {
     "jsonwebtoken": "8.5.1",
@@ -45,6 +46,7 @@
     "jest-junit": "12.0.0",
     "jest-simple-dot-reporter": "1.0.5",
     "nodemon": "2.0.7",
+    "replace": "1.2.1",
     "rimraf": "3.0.2",
     "ts-jest": "26.5.4",
     "ts-node": "9.1.1",
