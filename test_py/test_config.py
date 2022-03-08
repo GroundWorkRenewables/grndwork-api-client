@@ -2,7 +2,7 @@ import json
 import os
 
 import pytest
-from src.grndwork_python_client import config
+from src_py.grndwork_api_client import config
 
 
 def describe_get_token():
@@ -15,7 +15,7 @@ def describe_get_token():
     @pytest.fixture(name='openfile', autouse=True)
     def fixture_open(mocker):
         openpatch = mocker.patch(
-            target='src.grndwork_python_client.config.open',
+            target='src_py.grndwork_api_client.config.open',
         )
         file_mock = mocker.MagicMock()
         file_mock.read.return_value = json.dumps(refresh_token)

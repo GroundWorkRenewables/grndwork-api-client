@@ -1,8 +1,8 @@
 import time
 
 import pytest
-from src.grndwork_python_client import access_tokens
-from src.grndwork_python_client.make_request import make_request
+from src_py.grndwork_api_client import access_tokens
+from src_py.grndwork_api_client.make_request import make_request
 
 refresh_token = {
     'subject': 'uuid',
@@ -13,7 +13,7 @@ refresh_token = {
 @pytest.fixture(name='make_request', autouse=True)
 def fixture_requests(mocker):
     mockpatch = mocker.patch(
-        target='src.grndwork_python_client.access_tokens.make_request',
+        target='src_py.grndwork_api_client.access_tokens.make_request',
         spec=make_request,
     )
     mockpatch.return_value = {'token': 'access_token'}
@@ -23,7 +23,7 @@ def fixture_requests(mocker):
 @pytest.fixture(name='decode', autouse=True)
 def fixture_decode(mocker):
     mockdecode = mocker.patch(
-        target='src.grndwork_python_client.access_tokens.jwt.decode',
+        target='src_py.grndwork_api_client.access_tokens.jwt.decode',
     )
     not_expired = int(time.time() * 1000) + 1000
     mockdecode.return_value = {'exp': not_expired}

@@ -2,7 +2,8 @@ import json
 
 import pytest
 import requests
-from src.grndwork_python_client import make_request
+from src_py.grndwork_api_client import make_request
+
 
 API_URL = 'https://api.grndwork.com/v1/tokens'
 
@@ -10,7 +11,7 @@ API_URL = 'https://api.grndwork.com/v1/tokens'
 @pytest.fixture(name='requests', autouse=True)
 def fixture_requests(mocker):
     req_mock = mocker.patch(
-        target='src.grndwork_python_client.make_request.requests',
+        target='src_py.grndwork_api_client.make_request.requests',
         spec=requests,
     )
     response = mocker.MagicMock()

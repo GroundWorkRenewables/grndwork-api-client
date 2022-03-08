@@ -1,9 +1,9 @@
 import pytest
-from src.grndwork_python_client import client
-from src.grndwork_python_client.access_tokens import get_access_token
-from src.grndwork_python_client.config import DATA_URL, STATIONS_URL
-from src.grndwork_python_client.config import get_refresh_token
-from src.grndwork_python_client.make_request import get_offsets, make_request
+from src_py.grndwork_api_client import client
+from src_py.grndwork_api_client.access_tokens import get_access_token
+from src_py.grndwork_api_client.config import DATA_URL, STATIONS_URL
+from src_py.grndwork_api_client.config import get_refresh_token
+from src_py.grndwork_api_client.make_request import get_offsets, make_request
 
 
 def describe_client():
@@ -11,14 +11,14 @@ def describe_client():
     @pytest.fixture(name='get_refresh_token', autouse=False)
     def fixture_get_token(mocker):
         return mocker.patch(
-            target='src.grndwork_python_client.client.get_refresh_token',
+            target='src_py.grndwork_api_client.client.get_refresh_token',
             spec=get_refresh_token,
         )
 
     @pytest.fixture(name='get_access_token', autouse=False)
     def fixture_get_access_token(mocker):
         access_token_mock = mocker.patch(
-            target='src.grndwork_python_client.client.get_access_token',
+            target='src_py.grndwork_api_client.client.get_access_token',
             spec=get_access_token,
         )
         access_token_mock.return_value = 'access_token'
@@ -27,14 +27,14 @@ def describe_client():
     @pytest.fixture(name='make_request', autouse=True)
     def fixture_requests(mocker):
         return mocker.patch(
-            target='src.grndwork_python_client.client.make_request',
+            target='src_py.grndwork_api_client.client.make_request',
             spec=make_request,
         )
 
     @pytest.fixture(name='get_offsets', autouse=True)
     def fixture_offsets(mocker):
         return mocker.patch(
-            target='src.grndwork_python_client.client.get_offsets',
+            target='src_py.grndwork_api_client.client.get_offsets',
             spec=get_offsets,
         )
 

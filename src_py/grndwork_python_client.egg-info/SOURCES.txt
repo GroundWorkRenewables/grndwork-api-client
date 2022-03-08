@@ -1,0 +1,8 @@
+LICENSE
+README.md
+pyproject.toml
+setup.cfg
+src_py/grndwork_python_client.egg-info/PKG-INFO
+src_py/grndwork_python_client.egg-info/SOURCES.txt
+src_py/grndwork_python_client.egg-info/dependency_links.txt
+src_py/grndwork_python_client.egg-info/top_level.txt
