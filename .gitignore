@@ -17,4 +17,8 @@ lib
 # Secret files
 .env
 
+# Build files
+grndwork_python_client.egg-info/
+
+# Misc
 .DS_Store
