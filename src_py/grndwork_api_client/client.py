@@ -4,11 +4,12 @@ from .access_tokens import get_access_token
 from .config import DATA_URL, STATIONS_URL
 from .config import get_refresh_token
 from .dtos import DataFile, Station
-from .make_request import get_offsets, make_request
+from .make_request import make_request
 
 
 LOGGERNET_PLATFORM = 'loggernet'
 TRACE_PLATFORM = 'trace'
+GET_INTERVAL = 20
 
 
 class Client():
@@ -32,13 +33,23 @@ class Client():
             platform=self.platform,
             scope='read:stations',
         )
-        result: List[Station] = make_request(
-            url=STATIONS_URL,
-            method='GET',
-            query=query,
-            token=access_token,
-        )
-        yield result
+
+        offset = query.get('offset', 0)
+        results = []
+        while True:
+            result, cont_range = make_request(
+                    url=STATIONS_URL,
+                    method='GET',
+                    query=query,
+                    token=access_token,
+                )
+            results.append(result)
+            offset += GET_INTERVAL
+            query['offset'] = offset
+
+            if offset > cont_range['count']:
+                break
+        yield from results
 
     def get_data(
         self,
@@ -50,22 +61,27 @@ class Client():
             scope='read:data',
         )
 
-        offsets: List[int] = get_offsets(url=DATA_URL, query=query)
-
-        for offset in offsets:
+        offset = query.get('offset', 0)
+        results = []
+        while True:
+            result, cont_range = make_request(
+                    url=DATA_URL,
+                    method='GET',
+                    query=query,
+                    token=access_token,
+                )
+            results.append(result)
+            offset += GET_INTERVAL
             query['offset'] = offset
-            result: List[DataFile] = make_request(
-                url=DATA_URL,
-                method='GET',
-                query=query,
-                token=access_token,
-            )
-            yield result
+
+            if offset > cont_range['count']:
+                break
+        yield from results
 
     def post_data(
         self,
         payload: Dict[str, Any],
-    ) -> Generator[Any, None, None]:
+    ) -> Any:
         access_token = get_access_token(
             refresh_token=self.refresh_token,
             platform=self.platform,
@@ -77,4 +93,4 @@ class Client():
             body=payload,
             token=access_token,
         )
-        yield result
+        return result

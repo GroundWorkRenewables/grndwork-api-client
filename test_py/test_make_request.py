@@ -17,36 +17,25 @@ def fixture_requests(mocker):
     response = mocker.MagicMock()
     response.status_code = 200
     response.json.return_value = {}
+    response.headers = {'Content-Range': 'items 1-1/1'}
     req_mock.request.return_value = response
-    req_mock.head.return_value = mocker.MagicMock()
 
     return req_mock
 
 
-def describe_get_offsets():
-    def it_parses_no_range(requests):
-        query = {'filename': 'Test_OneMin.dat'}
-        requests.head.return_value.headers = {'Content-Range': 'items 1-1/1'}
-        offsets = make_request.get_offsets(url=API_URL, query=query)
-        (_, kwargs) = requests.head.call_args
-        assert kwargs['params'] == query
-        assert offsets == [0]
+def describe_parse_content_range():
+    def it_parses_range():
+        result = make_request.parse_content_range('items 1-1/1')
+        assert result == {'first': 1, 'last': 1, 'count': 1}
 
-    def it_parses_range(requests):
-        query = {'filename': 'Test_OneMin.dat'}
-        requests.head.return_value.headers = {'Content-Range': 'items 1-20/65'}
-        offsets = make_request.get_offsets(url=API_URL, query=query)
-        (_, kwargs) = requests.head.call_args
-        assert kwargs['params'] == query
-        assert offsets == [0, 20, 40, 60]
+        result = make_request.parse_content_range('items 1-20/65')
+        assert result == {'first': 1, 'last': 20, 'count': 65}
 
-    def it_parses_range_with_offset(requests):
-        query = {'filename': 'Test_OneMin.dat'}
-        requests.head.return_value.headers = {'Content-Range': 'items 6-25/65'}
-        offsets = make_request.get_offsets(url=API_URL, query=query)
-        (_, kwargs) = requests.head.call_args
-        assert kwargs['params'] == query
-        assert offsets == [5, 25, 45]
+        result = make_request.parse_content_range('items 6-25/65')
+        assert result == {'first': 6, 'last': 25, 'count': 65}
+
+        result = make_request.parse_content_range(None)
+        assert result == {}
 
 
 def describe_make_request():
@@ -104,8 +93,14 @@ def describe_make_request():
         requests.request.return_value.json.return_value = {'token': 'access_token'}
         token = 'refresh_token'
         body = {'test': 'test'}
-        result = make_request.make_request(url=API_URL, method='POST', body=body, token=token)
+        result, range_vals = make_request.make_request(
+            url=API_URL,
+            method='POST',
+            body=body,
+            token=token,
+        )
         assert result['token'] == 'access_token'
+        assert range_vals == {'first': 1, 'last': 1, 'count': 1}
 
     def it_handles_bad_response(requests):
         requests.request.return_value.status_code = 404
@@ -113,3 +108,14 @@ def describe_make_request():
         token = 'refresh_token'
         with pytest.raises(ConnectionError):
             make_request.make_request(url=API_URL, method='POST', token=token)
+
+    def it_returns_result_and_content_range_for_get(requests):
+        result, cont_range = make_request.make_request(url=API_URL, method='GET')
+        assert result == {}
+        assert cont_range == {'first': 1, 'last': 1, 'count': 1}
+
+    def it_returns_result_and_content_range_for_post(requests):
+        body = {'test': 'test'}
+        result, cont_range = make_request.make_request(url=API_URL, method='POST', body=body)
+        assert result == {}
+        assert cont_range == {'first': 1, 'last': 1, 'count': 1}

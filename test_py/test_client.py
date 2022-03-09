@@ -1,9 +1,9 @@
 import pytest
 from src_py.grndwork_api_client import client
 from src_py.grndwork_api_client.access_tokens import get_access_token
-from src_py.grndwork_api_client.config import DATA_URL, STATIONS_URL
+from src_py.grndwork_api_client.config import DATA_URL
 from src_py.grndwork_api_client.config import get_refresh_token
-from src_py.grndwork_api_client.make_request import get_offsets, make_request
+from src_py.grndwork_api_client.make_request import make_request
 
 
 def describe_client():
@@ -31,13 +31,6 @@ def describe_client():
             spec=make_request,
         )
 
-    @pytest.fixture(name='get_offsets', autouse=True)
-    def fixture_offsets(mocker):
-        return mocker.patch(
-            target='src_py.grndwork_api_client.client.get_offsets',
-            spec=get_offsets,
-        )
-
     def it_creates_client(get_refresh_token):
         refresh_token = {
             'subject': 'uuid',
@@ -54,71 +47,72 @@ def describe_client():
             client.Client()
 
     def it_gets_stations(get_refresh_token, get_access_token, make_request):
+        make_request.side_effect = [
+            (
+                {'result': 1}, {'first': 1, 'last': 20, 'count': 15},
+            ),
+        ]
         my_client = client.Client()
         my_request = my_client.get_stations(query={})
-        next(my_request)
-        (_, kwargs) = make_request.call_args
+        assert next(my_request) == {'result': 1}
 
-        assert kwargs == {
-            'url': STATIONS_URL,
-            'method': 'GET',
-            'query': {},
-            'token': 'access_token',
-        }
-        assert make_request.call_count == 1
+    def it_gets_stations_with_offset(get_refresh_token, get_access_token, make_request):
+        make_request.side_effect = [
+            (
+                {'result': 1}, {'first': 1, 'last': 20, 'count': 65},
+            ),
+            (
+                {'result': 2}, {'first': 21, 'last': 40, 'count': 65},
+            ),
+            (
+                {'result': 3}, {'first': 41, 'last': 60, 'count': 65},
+            ),
+            (
+                {'result': 4}, {'first': 61, 'last': 65, 'count': 65},
+            ),
+        ]
 
-    def it_gets_data(get_refresh_token, get_access_token, make_request, get_offsets):
-        get_offsets.return_value = [0]
         my_client = client.Client()
-        next(my_client.get_data(query={}))
-        assert make_request.call_count == 1
-        (_, kwargs) = make_request.call_args
+        my_request = my_client.get_stations(query={})
+        assert next(my_request) == {'result': 1}
+        assert next(my_request) == {'result': 2}
+        assert next(my_request) == {'result': 3}
+        assert next(my_request) == {'result': 4}
+        with pytest.raises(StopIteration):
+            next(my_request)
 
-        assert kwargs == {
-            'url': DATA_URL,
-            'method': 'GET',
-            'query': {'offset': 0},
-            'token': 'access_token',
-        }
-        assert make_request.call_count == 1
-
-    def it_gets_data_with_offset(get_refresh_token, get_access_token, make_request, get_offsets):
-        get_offsets.return_value = [0, 20, 40]
+    def it_gets_data(get_refresh_token, get_access_token, make_request):
+        make_request.side_effect = [
+            (
+                {'result': 1}, {'first': 1, 'last': 20, 'count': 15},
+            ),
+        ]
         my_client = client.Client()
         my_request = my_client.get_data(query={})
-        next(my_request)
+        assert next(my_request) == {'result': 1}
 
-        (_, kwargs) = make_request.call_args
-        assert kwargs == {
-            'url': DATA_URL,
-            'method': 'GET',
-            'query': {'offset': 0},
-            'token': 'access_token',
-        }
-        assert make_request.call_count == 1
+    def it_gets_data_with_offset(get_refresh_token, get_access_token, make_request):
+        make_request.side_effect = [
+            (
+                {'result': 1}, {'first': 1, 'last': 20, 'count': 65},
+            ),
+            (
+                {'result': 2}, {'first': 21, 'last': 40, 'count': 65},
+            ),
+            (
+                {'result': 3}, {'first': 41, 'last': 60, 'count': 65},
+            ),
+            (
+                {'result': 4}, {'first': 61, 'last': 65, 'count': 65},
+            ),
+        ]
 
-        next(my_request)
-        (_, kwargs) = make_request.call_args
-
-        assert kwargs == {
-            'url': DATA_URL,
-            'method': 'GET',
-            'query': {'offset': 20},
-            'token': 'access_token',
-        }
-        assert make_request.call_count == 2
-
-        next(my_request)
-        (_, kwargs) = make_request.call_args
-
-        assert kwargs == {
-            'url': DATA_URL,
-            'method': 'GET',
-            'query': {'offset': 40},
-            'token': 'access_token',
-        }
-        assert make_request.call_count == 3
-
+        my_client = client.Client()
+        my_request = my_client.get_data(query={})
+        assert next(my_request) == {'result': 1}
+        assert next(my_request) == {'result': 2}
+        assert next(my_request) == {'result': 3}
+        assert next(my_request) == {'result': 4}
         with pytest.raises(StopIteration):
             next(my_request)
 
