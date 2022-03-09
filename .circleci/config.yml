@@ -48,13 +48,9 @@ jobs:
           paths:
             - ~/.npm/
       - run:
-          name: Run javascript Build
+          name: Run build
           command: |
-            npm run build:js
-      - run:
-          name: Run python Build
-          command: |
-            npm run build:py
+            npm run build
 
       - run:
           name: Publish javascript to npm When Tagged Release

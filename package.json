@@ -23,7 +23,7 @@
     "publish:test": "pipenv run python3 -m twine upload --repository testpypi dist/* && rm dist/*",
     "test": "npm run test:pytest && npm run test:jest",
     "test:jest": "jest",
-    "test:pytest": "pipenv run pytest",
+    "test:pytest": "pipenv run python3 -m pytest",
     "test:watch": "nodemon -w ./ -e ts -x 'npm test -- --reporters=jest-simple-dot-reporter'",
     "preversion": "npm test -- --reporters=jest-simple-dot-reporter && npm run build:js",
     "postversion": "git push && git push --tags",
