@@ -1,28 +1,34 @@
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Mapping, Optional, Union
 
 import requests
 from requests.exceptions import RequestException
 
+from .dtos import ContentRange, DataFile, Station
 
-def parse_content_range(cont_range: str) -> Dict[str, int]:
-    result = {}
-    if cont_range:
-        result['count'] = int(cont_range.split('/')[1])
-        result['first'] = int(cont_range.replace('items ', '').split('-')[0])
-        result['last'] = int(cont_range.replace('items ', '').split('-')[1].split('/')[0])
 
-    return result
+def parse_content_range(cont_range: str) -> ContentRange:
+    try:
+        count = int(cont_range.split('/')[1])
+        first = int(cont_range.replace('items ', '').split('-')[0])
+        last = int(cont_range.replace('items ', '').split('-')[1].split('/')[0])
+    except AttributeError:
+        count = 0
+        first = 0
+        last = 0
+
+    return ContentRange(count=count, first=first, last=last)
 
 
 def make_request(
     url: str,
+    *,
     method: str,
     headers: Optional[Dict[str, Any]] = None,
-    query: Optional[Any] = None,
+    query: Optional[Mapping[str, Any]] = None,
     token: Optional[str] = None,
-    body: Optional[Any] = None,
-) -> Any:
+    body: Optional[Dict[str, Any]] = None,
+) -> tuple[Union[Mapping[str, Any], List[DataFile], List[Station]], ContentRange]:
 
     if not headers:
         headers = {}
@@ -41,7 +47,7 @@ def make_request(
             params=query,
             data=json.dumps(body),
         )
-        range_vals = parse_content_range(response.headers['Content-Range'])
+        cont_range = parse_content_range(response.headers['Content-Range'])
 
     except RequestException:
         raise ConnectionError('Invalid response payload')
@@ -53,4 +59,4 @@ def make_request(
             ),
         )
 
-    return response.json(), range_vals
+    return response.json(), cont_range

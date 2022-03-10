@@ -2,7 +2,9 @@ import time
 
 import pytest
 from src_py.grndwork_api_client import access_tokens
+from src_py.grndwork_api_client.make_request import ContentRange
 from src_py.grndwork_api_client.make_request import make_request
+
 
 refresh_token = {
     'subject': 'uuid',
@@ -16,7 +18,8 @@ def fixture_requests(mocker):
         target='src_py.grndwork_api_client.access_tokens.make_request',
         spec=make_request,
     )
-    mockpatch.return_value = {'token': 'access_token'}
+    cont_range = ContentRange(count=1, first=1, last=1)
+    mockpatch.return_value = {'token': 'access_token'}, cont_range
     return mockpatch
 
 

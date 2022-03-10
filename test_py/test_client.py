@@ -3,6 +3,9 @@ from src_py.grndwork_api_client import client
 from src_py.grndwork_api_client.access_tokens import get_access_token
 from src_py.grndwork_api_client.config import DATA_URL
 from src_py.grndwork_api_client.config import get_refresh_token
+from src_py.grndwork_api_client.dtos import DataFile, DataFileHeaders, Station
+from src_py.grndwork_api_client.dtos import GetDataQuery, GetStationsQuery
+from src_py.grndwork_api_client.make_request import ContentRange
 from src_py.grndwork_api_client.make_request import make_request
 
 
@@ -47,76 +50,172 @@ def describe_client():
             client.Client()
 
     def it_gets_stations(get_refresh_token, get_access_token, make_request):
+        station = Station(
+            client_uuid='client_uuid',
+            client_full_name='full_name',
+            client_short_name='short_name',
+            site_uuid='station_uuid',
+            station_full_name='station',
+            description='',
+            latitude=0,
+            longitude=0,
+            altitude=0,
+            timezone_offset=1,
+            start_timestamp='1',
+            end_timestamp='1',
+            data_file_prefix='PRE',
+            data_files=[],
+        )
         make_request.side_effect = [
             (
-                {'result': 1}, {'first': 1, 'last': 20, 'count': 15},
+                [station], ContentRange(first=1, last=20, count=15),
             ),
         ]
         my_client = client.Client()
-        my_request = my_client.get_stations(query={})
-        assert next(my_request) == {'result': 1}
+        station_query = GetStationsQuery(
+            client='client',
+        )
+
+        my_request = my_client.get_stations(station_query)
+        assert next(my_request) == station
 
     def it_gets_stations_with_offset(get_refresh_token, get_access_token, make_request):
+        station = Station(
+            client_uuid='client_uuid',
+            client_full_name='full_name',
+            client_short_name='short_name',
+            site_uuid='station_uuid',
+            station_full_name='station',
+            description='',
+            latitude=0,
+            longitude=0,
+            altitude=0,
+            timezone_offset=1,
+            start_timestamp='1',
+            end_timestamp='1',
+            data_file_prefix='PRE',
+            data_files=[],
+        )
         make_request.side_effect = [
             (
-                {'result': 1}, {'first': 1, 'last': 20, 'count': 65},
+                [station], ContentRange(first=1, last=20, count=65),
             ),
             (
-                {'result': 2}, {'first': 21, 'last': 40, 'count': 65},
+                [station], ContentRange(first=21, last=40, count=65),
             ),
             (
-                {'result': 3}, {'first': 41, 'last': 60, 'count': 65},
+                [station], ContentRange(first=41, last=60, count=65),
             ),
             (
-                {'result': 4}, {'first': 61, 'last': 65, 'count': 65},
+                [station], ContentRange(first=61, last=65, count=65),
             ),
         ]
 
+        station_query = GetStationsQuery(
+            client='client',
+            site='site',
+        )
         my_client = client.Client()
-        my_request = my_client.get_stations(query={})
-        assert next(my_request) == {'result': 1}
-        assert next(my_request) == {'result': 2}
-        assert next(my_request) == {'result': 3}
-        assert next(my_request) == {'result': 4}
+        my_request = my_client.get_stations(query=station_query)
+        assert next(my_request) == station
+        assert next(my_request) == station
+        assert next(my_request) == station
+        assert next(my_request) == station
         with pytest.raises(StopIteration):
             next(my_request)
 
     def it_gets_data(get_refresh_token, get_access_token, make_request):
+        headers = DataFileHeaders(
+            meta={},
+            columns=[],
+            units=[],
+            processing=[],
+        )
+        datafile = DataFile(
+            source='src',
+            filename='filename.dat',
+            is_stale=False,
+            headers=headers,
+            records=[],
+        )
         make_request.side_effect = [
             (
-                {'result': 1}, {'first': 1, 'last': 20, 'count': 15},
+                [datafile], ContentRange(first=1, last=20, count=15),
             ),
         ]
         my_client = client.Client()
-        my_request = my_client.get_data(query={})
-        assert next(my_request) == {'result': 1}
+        data_query = GetDataQuery(
+            client='client',
+            site='site',
+            gateway='gateway',
+            station='station',
+            filename='filename.dat',
+            limit=1,
+            offset=0,
+            records_before=0,
+            records_after=0,
+            records_limit=0,
+        )
+        my_request = my_client.get_data(query=data_query)
+        assert next(my_request) == datafile
 
     def it_gets_data_with_offset(get_refresh_token, get_access_token, make_request):
+        headers = DataFileHeaders(
+            meta={},
+            columns=[],
+            units=[],
+            processing=[],
+        )
+        datafile = DataFile(
+            source='src',
+            filename='filename.dat',
+            is_stale=False,
+            headers=headers,
+            records=[],
+        )
         make_request.side_effect = [
             (
-                {'result': 1}, {'first': 1, 'last': 20, 'count': 65},
+                [datafile], ContentRange(first=1, last=20, count=65),
             ),
             (
-                {'result': 2}, {'first': 21, 'last': 40, 'count': 65},
+                [datafile], ContentRange(first=21, last=40, count=65),
             ),
             (
-                {'result': 3}, {'first': 41, 'last': 60, 'count': 65},
+                [datafile], ContentRange(first=41, last=60, count=65),
             ),
             (
-                {'result': 4}, {'first': 61, 'last': 65, 'count': 65},
+                [datafile], ContentRange(first=61, last=65, count=65),
             ),
         ]
 
         my_client = client.Client()
-        my_request = my_client.get_data(query={})
-        assert next(my_request) == {'result': 1}
-        assert next(my_request) == {'result': 2}
-        assert next(my_request) == {'result': 3}
-        assert next(my_request) == {'result': 4}
+        data_query = GetDataQuery(
+            client='client',
+            site='site',
+            gateway='gateway',
+            station='station',
+            filename='filename.dat',
+            limit=1,
+            offset=0,
+            records_before=0,
+            records_after=0,
+            records_limit=0,
+        )
+        my_request = my_client.get_data(query=data_query)
+        assert next(my_request) == datafile
+        assert next(my_request) == datafile
+        assert next(my_request) == datafile
+        assert next(my_request) == datafile
         with pytest.raises(StopIteration):
             next(my_request)
 
     def it_posts_data(get_refresh_token, get_access_token, make_request):
+        make_request.side_effect = [
+            (
+                {'result': 1}, ContentRange(first=0, last=0, count=0),
+            ),
+        ]
+
         payload = {
             'platform': 'loggernet',
             'source': 'station:12345',
@@ -134,8 +233,7 @@ def describe_client():
             ],
         }
         my_client = client.Client()
-        my_request = my_client.post_data(payload=payload)
-        next(my_request)
+        my_client.post_data(payload=payload)
         (_, kwargs) = make_request.call_args
 
         assert kwargs == {

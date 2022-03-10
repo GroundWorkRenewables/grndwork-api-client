@@ -14,7 +14,7 @@ $ npm install @grndwork/api-client
 
 Python:
 ```
-pip install grndwork_python_client
+pip install grndwork_api_client
 ```
 
 ## Usage
@@ -28,7 +28,7 @@ const data = await client.getData();
 ```
 
 ```py
-from grndwork_python_client.client import Client
+from grndwork_api_client.client import Client
 
 client = Client()
 
@@ -142,7 +142,7 @@ client.getData(query?: GetDataQuery): Promise<Array<DataFile>>
 ```
 
 ```py
-client.get_data(query={'filename': '<>'})
+client.get_data(query={'filename': '<MS_MyStation_OneMin.dat>'})
 ```
 
 Takes an optional get data query object as an argument and returns an array of data files.

@@ -1,5 +1,5 @@
 import {readFileSync} from 'fs';
-import {getRefreshToken} from '../src_js/grndwork_api_client/config';
+import {getRefreshToken} from '../src_js/config';
 
 jest.mock('fs');
 

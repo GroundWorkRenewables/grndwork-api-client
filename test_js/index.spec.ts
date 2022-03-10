@@ -1,7 +1,7 @@
-import {createClient} from '../src_js/grndwork_api_client';
-import {getRefreshToken} from '../src_js/grndwork_api_client/config';
+import {createClient} from '../src_js';
+import {getRefreshToken} from '../src_js/config';
 
-jest.mock('../src_js/grndwork_api_client/config');
+jest.mock('../src_js/config');
 
 describe('createClient', () => {
   afterEach(() => {

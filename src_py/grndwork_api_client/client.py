@@ -1,9 +1,10 @@
-from typing import Any, Dict, Generator, List, Optional
+from typing import Any, Dict, Iterator, Optional
 
 from .access_tokens import get_access_token
 from .config import DATA_URL, STATIONS_URL
 from .config import get_refresh_token
 from .dtos import DataFile, Station
+from .dtos import GetDataQuery, GetStationsQuery
 from .make_request import make_request
 
 
@@ -26,57 +27,59 @@ class Client():
 
     def get_stations(
         self,
-        query: Dict[str, Any],
-    ) -> Generator[List[Station], None, None]:
+        query: GetStationsQuery,
+    ) -> Iterator[Station]:
         access_token = get_access_token(
             refresh_token=self.refresh_token,
             platform=self.platform,
             scope='read:stations',
         )
 
-        offset = query.get('offset', 0)
-        results = []
+        offset = 0
+        query['offset'] = offset
+
         while True:
-            result, cont_range = make_request(
+            results, cont_range = make_request(
                     url=STATIONS_URL,
                     method='GET',
                     query=query,
                     token=access_token,
                 )
-            results.append(result)
-            offset += GET_INTERVAL
-            query['offset'] = offset
 
-            if offset > cont_range['count']:
+            yield from results
+
+            if cont_range.last == cont_range.count:
                 break
-        yield from results
+
+            offset = cont_range.last
 
     def get_data(
         self,
-        query: Dict[str, Any],
-    ) -> Generator[List[DataFile], None, None]:
+        query: GetDataQuery,
+    ) -> Iterator[DataFile]:
         access_token = get_access_token(
             refresh_token=self.refresh_token,
             platform=self.platform,
             scope='read:data',
         )
 
-        offset = query.get('offset', 0)
-        results = []
+        offset = 0
+        query['offset'] = offset
+
         while True:
-            result, cont_range = make_request(
+            results, cont_range = make_request(
                     url=DATA_URL,
                     method='GET',
                     query=query,
                     token=access_token,
                 )
-            results.append(result)
-            offset += GET_INTERVAL
-            query['offset'] = offset
 
-            if offset > cont_range['count']:
+            yield from results
+
+            if cont_range.last == cont_range.count:
                 break
-        yield from results
+
+            offset = cont_range.last
 
     def post_data(
         self,
@@ -87,7 +90,7 @@ class Client():
             platform=self.platform,
             scope='write:data',
         )
-        result = make_request(
+        result, cont_range = make_request(
             url=DATA_URL,
             method='POST',
             body=payload,

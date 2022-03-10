@@ -3,8 +3,8 @@
   "description": "API client for GroundWork Renewables Inc",
   "version": "1.0.0-alpha.4",
   "license": "MIT",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "dist_js/index.js",
+  "types": "dist_js/index.d.ts",
   "repository": "https://github.com/GroundWorkRenewables/grndwork-api-client",
   "engines": {
     "node": ">=10"
@@ -13,21 +13,21 @@
     "update": "updates --update --minor && (git diff-files --quiet package.json || (rimraf package-lock.json node_modules && npm install))",
     "update:python": "pipenv update --dev",
     "postupdate": "git diff-files --quiet package-lock.json || (npm test -- --reporters=jest-simple-dot-reporter && npm run build:js)",
-    "prebuild": "rimraf lib",
+    "prebuild": "rimraf dist_js dist_py",
     "build:js": "tsc -p tsconfig.json",
-    "build:py": "rm -f dist/* && npm run syncversion && pipenv run python3 -m build",
+    "build:py": "pipenv run python3 -m build --outdir dist_py",
     "build": "npm run build:js && npm run build:py",
     "install": "pipenv sync --dev",
-    "pretest": "pipenv run flake8 && pipenv run mypy src_py/grndwork_api_client && eslint src_js/grndwork_api_client ",
-    "publish:py": "pipenv run python3 -m twine upload dist/* && rm dist/*",
-    "publish:test": "pipenv run python3 -m twine upload --repository testpypi dist/* && rm dist/*",
+    "pretest": "pipenv run flake8 && pipenv run mypy src_py/grndwork_api_client && eslint src_js ",
+    "publish:py": "pipenv run python3 -m twine upload dist_py/*",
+    "publish:test": "pipenv run python3 -m twine upload --repository testpypi dist_py/*",
     "test": "npm run test:pytest && npm run test:jest",
     "test:jest": "jest",
     "test:pytest": "pipenv run python3 -m pytest",
     "test:watch": "nodemon -w ./ -e ts -x 'npm test -- --reporters=jest-simple-dot-reporter'",
     "preversion": "npm test -- --reporters=jest-simple-dot-reporter && npm run build:js",
     "postversion": "git push && git push --tags",
-    "syncversion": "replace \"version.=.[0-9]+[.0-9]+[-a-z.0-9]*\" \"version = $npm_package_version\" setup.cfg"
+    "version": "replace \"version.=.[0-9]+[.0-9]+[-a-z.0-9]*\" \"version = $npm_package_version\" setup.cfg"
   },
   "dependencies": {
     "jsonwebtoken": "8.5.1",

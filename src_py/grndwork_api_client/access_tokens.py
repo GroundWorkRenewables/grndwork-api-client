@@ -1,10 +1,11 @@
 import time
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import jwt
 
 from .config import TOKENS_URL
 from .make_request import make_request
+
 
 access_token_cache: Dict[str, Any] = {}
 
@@ -18,9 +19,9 @@ def get_access_token(
     refresh_token: Dict[str, Any],
     platform: str,
     scope: str,
-) -> Any:
+) -> Optional[str]:
     cache_key = f'{platform}:{scope}'
-    access_token = access_token_cache.get(cache_key)
+    access_token: Optional[str] = access_token_cache.get(cache_key)
 
     if not access_token or has_expired(access_token):
         access_token = create_access_token(refresh_token, platform, scope)
@@ -33,8 +34,8 @@ def create_access_token(
     refresh_token: Dict[str, Any],
     platform: str,
     scope: str,
-) -> Any:
-    result = make_request(
+) -> Optional[str]:
+    result, cont_range = make_request(
         url=TOKENS_URL,
         method='POST',
         token=refresh_token.get('token'),
@@ -44,7 +45,7 @@ def create_access_token(
             'scope': scope,
         },
     )
-
+    assert isinstance(result, dict)
     return result.get('token', None)
 
 

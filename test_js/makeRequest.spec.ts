@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
-import {makeRequest} from '../src_js/grndwork_api_client/makeRequest';
-import {ServerError} from '../src_js/grndwork_api_client/ServerError';
+import {makeRequest} from '../src_js/makeRequest';
+import {ServerError} from '../src_js/ServerError';
 
 jest.mock('node-fetch');
 
