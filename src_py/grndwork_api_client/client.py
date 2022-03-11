@@ -22,9 +22,6 @@ class Client():
         self.refresh_token: Dict[str, Any] = get_refresh_token()
         self.platform: str = platform if platform else LOGGERNET_PLATFORM
 
-        if not self.refresh_token:
-            raise OSError('Could not get refresh token from environment')
-
     def get_stations(
         self,
         query: GetStationsQuery,

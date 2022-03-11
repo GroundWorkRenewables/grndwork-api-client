@@ -39,6 +39,8 @@ class Station():
     client_full_name: str
     client_short_name: str
     site_uuid: str
+    site_full_name: str
+    station_uuid: str
     station_full_name: str
     description: str
     latitude: int

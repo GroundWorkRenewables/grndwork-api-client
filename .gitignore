@@ -18,8 +18,11 @@ lib
 .env
 
 # Build files
-grndwork_python_client.egg-info/
 dist_*/
+*.egg-info/
 
 # Misc
 .DS_Store
+pycache/
+.venv/
+.pytest_cache/

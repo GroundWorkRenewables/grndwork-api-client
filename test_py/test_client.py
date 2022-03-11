@@ -44,17 +44,14 @@ def describe_client():
         assert my_client.refresh_token
         assert my_client.platform == 'loggernet'
 
-    def it_throws_when_refresh_token_is_null(get_refresh_token):
-        get_refresh_token.return_value = None
-        with pytest.raises(OSError, match='Could not get refresh token from environment'):
-            client.Client()
-
     def it_gets_stations(get_refresh_token, get_access_token, make_request):
         station = Station(
             client_uuid='client_uuid',
             client_full_name='full_name',
             client_short_name='short_name',
             site_uuid='station_uuid',
+            site_full_name='site_full_name',
+            station_uuid='station_uuid',
             station_full_name='station',
             description='',
             latitude=0,
@@ -85,6 +82,8 @@ def describe_client():
             client_full_name='full_name',
             client_short_name='short_name',
             site_uuid='station_uuid',
+            site_full_name='site_full_name',
+            station_uuid='station_uuid',
             station_full_name='station',
             description='',
             latitude=0,

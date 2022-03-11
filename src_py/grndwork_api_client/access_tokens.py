@@ -16,12 +16,12 @@ def reset_access_token_cache() -> None:
 
 
 def get_access_token(
-    refresh_token: Dict[str, Any],
+    refresh_token: Dict[str, str],
     platform: str,
     scope: str,
 ) -> Optional[str]:
     cache_key = f'{platform}:{scope}'
-    access_token: Optional[str] = access_token_cache.get(cache_key)
+    access_token = access_token_cache.get(cache_key)
 
     if not access_token or has_expired(access_token):
         access_token = create_access_token(refresh_token, platform, scope)
