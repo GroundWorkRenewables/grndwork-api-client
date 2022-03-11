@@ -1,5 +1,5 @@
-src
-test
+src_*/
+test_*/
 coverage
 jest.config.js
 tsconfig*

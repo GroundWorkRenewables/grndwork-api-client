@@ -19,8 +19,7 @@ lib
 
 # Build files
 grndwork_python_client.egg-info/
-dist_js/
-dist_py/
+dist_*/
 
 # Misc
 .DS_Store

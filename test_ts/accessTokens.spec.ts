@@ -1,9 +1,9 @@
 import jwt from 'jsonwebtoken';
-import {makeRequest} from '../src_js/makeRequest';
-import {getAccessToken, resetAccessTokenCache} from '../src_js/accessTokens';
+import {makeRequest} from '../src_ts/makeRequest';
+import {getAccessToken, resetAccessTokenCache} from '../src_ts/accessTokens';
 
 jest.mock('jsonwebtoken');
-jest.mock('../src_js/makeRequest');
+jest.mock('../src_ts/makeRequest');
 
 describe('getAccessToken', () => {
   const refreshToken = {

@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
-import {makeRequest} from '../src_js/makeRequest';
-import {ServerError} from '../src_js/ServerError';
+import {makeRequest} from '../src_ts/makeRequest';
+import {ServerError} from '../src_ts/ServerError';
 
 jest.mock('node-fetch');
 
