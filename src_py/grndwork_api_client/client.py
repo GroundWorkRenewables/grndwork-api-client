@@ -1,10 +1,10 @@
-from typing import Any, Dict, Iterator, Optional
+from typing import Any, Iterator, Optional
 
 from .access_tokens import get_access_token
 from .config import DATA_URL, STATIONS_URL
 from .config import get_refresh_token
 from .dtos import DataFile, Station
-from .dtos import GetDataQuery, GetStationsQuery
+from .dtos import GetDataQuery, GetStationsQuery, PostDataPayload, RefreshToken
 from .make_request import make_request
 
 
@@ -19,7 +19,7 @@ class Client():
         self,
         platform: Optional[str] = None,
     ) -> None:
-        self.refresh_token: Dict[str, Any] = get_refresh_token()
+        self.refresh_token: RefreshToken = get_refresh_token()
         self.platform: str = platform if platform else LOGGERNET_PLATFORM
 
     def get_stations(
@@ -80,7 +80,7 @@ class Client():
 
     def post_data(
         self,
-        payload: Dict[str, Any],
+        payload: PostDataPayload,
     ) -> Any:
         access_token = get_access_token(
             refresh_token=self.refresh_token,

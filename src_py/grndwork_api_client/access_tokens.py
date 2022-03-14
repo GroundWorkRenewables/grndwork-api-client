@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional
 import jwt
 
 from .config import TOKENS_URL
+from .dtos import PostTokenPayload, RefreshToken
 from .make_request import make_request
 
 
@@ -16,7 +17,7 @@ def reset_access_token_cache() -> None:
 
 
 def get_access_token(
-    refresh_token: Dict[str, str],
+    refresh_token: RefreshToken,
     platform: str,
     scope: str,
 ) -> Optional[str]:
@@ -31,7 +32,7 @@ def get_access_token(
 
 
 def create_access_token(
-    refresh_token: Dict[str, Any],
+    refresh_token: RefreshToken,
     platform: str,
     scope: str,
 ) -> Optional[str]:
@@ -39,11 +40,11 @@ def create_access_token(
         url=TOKENS_URL,
         method='POST',
         token=refresh_token.get('token'),
-        body={
-            'subject': refresh_token.get('subject'),
-            'platform': platform,
-            'scope': scope,
-        },
+        body=PostTokenPayload(
+            subject=refresh_token['subject'],
+            platform=platform,
+            scope=scope,
+        ),
     )
     assert isinstance(result, dict)
     return result.get('token', None)

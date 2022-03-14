@@ -72,3 +72,20 @@ class GetDataQuery(TypedDict):
     records_before: str
     records_after: str
     records_limit: str
+
+
+class PostDataPayload(TypedDict):
+    source: str
+    files: List[DataFile]
+    overwrite: bool
+
+
+class PostTokenPayload(TypedDict):
+    subject: str
+    platform: str
+    scope: str
+
+
+class RefreshToken(TypedDict):
+    subject: str
+    token: str

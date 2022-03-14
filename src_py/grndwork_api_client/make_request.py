@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Mapping, Optional, Union
 import requests
 from requests.exceptions import RequestException
 
-from .dtos import ContentRange, DataFile, Station
+from .dtos import ContentRange, DataFile, PostDataPayload, PostTokenPayload, Station
 
 
 def parse_content_range(cont_range: str) -> ContentRange:
@@ -27,7 +27,7 @@ def make_request(
     headers: Optional[Dict[str, Any]] = None,
     query: Optional[Mapping[str, Any]] = None,
     token: Optional[str] = None,
-    body: Optional[Dict[str, Any]] = None,
+    body: Optional[Union[PostDataPayload, PostTokenPayload]] = None,
 ) -> tuple[Union[Mapping[str, Any], List[DataFile], List[Station]], ContentRange]:
 
     if not headers:
