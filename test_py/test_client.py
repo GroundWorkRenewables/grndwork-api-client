@@ -40,7 +40,7 @@ def describe_client():
             'token': 'refresh_token',
         }
         get_refresh_token.return_value = refresh_token
-        my_client = client.Client()
+        my_client = client.create_client()
         assert my_client.refresh_token
         assert my_client.platform == 'loggernet'
 
@@ -68,7 +68,7 @@ def describe_client():
                 [station], ContentRange(first=1, last=20, count=15),
             ),
         ]
-        my_client = client.Client()
+        my_client = client.create_client()
         station_query = GetStationsQuery(
             client='client',
         )
@@ -114,7 +114,7 @@ def describe_client():
             client='client',
             site='site',
         )
-        my_client = client.Client()
+        my_client = client.create_client()
         my_request = my_client.get_stations(query=station_query)
         assert next(my_request) == station
         assert next(my_request) == station
@@ -142,7 +142,7 @@ def describe_client():
                 [datafile], ContentRange(first=1, last=20, count=15),
             ),
         ]
-        my_client = client.Client()
+        my_client = client.create_client()
         data_query = GetDataQuery(
             client='client',
             site='site',
@@ -187,7 +187,7 @@ def describe_client():
             ),
         ]
 
-        my_client = client.Client()
+        my_client = client.create_client()
         data_query = GetDataQuery(
             client='client',
             site='site',
@@ -231,7 +231,7 @@ def describe_client():
                 },
             ],
         }
-        my_client = client.Client()
+        my_client = client.create_client()
         my_client.post_data(payload=payload)
         (_, kwargs) = make_request.call_args
 

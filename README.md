@@ -28,9 +28,9 @@ const data = await client.getData();
 ```
 
 ```py
-from grndwork_api_client.client import Client
+from grndwork_api_client.client import create_client
 
-client = Client()
+client = create_client()
 
 data = client.get_data()
 

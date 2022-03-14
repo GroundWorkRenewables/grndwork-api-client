@@ -1,4 +1,4 @@
-from typing import Any, Iterator, Optional
+from typing import Any, Iterator
 
 from .access_tokens import get_access_token
 from .config import DATA_URL, STATIONS_URL
@@ -17,10 +17,11 @@ class Client():
 
     def __init__(
         self,
-        platform: Optional[str] = None,
+        refresh_token: RefreshToken,
+        platform: str,
     ) -> None:
-        self.refresh_token: RefreshToken = get_refresh_token()
-        self.platform: str = platform if platform else LOGGERNET_PLATFORM
+        self.refresh_token = refresh_token
+        self.platform = platform
 
     def get_stations(
         self,
@@ -94,3 +95,13 @@ class Client():
             token=access_token,
         )
         return result
+
+
+def create_client(
+    platform: str = LOGGERNET_PLATFORM,
+) -> Client:
+    refresh_token: RefreshToken = get_refresh_token()
+    return Client(
+        refresh_token=refresh_token,
+        platform=platform,
+    )
