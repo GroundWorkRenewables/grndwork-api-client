@@ -50,7 +50,11 @@ def create_access_token(
 
 
 def has_expired(token: str) -> bool:
-    decoded_token: Dict[str, Any] = jwt.decode(token, 'secret', algorithms=['HS256'])
+    decoded_token: Dict[str, Any] = jwt.decode(
+        token,
+        algorithms=['HS256'],
+        options={'verify_signature': False},
+    )
     expiration = int(decoded_token.get('exp', 0))
     now: int = int(time.time() * 1000)
     if expiration and now - expiration >= 0:
