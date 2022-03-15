@@ -1,5 +1,5 @@
 import {readFileSync} from 'fs';
-import {getRefreshToken} from '../src_ts/config';
+import {getRefreshToken} from '../src_js/config';
 
 jest.mock('fs');
 

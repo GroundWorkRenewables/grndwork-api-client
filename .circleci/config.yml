@@ -59,19 +59,15 @@ jobs:
               case $CIRCLE_TAG in
                 *alpha*)
                   npm publish --access public --tag alpha
-                  npm run publish:py
                   ;;
                 *beta*)
                   npm publish --access public --tag beta
-                  npm run publish:py
                   ;;
                 *rc*)
                   npm publish --access public --tag next
-                  npm run publish:py
                   ;;
                 *)
                   npm publish --access public --tag latest
-                  npm run publish:py
                   ;;
               esac
             fi
