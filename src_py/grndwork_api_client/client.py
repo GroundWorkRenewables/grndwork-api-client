@@ -33,9 +33,6 @@ class Client():
             scope='read:stations',
         )
 
-        offset = 0
-        query['offset'] = offset
-
         while True:
             results, cont_range = make_request(
                     url=STATIONS_URL,
@@ -49,7 +46,7 @@ class Client():
             if cont_range.last == cont_range.count:
                 break
 
-            offset = cont_range.last
+            query['offset'] = cont_range.last
 
     def get_data(
         self,
@@ -60,9 +57,6 @@ class Client():
             platform=self.platform,
             scope='read:data',
         )
-
-        offset = 0
-        query['offset'] = offset
 
         while True:
             results, cont_range = make_request(
@@ -77,7 +71,7 @@ class Client():
             if cont_range.last == cont_range.count:
                 break
 
-            offset = cont_range.last
+            query['offset'] = cont_range.last
 
     def post_data(
         self,

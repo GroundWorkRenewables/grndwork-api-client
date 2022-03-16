@@ -123,6 +123,115 @@ def describe_client():
         with pytest.raises(StopIteration):
             next(my_request)
 
+    def it_gets_stations_with_offset_parameter(get_refresh_token, get_access_token, make_request):
+        station = Station(
+            client_uuid='client_uuid',
+            client_full_name='full_name',
+            client_short_name='short_name',
+            site_uuid='station_uuid',
+            site_full_name='site_full_name',
+            station_uuid='station_uuid',
+            station_full_name='station',
+            description='',
+            latitude=0,
+            longitude=0,
+            altitude=0,
+            timezone_offset=1,
+            start_timestamp='1',
+            end_timestamp='1',
+            data_file_prefix='PRE',
+            data_files=[],
+        )
+        make_request.side_effect = [
+            (
+                [station], ContentRange(first=6, last=25, count=65),
+            ),
+            (
+                [station], ContentRange(first=26, last=45, count=65),
+            ),
+            (
+                [station], ContentRange(first=46, last=65, count=65),
+            ),
+        ]
+
+        station_query = GetStationsQuery(
+            client='client',
+            site='site',
+            offset=5,
+        )
+        my_client = client.create_client()
+        my_request = my_client.get_stations(query=station_query)
+
+        next(my_request)
+        (_, kwargs) = make_request.call_args
+        assert kwargs['query']['offset'] == 5
+
+        next(my_request)
+        (_, kwargs) = make_request.call_args
+        assert kwargs['query']['offset'] == 25
+
+        next(my_request)
+        (_, kwargs) = make_request.call_args
+        assert kwargs['query']['offset'] == 45
+
+        with pytest.raises(StopIteration):
+            next(my_request)
+
+    def it_gets_stations_offset_limit_parameters(get_refresh_token, get_access_token, make_request):
+        station = Station(
+            client_uuid='client_uuid',
+            client_full_name='full_name',
+            client_short_name='short_name',
+            site_uuid='station_uuid',
+            site_full_name='site_full_name',
+            station_uuid='station_uuid',
+            station_full_name='station',
+            description='',
+            latitude=0,
+            longitude=0,
+            altitude=0,
+            timezone_offset=1,
+            start_timestamp='1',
+            end_timestamp='1',
+            data_file_prefix='PRE',
+            data_files=[],
+        )
+
+        make_request.side_effect = [
+            (
+                [station], ContentRange(first=6, last=105, count=250),
+            ),
+            (
+                [station], ContentRange(first=106, last=205, count=250),
+            ),
+            (
+                [station], ContentRange(first=206, last=250, count=250),
+            ),
+        ]
+
+        station_query = GetStationsQuery(
+            client='client',
+            site='site',
+            offset=5,
+        )
+        my_client = client.create_client()
+        my_request = my_client.get_stations(query=station_query)
+
+        next(my_request)
+        (_, kwargs) = make_request.call_args
+        assert kwargs['query']['offset'] == 5
+
+        next(my_request)
+        (_, kwargs) = make_request.call_args
+        assert kwargs['query']['offset'] == 105
+
+        next(my_request)
+        (_, kwargs) = make_request.call_args
+        assert kwargs['query']['offset'] == 205
+
+        with pytest.raises(StopIteration):
+            next(my_request)
+
     def it_gets_data(get_refresh_token, get_access_token, make_request):
         headers = DataFileHeaders(
             meta={},
@@ -205,6 +314,120 @@ def describe_client():
         assert next(my_request) == datafile
         assert next(my_request) == datafile
         assert next(my_request) == datafile
+        with pytest.raises(StopIteration):
+            next(my_request)
+
+    def it_gets_data_with_offset_parameter(get_refresh_token, get_access_token, make_request):
+        headers = DataFileHeaders(
+            meta={},
+            columns=[],
+            units=[],
+            processing=[],
+        )
+        datafile = DataFile(
+            source='src',
+            filename='filename.dat',
+            is_stale=False,
+            headers=headers,
+            records=[],
+        )
+        make_request.side_effect = [
+            (
+                [datafile], ContentRange(first=6, last=25, count=65),
+            ),
+            (
+                [datafile], ContentRange(first=26, last=45, count=65),
+            ),
+            (
+                [datafile], ContentRange(first=46, last=65, count=65),
+            ),
+        ]
+
+        data_query = GetDataQuery(
+            client='client',
+            site='site',
+            gateway='gateway',
+            station='station',
+            filename='filename.dat',
+            limit=1,
+            offset=5,
+            records_before=0,
+            records_after=0,
+            records_limit=0,
+        )
+        my_client = client.create_client()
+
+        my_request = my_client.get_data(query=data_query)
+
+        next(my_request)
+        (_, kwargs) = make_request.call_args
+        assert kwargs['query']['offset'] == 5
+
+        next(my_request)
+        (_, kwargs) = make_request.call_args
+        assert kwargs['query']['offset'] == 25
+
+        next(my_request)
+        (_, kwargs) = make_request.call_args
+        assert kwargs['query']['offset'] == 45
+
+        with pytest.raises(StopIteration):
+            next(my_request)
+
+    def it_gets_data_offset_limit_parameters(get_refresh_token, get_access_token, make_request):
+        headers = DataFileHeaders(
+            meta={},
+            columns=[],
+            units=[],
+            processing=[],
+        )
+        datafile = DataFile(
+            source='src',
+            filename='filename.dat',
+            is_stale=False,
+            headers=headers,
+            records=[],
+        )
+        make_request.side_effect = [
+            (
+                [datafile], ContentRange(first=6, last=105, count=250),
+            ),
+            (
+                [datafile], ContentRange(first=106, last=205, count=250),
+            ),
+            (
+                [datafile], ContentRange(first=206, last=250, count=250),
+            ),
+        ]
+
+        data_query = GetDataQuery(
+            client='client',
+            site='site',
+            gateway='gateway',
+            station='station',
+            filename='filename.dat',
+            limit=100,
+            offset=5,
+            records_before=0,
+            records_after=0,
+            records_limit=0,
+        )
+        my_client = client.create_client()
+
+        my_request = my_client.get_data(query=data_query)
+
+        next(my_request)
+        (_, kwargs) = make_request.call_args
+        assert kwargs['query']['offset'] == 5
+
+        next(my_request)
+        (_, kwargs) = make_request.call_args
+        assert kwargs['query']['offset'] == 105
+
+        next(my_request)
+        (_, kwargs) = make_request.call_args
+        assert kwargs['query']['offset'] == 205
+
         with pytest.raises(StopIteration):
             next(my_request)
 
