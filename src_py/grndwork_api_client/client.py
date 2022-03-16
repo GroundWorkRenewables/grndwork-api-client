@@ -26,6 +26,7 @@ class Client():
     def get_stations(
         self,
         query: GetStationsQuery,
+        page_size: int = 100,
     ) -> Iterator[Station]:
         access_token = get_access_token(
             refresh_token=self.refresh_token,
@@ -33,20 +34,40 @@ class Client():
             scope='read:stations',
         )
 
+        limit = query.get('limit')
+        print("here's our limit:", limit)
+        offset = query.get('offset', 0)
+
         while True:
+            print("limit", limit)
+            print("offset: ", offset)
+            print("limit adjusted: ", min(limit, page_size) if limit else page_size)
             results, cont_range = make_request(
                     url=STATIONS_URL,
                     method='GET',
-                    query=query,
+                    query={
+                        **query,
+                        'limit': min(limit, page_size) if limit else page_size,
+                        'offset': offset,
+                    },
                     token=access_token,
                 )
-
+            
             yield from results
 
             if cont_range.last == cont_range.count:
                 break
 
-            query['offset'] = cont_range.last
+            if limit is not None:
+                limit -= len(results)
+
+                if limit <= 0:
+                    break
+
+            offset = cont_range.last
+            print("limit updated: ", limit)
+            print("ok offset updated", offset)
+
 
     def get_data(
         self,
