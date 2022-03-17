@@ -1,4 +1,5 @@
 from copy import copy
+
 import pytest
 from src_py.grndwork_api_client import client
 from src_py.grndwork_api_client.access_tokens import get_access_token
@@ -198,52 +199,57 @@ def describe_client():
             data_files=[],
         )
 
-        offset = 5
         page_size = 100
-        limit = 250
-
-        stations = [copy(station) for i in range(page_size)]
+        station_list = [copy(station) for i in range(page_size)]
 
         make_request.side_effect = [
             (
-                stations, ContentRange(first=6, last=105, count=300),
+                station_list, ContentRange(first=6, last=105, count=300),
             ),
             (
-                stations, ContentRange(first=106, last=205, count=300),
+                station_list, ContentRange(first=106, last=205, count=300),
             ),
             (
-                stations, ContentRange(first=206, last=250, count=300),
+                station_list, ContentRange(first=206, last=250, count=300),
             ),
         ]
-
-        # START HERE: fix tests
 
         station_query = GetStationsQuery(
             client='client',
             site='site',
-            offset=offset,
-            limit=limit,
+            offset=5,
+            limit=250,
         )
-        my_client = client.create_client()
-        my_request = my_client.get_stations(query=station_query, page_size=page_size)
 
-        next(my_request)
+        my_client = client.create_client()
+
+        my_request = my_client.get_stations(
+            query=station_query,
+        )
+
+        for _ in range(100):
+            next(my_request)
         (_, kwargs) = make_request.call_args
         assert kwargs['query']['offset'] == 5
         assert kwargs['query']['limit'] == 100
+        assert make_request.call_count == 1
 
-        next(my_request)
-        # (_, kwargs) = make_request.call_args
-        # print(kwargs)
+        for _ in range(100):
+            next(my_request)
+        (_, kwargs) = make_request.call_args
         assert kwargs['query']['offset'] == 105
         assert kwargs['query']['limit'] == 100
+        assert make_request.call_count == 2
 
-        # next(my_request)
-        # (_, kwargs) = make_request.call_args
-        # assert kwargs['query']['offset'] == 205
+        for _ in range(100):
+            next(my_request)
+        (_, kwargs) = make_request.call_args
+        assert kwargs['query']['offset'] == 205
+        assert kwargs['query']['limit'] == 50  # limit now < page size
+        assert make_request.call_count == 3
 
-        # with pytest.raises(StopIteration):
-        #     next(my_request)
+        with pytest.raises(StopIteration):
+            next(my_request)
 
     def it_gets_data(get_refresh_token, get_access_token, make_request):
         headers = DataFileHeaders(
@@ -280,56 +286,6 @@ def describe_client():
         my_request = my_client.get_data(query=data_query)
         assert next(my_request) == datafile
 
-    def it_gets_data_with_offset(get_refresh_token, get_access_token, make_request):
-        headers = DataFileHeaders(
-            meta={},
-            columns=[],
-            units=[],
-            processing=[],
-        )
-        datafile = DataFile(
-            source='src',
-            filename='filename.dat',
-            is_stale=False,
-            headers=headers,
-            records=[],
-        )
-        make_request.side_effect = [
-            (
-                [datafile], ContentRange(first=1, last=20, count=65),
-            ),
-            (
-                [datafile], ContentRange(first=21, last=40, count=65),
-            ),
-            (
-                [datafile], ContentRange(first=41, last=60, count=65),
-            ),
-            (
-                [datafile], ContentRange(first=61, last=65, count=65),
-            ),
-        ]
-
-        my_client = client.create_client()
-        data_query = GetDataQuery(
-            client='client',
-            site='site',
-            gateway='gateway',
-            station='station',
-            filename='filename.dat',
-            limit=1,
-            offset=0,
-            records_before=0,
-            records_after=0,
-            records_limit=0,
-        )
-        my_request = my_client.get_data(query=data_query)
-        assert next(my_request) == datafile
-        assert next(my_request) == datafile
-        assert next(my_request) == datafile
-        assert next(my_request) == datafile
-        with pytest.raises(StopIteration):
-            next(my_request)
-
     def it_gets_data_with_offset_parameter(get_refresh_token, get_access_token, make_request):
         headers = DataFileHeaders(
             meta={},
@@ -362,7 +318,6 @@ def describe_client():
             gateway='gateway',
             station='station',
             filename='filename.dat',
-            limit=1,
             offset=5,
             records_before=0,
             records_after=0,
@@ -401,15 +356,19 @@ def describe_client():
             headers=headers,
             records=[],
         )
+
+        page_size = 100
+        datafile_list = [copy(datafile) for i in range(page_size)]
+
         make_request.side_effect = [
             (
-                [datafile], ContentRange(first=6, last=105, count=250),
+                datafile_list, ContentRange(first=6, last=105, count=300),
             ),
             (
-                [datafile], ContentRange(first=106, last=205, count=250),
+                datafile_list, ContentRange(first=106, last=205, count=300),
             ),
             (
-                [datafile], ContentRange(first=206, last=250, count=250),
+                datafile_list, ContentRange(first=206, last=250, count=300),
             ),
         ]
 
@@ -419,27 +378,33 @@ def describe_client():
             gateway='gateway',
             station='station',
             filename='filename.dat',
-            limit=100,
+            limit=250,
             offset=5,
             records_before=0,
             records_after=0,
             records_limit=0,
         )
-        my_client = client.create_client()
 
+        my_client = client.create_client()
         my_request = my_client.get_data(query=data_query)
 
-        next(my_request)
+        for _ in range(100):
+            next(my_request)
         (_, kwargs) = make_request.call_args
         assert kwargs['query']['offset'] == 5
+        assert kwargs['query']['limit'] == 100  #
 
-        next(my_request)
+        for _ in range(100):
+            next(my_request)
         (_, kwargs) = make_request.call_args
         assert kwargs['query']['offset'] == 105
+        assert kwargs['query']['limit'] == 100
 
-        next(my_request)
+        for _ in range(100):
+            next(my_request)
         (_, kwargs) = make_request.call_args
         assert kwargs['query']['offset'] == 205
+        assert kwargs['query']['limit'] == 50  # limit now < page size
 
         with pytest.raises(StopIteration):
             next(my_request)
