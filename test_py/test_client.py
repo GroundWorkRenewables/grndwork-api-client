@@ -13,6 +13,43 @@ from src_py.grndwork_api_client.make_request import make_request
 
 def describe_client():
 
+    def get_datafile():
+        headers = DataFileHeaders(
+            meta={},
+            columns=[],
+            units=[],
+            processing=[],
+        )
+        datafile = DataFile(
+            source='src',
+            filename='filename.dat',
+            is_stale=False,
+            headers=headers,
+            records=[],
+        )
+        return datafile
+
+    def get_station():
+        station = Station(
+            client_uuid='client_uuid',
+            client_full_name='full_name',
+            client_short_name='short_name',
+            site_uuid='station_uuid',
+            site_full_name='site_full_name',
+            station_uuid='station_uuid',
+            station_full_name='station',
+            description='',
+            latitude=0,
+            longitude=0,
+            altitude=0,
+            timezone_offset=1,
+            start_timestamp='1',
+            end_timestamp='1',
+            data_file_prefix='PRE',
+            data_files=[],
+        )
+        return station
+
     @pytest.fixture(name='get_refresh_token', autouse=False)
     def fixture_get_token(mocker):
         return mocker.patch(
@@ -47,24 +84,7 @@ def describe_client():
         assert my_client.platform == 'loggernet'
 
     def it_gets_stations(get_refresh_token, get_access_token, make_request):
-        station = Station(
-            client_uuid='client_uuid',
-            client_full_name='full_name',
-            client_short_name='short_name',
-            site_uuid='station_uuid',
-            site_full_name='site_full_name',
-            station_uuid='station_uuid',
-            station_full_name='station',
-            description='',
-            latitude=0,
-            longitude=0,
-            altitude=0,
-            timezone_offset=1,
-            start_timestamp='1',
-            end_timestamp='1',
-            data_file_prefix='PRE',
-            data_files=[],
-        )
+        station = get_station()
         make_request.side_effect = [
             (
                 [station], ContentRange(first=1, last=20, count=15),
@@ -79,24 +99,7 @@ def describe_client():
         assert next(my_request) == station
 
     def it_gets_stations_with_offset(get_refresh_token, get_access_token, make_request):
-        station = Station(
-            client_uuid='client_uuid',
-            client_full_name='full_name',
-            client_short_name='short_name',
-            site_uuid='station_uuid',
-            site_full_name='site_full_name',
-            station_uuid='station_uuid',
-            station_full_name='station',
-            description='',
-            latitude=0,
-            longitude=0,
-            altitude=0,
-            timezone_offset=1,
-            start_timestamp='1',
-            end_timestamp='1',
-            data_file_prefix='PRE',
-            data_files=[],
-        )
+        station = get_station()
         make_request.side_effect = [
             (
                 [station], ContentRange(first=1, last=20, count=65),
@@ -126,24 +129,7 @@ def describe_client():
             next(my_request)
 
     def it_gets_stations_with_offset_parameter(get_refresh_token, get_access_token, make_request):
-        station = Station(
-            client_uuid='client_uuid',
-            client_full_name='full_name',
-            client_short_name='short_name',
-            site_uuid='station_uuid',
-            site_full_name='site_full_name',
-            station_uuid='station_uuid',
-            station_full_name='station',
-            description='',
-            latitude=0,
-            longitude=0,
-            altitude=0,
-            timezone_offset=1,
-            start_timestamp='1',
-            end_timestamp='1',
-            data_file_prefix='PRE',
-            data_files=[],
-        )
+        station = get_station()
         make_request.side_effect = [
             (
                 [station], ContentRange(first=6, last=25, count=65),
@@ -180,25 +166,7 @@ def describe_client():
             next(my_request)
 
     def it_gets_stations_offset_limit_parameters(get_refresh_token, get_access_token, make_request):
-        station = Station(
-            client_uuid='client_uuid',
-            client_full_name='full_name',
-            client_short_name='short_name',
-            site_uuid='station_uuid',
-            site_full_name='site_full_name',
-            station_uuid='station_uuid',
-            station_full_name='station',
-            description='',
-            latitude=0,
-            longitude=0,
-            altitude=0,
-            timezone_offset=1,
-            start_timestamp='1',
-            end_timestamp='1',
-            data_file_prefix='PRE',
-            data_files=[],
-        )
-
+        station = get_station()
         page_size = 100
         station_list = [copy(station) for i in range(page_size)]
 
@@ -210,7 +178,7 @@ def describe_client():
                 station_list, ContentRange(first=106, last=205, count=300),
             ),
             (
-                station_list, ContentRange(first=206, last=250, count=300),
+                station_list[:50], ContentRange(first=206, last=250, count=300),
             ),
         ]
 
@@ -241,7 +209,7 @@ def describe_client():
         assert kwargs['query']['limit'] == 100
         assert make_request.call_count == 2
 
-        for _ in range(100):
+        for _ in range(50):
             next(my_request)
         (_, kwargs) = make_request.call_args
         assert kwargs['query']['offset'] == 205
@@ -252,19 +220,7 @@ def describe_client():
             next(my_request)
 
     def it_gets_data(get_refresh_token, get_access_token, make_request):
-        headers = DataFileHeaders(
-            meta={},
-            columns=[],
-            units=[],
-            processing=[],
-        )
-        datafile = DataFile(
-            source='src',
-            filename='filename.dat',
-            is_stale=False,
-            headers=headers,
-            records=[],
-        )
+        datafile = get_datafile()
         make_request.side_effect = [
             (
                 [datafile], ContentRange(first=1, last=20, count=15),
@@ -287,19 +243,7 @@ def describe_client():
         assert next(my_request) == datafile
 
     def it_gets_data_with_offset_parameter(get_refresh_token, get_access_token, make_request):
-        headers = DataFileHeaders(
-            meta={},
-            columns=[],
-            units=[],
-            processing=[],
-        )
-        datafile = DataFile(
-            source='src',
-            filename='filename.dat',
-            is_stale=False,
-            headers=headers,
-            records=[],
-        )
+        datafile = get_datafile()
         make_request.side_effect = [
             (
                 [datafile], ContentRange(first=6, last=25, count=65),
@@ -343,19 +287,7 @@ def describe_client():
             next(my_request)
 
     def it_gets_data_offset_limit_parameters(get_refresh_token, get_access_token, make_request):
-        headers = DataFileHeaders(
-            meta={},
-            columns=[],
-            units=[],
-            processing=[],
-        )
-        datafile = DataFile(
-            source='src',
-            filename='filename.dat',
-            is_stale=False,
-            headers=headers,
-            records=[],
-        )
+        datafile = get_datafile()
 
         page_size = 100
         datafile_list = [copy(datafile) for i in range(page_size)]

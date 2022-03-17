@@ -60,8 +60,11 @@ client.getStations(query?: GetStationsQuery): Promise<Array<Station>>
 ```
 
 ```py
-client.get_stations(query={'station': '<station-uuid>'})
+stations = client.get_stations(query={'station': '<station-uuid>'})
+station = next(stations)
 ```
+
+**Note**: Python returns in iterator. Use next() to get the next result in the set.
 
 Takes an optional get stations query object as an argument and returns an array of stations.
 
@@ -72,7 +75,7 @@ Takes an optional get stations query object as an argument and returns an array 
   | station | string | Only return stations with UUID, name, or name matching pattern |
   | site | string | Only return stations for site with UUID, name, or name matching pattern |
   | client | string | Only return stations for client with UUID, name, or name matching pattern |
-  | limit | number | Number of stations to return ( min: 1, max: 100, default: 20 ) |
+  | limit | number | Total number of stations to return ( min: 1, max: 100, default: 20 ) |
   | offset | number | Number of stations to skip over when paging results ( default: 0 ) |
 
 ##### Pattern Matching
@@ -90,11 +93,21 @@ const data = await client.getStations({
 ```
 
 ```py
-data = client.get_stations(query={'station': 'Test*'})
+client.get_stations(query={'station': 'Test*'})
 ```
 
 
 Would return all stations whose name starts with `Test`.
+
+#### Page size
+
+You can set an optional page size to control the number of records returned from the API. ( min: 1, max: 100, default: 100 )
+```py
+client.get_stations(
+  query={'station': '<station-uuid>'},
+  page_size=50
+)
+```
 
 #### Return Values
 
@@ -142,8 +155,11 @@ client.getData(query?: GetDataQuery): Promise<Array<DataFile>>
 ```
 
 ```py
-client.get_data(query={'filename': '<MS_MyStation_OneMin.dat>'})
+datafiles = client.get_data(query={'filename': '<MS_MyStation_OneMin.dat>'})
+datafile = next(datafiles))
+
 ```
+**Note**: Python returns in iterator. Use next() to get the next result in the set.
 
 Takes an optional get data query object as an argument and returns an array of data files.
 
@@ -180,6 +196,16 @@ data = client.get_data(query={'filename':'*_OneMin.dat'})
 ```
 
 Would return all one minute data files.
+
+#### Page size
+
+You can set an optional page size to control the number of records returned from the API. ( min: 1, max: 100, default: 100 )
+```py
+client.get_data(
+  query={'filename': '<MS_MyStation_OneMin.dat>'},
+  page_size=50
+  )
+```
 
 #### Return Values
 
