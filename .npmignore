@@ -1,8 +1,14 @@
-src_*/
-test_*/
+src*
+test*
 coverage
 jest.config.js
 tsconfig*
 .circleci
 .eslintignore
 .eslintrc.js
+.flake8
+Pipfile
+Pipfile.lock
+mypy.ini
+pyproject.toml
+setup.cfg

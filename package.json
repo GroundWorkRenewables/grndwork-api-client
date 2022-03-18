@@ -10,25 +10,26 @@
     "node": ">=10"
   },
   "scripts": {
-    "update": "updates --update --minor && (git diff-files --quiet package.json || (rimraf package-lock.json node_modules && npm install))",
+    "update": "npm run update:node && npm run update:python",
+    "update:node": "updates --update --minor --exclude && (git diff-files --quiet package.json || (rimraf package-lock.json node_modules && npm install --ignore-scripts))",
     "update:python": "pipenv update --dev",
-    "postupdate": "git diff-files --quiet package-lock.json || (npm test -- --reporters=jest-simple-dot-reporter && npm run build:js)",
+    "postupdate": "git diff-files --quiet package-lock.json Pipfile.lock || (npm test && npm run build)",
     "prebuild": "rimraf dist_ts dist_py",
     "build": "npm run build:js && npm run build:py",
+    "install": "pipenv sync --dev",
     "build:js": "tsc -p tsconfig.json",
     "build:py": "pipenv run python3 -m build --outdir dist_py",
-    "install": "pipenv sync --dev",
     "pretest": "pipenv run flake8 && pipenv run mypy src_py/grndwork_api_client && eslint src_js ",
     "test": "npm run test:pytest && npm run test:jest",
     "test:jest": "jest",
     "test:pytest": "pipenv run python3 -m pytest",
-    "test:watch": "nodemon -w ./ -e ts -x 'npm test -- --reporters=jest-simple-dot-reporter'",
-    "preversion": "npm test -- --reporters=jest-simple-dot-reporter && npm run build:js",
+    "test:watch": "nodemon -w ./ -e ts,py -x 'npm run pretest && npm run test:jest -- --notify --reporters=jest-simple-dot-reporter && npm run test:pytest'",
+    "preversion": "npm test && npm run build",
     "version": "replace \"version.=.[0-9]+[.0-9]+[-a-z.0-9]*\" \"version = $npm_package_version\" setup.cfg",
     "postversion": "git push && git push --tags",
     "publish": "npm run publish:py",
-    "publish:py": "pipenv run python3 -m twine upload dist_py/*",
-    "publish:test": "npm run publish:py -- --repository=testpypi"
+    "publish:test": "npm run publish:py -- --repository=testpypi",
+    "publish:py": "pipenv run python3 -m twine upload dist_py/*"
     },
   "dependencies": {
     "jsonwebtoken": "8.5.1",

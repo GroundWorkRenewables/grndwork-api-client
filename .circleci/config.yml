@@ -11,23 +11,26 @@ jobs:
             - node-packages-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
             - node-packages-v1-{{ .Branch }}-
             - node-packages-v1-
+
+      - restore_cache:
+          keys:
+            - pipenv-packages-v1-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+            - pipenv-packages-v1-{{ .Branch }}-
+            - pipenv-packages-v1-
       - run:
-          name: Install Dependencies
           command: |
-            npm ci
+            npm install
       - save_cache:
           key: node-packages-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
           paths:
             - ~/.npm/
+      - save_cache:
+          key: pipenv-packages-v1-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+          paths:
+            - ~/.virtualenvs
       - run:
-          name: Run Unit Tests
           command: |
-            mkdir -p test-results/jest
-            npm test -- --ci --runInBand --reporters=default --reporters=jest-junit
-          environment:
-            JEST_JUNIT_OUTPUT: 'test-results/jest/results.xml'
-      - store_test_results:
-          path: test-results
+            npm test
 
   build:
     docker:
@@ -48,12 +51,12 @@ jobs:
           paths:
             - ~/.npm/
       - run:
-          name: Run build
+          name: Run Build
           command: |
             npm run build
 
       - run:
-          name: Publish to npm (js) When Tagged Release, publish to pypi
+          name: Publish When Tagged Release
           command: |
             if [[ $CIRCLE_TAG =~ ^v[0-9].* ]]; then
               case $CIRCLE_TAG in

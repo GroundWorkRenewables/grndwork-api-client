@@ -1,14 +1,14 @@
 import time
-from typing import Any, Dict, Optional
+from typing import Dict
 
 import jwt
 
 from .config import TOKENS_URL
-from .dtos import PostTokenPayload, RefreshToken
+from .dtos import RefreshToken
 from .make_request import make_request
 
 
-access_token_cache: Dict[str, Any] = {}
+access_token_cache: Dict[str, str] = {}
 
 
 def reset_access_token_cache() -> None:
@@ -20,7 +20,7 @@ def get_access_token(
     refresh_token: RefreshToken,
     platform: str,
     scope: str,
-) -> Optional[str]:
+) -> str:
     cache_key = f'{platform}:{scope}'
     access_token = access_token_cache.get(cache_key)
 
@@ -35,29 +35,36 @@ def create_access_token(
     refresh_token: RefreshToken,
     platform: str,
     scope: str,
-) -> Optional[str]:
-    result, cont_range = make_request(
+) -> str:
+    result, _ = make_request(
         url=TOKENS_URL,
         method='POST',
-        token=refresh_token.get('token'),
-        body=PostTokenPayload(
-            subject=refresh_token['subject'],
-            platform=platform,
-            scope=scope,
-        ),
+        token=refresh_token['token'],
+        body={
+            'subject': refresh_token['subject'],
+            'platform': platform,
+            'scope': scope,
+        },
     )
-    assert isinstance(result, dict)
-    return result.get('token', None)
+
+    access_token = result.get('token')
+
+    if isinstance(access_token, str):
+        return access_token
+
+    raise ValueError('No token returned')
 
 
 def has_expired(token: str) -> bool:
-    decoded_token: Dict[str, Any] = jwt.decode(
+    decoded_token = jwt.decode(
         token,
         algorithms=['HS256'],
         options={'verify_signature': False},
     )
+
     expiration = int(decoded_token.get('exp', 0))
-    now: int = int(time.time() * 1000)
+    now = int(time.time() * 1000)
+
     if expiration and now - expiration >= 0:
         return True
 

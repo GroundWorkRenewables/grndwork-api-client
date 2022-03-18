@@ -11,18 +11,23 @@ pids
 node_modules/
 npm-debug.log
 
-# Compiled files
-lib
-
-# Secret files
-.env
-
-# Build files
-dist_*/
-*.egg-info/
-
 # Misc
 .DS_Store
 pycache/
 .venv/
 .pytest_cache/
+
+# Python files
+__pycache__/
+.venv/
+
+# Linting, test, deploy and documentation files
+.pytest_cache/
+.coverage
+
+# Build files
+dist*
+*.egg-info/
+
+# Secret files
+.env

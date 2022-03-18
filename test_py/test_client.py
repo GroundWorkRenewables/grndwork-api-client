@@ -1,5 +1,3 @@
-from copy import copy
-
 import pytest
 from src_py.grndwork_api_client import client
 from src_py.grndwork_api_client.access_tokens import get_access_token
@@ -8,6 +6,7 @@ from src_py.grndwork_api_client.config import get_refresh_token
 from src_py.grndwork_api_client.dtos import DataFile, DataFileHeaders, Station
 from src_py.grndwork_api_client.dtos import GetDataQuery, GetStationsQuery
 from src_py.grndwork_api_client.make_request import ContentRange
+from src_py.grndwork_api_client.make_request import make_paginated_request
 from src_py.grndwork_api_client.make_request import make_request
 
 
@@ -73,6 +72,13 @@ def describe_client():
             spec=make_request,
         )
 
+    @pytest.fixture(name='make_paginated_request', autouse=True)
+    def fixture_pag_requests(mocker):
+        return mocker.patch(
+            target='src_py.grndwork_api_client.client.make_paginated_request',
+            spec=make_paginated_request,
+        )
+
     def it_creates_client(get_refresh_token):
         refresh_token = {
             'subject': 'uuid',
@@ -83,13 +89,9 @@ def describe_client():
         assert my_client.refresh_token
         assert my_client.platform == 'loggernet'
 
-    def it_gets_stations(get_refresh_token, get_access_token, make_request):
+    def it_gets_stations(get_refresh_token, get_access_token, make_request, make_paginated_request):
         station = get_station()
-        make_request.side_effect = [
-            (
-                [station], ContentRange(first=1, last=20, count=15),
-            ),
-        ]
+        make_paginated_request.return_value = iter([station])
         my_client = client.create_client()
         station_query = GetStationsQuery(
             client='client',
@@ -98,23 +100,9 @@ def describe_client():
         my_request = my_client.get_stations(station_query)
         assert next(my_request) == station
 
-    def it_gets_stations_with_offset(get_refresh_token, get_access_token, make_request):
+    def it_gets_stations_with_offset(get_refresh_token, get_access_token, make_paginated_request):
         station = get_station()
-        make_request.side_effect = [
-            (
-                [station], ContentRange(first=1, last=20, count=65),
-            ),
-            (
-                [station], ContentRange(first=21, last=40, count=65),
-            ),
-            (
-                [station], ContentRange(first=41, last=60, count=65),
-            ),
-            (
-                [station], ContentRange(first=61, last=65, count=65),
-            ),
-        ]
-
+        make_paginated_request.return_value = iter([station, station, station, station])
         station_query = GetStationsQuery(
             client='client',
             site='site',
@@ -128,104 +116,10 @@ def describe_client():
         with pytest.raises(StopIteration):
             next(my_request)
 
-    def it_gets_stations_with_offset_parameter(get_refresh_token, get_access_token, make_request):
-        station = get_station()
-        make_request.side_effect = [
-            (
-                [station], ContentRange(first=6, last=25, count=65),
-            ),
-            (
-                [station], ContentRange(first=26, last=45, count=65),
-            ),
-            (
-                [station], ContentRange(first=46, last=65, count=65),
-            ),
-        ]
-
-        station_query = GetStationsQuery(
-            client='client',
-            site='site',
-            offset=5,
-        )
-        my_client = client.create_client()
-        my_request = my_client.get_stations(query=station_query)
-
-        next(my_request)
-        (_, kwargs) = make_request.call_args
-        assert kwargs['query']['offset'] == 5
-
-        next(my_request)
-        (_, kwargs) = make_request.call_args
-        assert kwargs['query']['offset'] == 25
-
-        next(my_request)
-        (_, kwargs) = make_request.call_args
-        assert kwargs['query']['offset'] == 45
-
-        with pytest.raises(StopIteration):
-            next(my_request)
-
-    def it_gets_stations_offset_limit_parameters(get_refresh_token, get_access_token, make_request):
-        station = get_station()
-        page_size = 100
-        station_list = [copy(station) for i in range(page_size)]
-
-        make_request.side_effect = [
-            (
-                station_list, ContentRange(first=6, last=105, count=300),
-            ),
-            (
-                station_list, ContentRange(first=106, last=205, count=300),
-            ),
-            (
-                station_list[:50], ContentRange(first=206, last=250, count=300),
-            ),
-        ]
-
-        station_query = GetStationsQuery(
-            client='client',
-            site='site',
-            offset=5,
-            limit=250,
-        )
-
-        my_client = client.create_client()
-
-        my_request = my_client.get_stations(
-            query=station_query,
-        )
-
-        for _ in range(100):
-            next(my_request)
-        (_, kwargs) = make_request.call_args
-        assert kwargs['query']['offset'] == 5
-        assert kwargs['query']['limit'] == 100
-        assert make_request.call_count == 1
-
-        for _ in range(100):
-            next(my_request)
-        (_, kwargs) = make_request.call_args
-        assert kwargs['query']['offset'] == 105
-        assert kwargs['query']['limit'] == 100
-        assert make_request.call_count == 2
-
-        for _ in range(50):
-            next(my_request)
-        (_, kwargs) = make_request.call_args
-        assert kwargs['query']['offset'] == 205
-        assert kwargs['query']['limit'] == 50  # limit now < page size
-        assert make_request.call_count == 3
-
-        with pytest.raises(StopIteration):
-            next(my_request)
-
-    def it_gets_data(get_refresh_token, get_access_token, make_request):
+    def it_gets_data(get_refresh_token, get_access_token, make_paginated_request):
         datafile = get_datafile()
-        make_request.side_effect = [
-            (
-                [datafile], ContentRange(first=1, last=20, count=15),
-            ),
-        ]
+        make_paginated_request.return_value = iter([datafile])
+
         my_client = client.create_client()
         data_query = GetDataQuery(
             client='client',
@@ -241,105 +135,6 @@ def describe_client():
         )
         my_request = my_client.get_data(query=data_query)
         assert next(my_request) == datafile
-
-    def it_gets_data_with_offset_parameter(get_refresh_token, get_access_token, make_request):
-        datafile = get_datafile()
-        make_request.side_effect = [
-            (
-                [datafile], ContentRange(first=6, last=25, count=65),
-            ),
-            (
-                [datafile], ContentRange(first=26, last=45, count=65),
-            ),
-            (
-                [datafile], ContentRange(first=46, last=65, count=65),
-            ),
-        ]
-
-        data_query = GetDataQuery(
-            client='client',
-            site='site',
-            gateway='gateway',
-            station='station',
-            filename='filename.dat',
-            offset=5,
-            records_before=0,
-            records_after=0,
-            records_limit=0,
-        )
-        my_client = client.create_client()
-
-        my_request = my_client.get_data(query=data_query)
-
-        next(my_request)
-        (_, kwargs) = make_request.call_args
-        assert kwargs['query']['offset'] == 5
-
-        next(my_request)
-        (_, kwargs) = make_request.call_args
-        assert kwargs['query']['offset'] == 25
-
-        next(my_request)
-        (_, kwargs) = make_request.call_args
-        assert kwargs['query']['offset'] == 45
-
-        with pytest.raises(StopIteration):
-            next(my_request)
-
-    def it_gets_data_offset_limit_parameters(get_refresh_token, get_access_token, make_request):
-        datafile = get_datafile()
-
-        page_size = 100
-        datafile_list = [copy(datafile) for i in range(page_size)]
-
-        make_request.side_effect = [
-            (
-                datafile_list, ContentRange(first=6, last=105, count=300),
-            ),
-            (
-                datafile_list, ContentRange(first=106, last=205, count=300),
-            ),
-            (
-                datafile_list, ContentRange(first=206, last=250, count=300),
-            ),
-        ]
-
-        data_query = GetDataQuery(
-            client='client',
-            site='site',
-            gateway='gateway',
-            station='station',
-            filename='filename.dat',
-            limit=250,
-            offset=5,
-            records_before=0,
-            records_after=0,
-            records_limit=0,
-        )
-
-        my_client = client.create_client()
-        my_request = my_client.get_data(query=data_query)
-
-        for _ in range(100):
-            next(my_request)
-        (_, kwargs) = make_request.call_args
-        assert kwargs['query']['offset'] == 5
-        assert kwargs['query']['limit'] == 100  #
-
-        for _ in range(100):
-            next(my_request)
-        (_, kwargs) = make_request.call_args
-        assert kwargs['query']['offset'] == 105
-        assert kwargs['query']['limit'] == 100
-
-        for _ in range(100):
-            next(my_request)
-        (_, kwargs) = make_request.call_args
-        assert kwargs['query']['offset'] == 205
-        assert kwargs['query']['limit'] == 50  # limit now < page size
-
-        with pytest.raises(StopIteration):
-            next(my_request)
 
     def it_posts_data(get_refresh_token, get_access_token, make_request):
         make_request.side_effect = [

@@ -6,6 +6,7 @@ API client for [GroundWork Renewables](https://grndwork.com)
 
 
 ## Installation
+
 JavaScript:
 
 ```
@@ -14,7 +15,7 @@ $ npm install @grndwork/api-client
 
 Python:
 ```
-pip install grndwork_api_client
+pip install grndwork-api-client
 ```
 
 ## Usage
@@ -45,7 +46,7 @@ Or the subject and token values from this file can be provided using the `GROUND
 When providing subject and token values `GROUNDWORK_TOKEN_PATH` must not be set.
 
 You can set the environment variable using your OS or in code. For example in Python you can include:
-```
+```py
 import os
 os.environ['GROUNDWORK_TOKEN_PATH'] = '/Users/my_user/my_groundwork-api-token.json'
 ```
@@ -64,7 +65,7 @@ stations = client.get_stations(query={'station': '<station-uuid>'})
 station = next(stations)
 ```
 
-**Note**: Python returns in iterator. Use next() to get the next result in the set.
+**Note**: Python returns in iterator. Use `next()` to get the next result in the set or a loop to return all results in the set: `for station in client.get_stations()`
 
 Takes an optional get stations query object as an argument and returns an array of stations.
 
@@ -159,7 +160,8 @@ datafiles = client.get_data(query={'filename': '<MS_MyStation_OneMin.dat>'})
 datafile = next(datafiles))
 
 ```
-**Note**: Python returns in iterator. Use next() to get the next result in the set.
+**Note**: Python returns in iterator. Use `next()` to get the next result in the set or a loop to return all results in the set: `for station in client.get_data()`
+
 
 Takes an optional get data query object as an argument and returns an array of data files.
 
