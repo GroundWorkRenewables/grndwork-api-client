@@ -19,6 +19,7 @@ $ pip install grndwork-api-client
 
 ## Usage
 
+JavaScript:
 ```js
 import {createClient} from '@grndwork/api-client';
 
@@ -27,6 +28,7 @@ const client = createClient();
 const stations = await client.getStations();
 ```
 
+Python:
 ```py
 from grndwork_api_client import create_client
 
@@ -49,12 +51,14 @@ When providing subject and token values `GROUNDWORK_TOKEN_PATH` must not be set.
 
 ### Get Stations
 
+JavaScript:
 ```typescript
 client.getStations(query?: GetStationsQuery): Promise<Array<Station>>
 ```
 
+Python:
 ```py
-client.get_stations(query: GetStationsQuery, *, page_size: int = 100) -> Iterator[Station]: ...
+client.get_stations(query: GetStationsQuery = None, *, page_size: int = 100) -> Iterator[Station]
 ```
 
 Takes an optional get stations query object as an argument and returns an array of stations.
@@ -77,12 +81,14 @@ Pattern matching is case insensitive.
 
 For example:
 
+JavaScript:
 ```js
 const data = await client.getStations({
   station: 'Test*',
 });
 ```
 
+Python:
 ```py
 stations = list(client.get_stations({
     'station': 'Test*',
@@ -96,6 +102,7 @@ Would return all stations whose name starts with `Test`.
 
 You can set an optional page size to control the number of records returned from the API. ( min: 1, max: 100, default: 100 )
 
+Python:
 ```py
 stations = list(client.get_stations({
     'station': 'Test*',
@@ -143,12 +150,14 @@ Stations are returned in alphabetical order by station name.
 
 ### Get Data
 
+JavaScript:
 ```typescript
 client.getData(query?: GetDataQuery): Promise<Array<DataFile>>
 ```
 
+Python:
 ```py
-client.get_data(query: GetDataQuery, *, page_size: int = 100) -> Iterator[DataFile]: ...
+client.get_data(query: GetDataQuery = None, *, page_size: int = 100) -> Iterator[DataFile]
 ```
 
 Takes an optional get data query object as an argument and returns an array of data files.
@@ -175,12 +184,14 @@ Pattern matching is case insensitive.
 
 For example:
 
+JavaScript:
 ```js
 const dataFiles = await client.getData({
   filename: '*_OneMin.dat',
 });
 ```
 
+Python:
 ```py
 data_files = list(client.get_data({
     'filename': '*_OneMin.dat',
@@ -193,6 +204,7 @@ Would return all one minute data files.
 
 You can set an optional page size to control the number of records returned from the API. ( min: 1, max: 100, default: 100 )
 
+Python:
 ```py
 data_files = list(client.get_data({
     'filename': '*_OneMin.dat',
@@ -211,6 +223,7 @@ Only a single data file will be returned at a time when requesting multiple data
 
 For example:
 
+JavaScript:
 ```js
 const dataFiles = await client.getData({
   limit: 1,
@@ -218,6 +231,7 @@ const dataFiles = await client.getData({
 });
 ```
 
+Python:
 ```py
 data_files = list(client.get_data({
     'limit': 1,
@@ -255,12 +269,14 @@ Would return the most recent 100 records from the first file alphabetically.
 
 ### Post Data
 
+JavaScript:
 ```typescript
 client.postData(payload: PostDataPayload): Promise<void>
 ```
 
+Python:
 ```py
-client.post_data(payload: PostDataPayload) -> None: ...
+client.post_data(payload: PostDataPayload) -> None
 ```
 
 Takes a post data payload object as an argument and uploads it to the cloud.
