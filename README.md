@@ -8,14 +8,13 @@ API client for [GroundWork Renewables](https://grndwork.com)
 ## Installation
 
 JavaScript:
-
 ```
 $ npm install @grndwork/api-client
 ```
 
 Python:
 ```
-pip install grndwork-api-client
+$ pip install grndwork-api-client
 ```
 
 ## Usage
@@ -25,16 +24,15 @@ import {createClient} from '@grndwork/api-client';
 
 const client = createClient();
 
-const data = await client.getData();
+const stations = await client.getStations();
 ```
 
 ```py
-from grndwork_api_client.client import create_client
+from grndwork_api_client import create_client
 
 client = create_client()
 
-data = client.get_data()
-
+stations = list(client.get_stations())
 ```
 
 In order to access https://api.grndwork.com you must first obtain a refresh token from GroundWork Renewables.
@@ -45,12 +43,7 @@ Or the subject and token values from this file can be provided using the `GROUND
 
 When providing subject and token values `GROUNDWORK_TOKEN_PATH` must not be set.
 
-You can set the environment variable using your OS or in code. For example in Python you can include:
-```py
-import os
-os.environ['GROUNDWORK_TOKEN_PATH'] = '/Users/my_user/my_groundwork-api-token.json'
-```
-
+**Note**: Python returns an iterator. You can consume the iterator using `for station in client.get_stations()` or `list(client.get_stations())`.
 
 ## API
 
@@ -61,11 +54,8 @@ client.getStations(query?: GetStationsQuery): Promise<Array<Station>>
 ```
 
 ```py
-stations = client.get_stations(query={'station': '<station-uuid>'})
-station = next(stations)
+client.get_stations(query: GetStationsQuery, *, page_size: int = 100) -> Iterator[Station]: ...
 ```
-
-**Note**: Python returns in iterator. Use `next()` to get the next result in the set or a loop to return all results in the set: `for station in client.get_stations()`
 
 Takes an optional get stations query object as an argument and returns an array of stations.
 
@@ -76,8 +66,8 @@ Takes an optional get stations query object as an argument and returns an array 
   | station | string | Only return stations with UUID, name, or name matching pattern |
   | site | string | Only return stations for site with UUID, name, or name matching pattern |
   | client | string | Only return stations for client with UUID, name, or name matching pattern |
-  | limit | number | Total number of stations to return ( min: 1, max: 100, default: 20 ) |
-  | offset | number | Number of stations to skip over when paging results ( default: 0 ) |
+  | limit | number | Total number of stations to return |
+  | offset | number | Number of stations to skip over when paging results |
 
 ##### Pattern Matching
 
@@ -94,20 +84,22 @@ const data = await client.getStations({
 ```
 
 ```py
-client.get_stations(query={'station': 'Test*'})
+stations = list(client.get_stations({
+    'station': 'Test*',
+}))
 ```
 
 
 Would return all stations whose name starts with `Test`.
 
-#### Page size
+#### Page Size
 
 You can set an optional page size to control the number of records returned from the API. ( min: 1, max: 100, default: 100 )
+
 ```py
-client.get_stations(
-  query={'station': '<station-uuid>'},
-  page_size=50
-)
+stations = list(client.get_stations({
+    'station': 'Test*',
+}, page_size=50))
 ```
 
 #### Return Values
@@ -156,12 +148,8 @@ client.getData(query?: GetDataQuery): Promise<Array<DataFile>>
 ```
 
 ```py
-datafiles = client.get_data(query={'filename': '<MS_MyStation_OneMin.dat>'})
-datafile = next(datafiles))
-
+client.get_data(query: GetDataQuery, *, page_size: int = 100) -> Iterator[DataFile]: ...
 ```
-**Note**: Python returns in iterator. Use `next()` to get the next result in the set or a loop to return all results in the set: `for station in client.get_data()`
-
 
 Takes an optional get data query object as an argument and returns an array of data files.
 
@@ -173,8 +161,8 @@ Takes an optional get data query object as an argument and returns an array of d
   | station | string | Only return data files for station with UUID, name, or name matching pattern |
   | site | string | Only return data files for site with UUID, name, or name matching pattern |
   | client | string | Only return data files for client with UUID, name, or name matching pattern |
-  | limit | number | Number of files to return ( min: 1, max: 100, default: 20 ) |
-  | offset | number | Number of files to skip over when paging results ( default: 0 ) |
+  | limit | number | Total number of files to return |
+  | offset | number | Number of files to skip over when paging results |
   | records_limit | number | Number of records to return per file ( min: 1, max: 1500, default: 1 ) |
   | records_before | timestamp | Only return records at or before timestamp ( format: `yyyy-mm-dd hh:mm:ss` ) |
   | records_after | timestamp | Only return records at or after timestamp ( format: `yyyy-mm-dd hh:mm:ss` ) |
@@ -188,25 +176,27 @@ Pattern matching is case insensitive.
 For example:
 
 ```js
-const data = await client.getData({
+const dataFiles = await client.getData({
   filename: '*_OneMin.dat',
 });
 ```
 
 ```py
-data = client.get_data(query={'filename':'*_OneMin.dat'})
+data_files = list(client.get_data({
+    'filename': '*_OneMin.dat',
+}))
 ```
 
 Would return all one minute data files.
 
-#### Page size
+#### Page Size
 
 You can set an optional page size to control the number of records returned from the API. ( min: 1, max: 100, default: 100 )
+
 ```py
-client.get_data(
-  query={'filename': '<MS_MyStation_OneMin.dat>'},
-  page_size=50
-  )
+data_files = list(client.get_data({
+    'filename': '*_OneMin.dat',
+}, page_size=50))
 ```
 
 #### Return Values
@@ -222,13 +212,17 @@ Only a single data file will be returned at a time when requesting multiple data
 For example:
 
 ```js
-const data = await client.getData({
+const dataFiles = await client.getData({
+  limit: 1,
   records_limit: 100,
 });
 ```
 
 ```py
-data = client.get_data(query={'records_limit': 100})
+data_files = list(client.get_data({
+    'limit': 1,
+    'records_limit': 100,
+}))
 ```
 
 Would return the most recent 100 records from the first file alphabetically.
@@ -266,9 +260,8 @@ client.postData(payload: PostDataPayload): Promise<void>
 ```
 
 ```py
-client.post_data(payload={})
+client.post_data(payload: PostDataPayload) -> None: ...
 ```
-
 
 Takes a post data payload object as an argument and uploads it to the cloud.
 

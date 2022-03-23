@@ -11,15 +11,16 @@ jobs:
             - node-packages-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
             - node-packages-v1-{{ .Branch }}-
             - node-packages-v1-
-
       - restore_cache:
           keys:
             - pipenv-packages-v1-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
             - pipenv-packages-v1-{{ .Branch }}-
             - pipenv-packages-v1-
       - run:
+          name: Install Dependencies
           command: |
             npm install
+            pipenv sync --dev
       - save_cache:
           key: node-packages-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
           paths:
@@ -29,6 +30,7 @@ jobs:
           paths:
             - ~/.virtualenvs
       - run:
+          name: Run Unit Tests
           command: |
             npm test
 
@@ -42,19 +44,28 @@ jobs:
             - node-packages-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
             - node-packages-v1-{{ .Branch }}-
             - node-packages-v1-
+      - restore_cache:
+          keys:
+            - pipenv-packages-v1-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+            - pipenv-packages-v1-{{ .Branch }}-
+            - pipenv-packages-v1-
       - run:
           name: Install Dependencies
           command: |
-            npm ci
+            npm install
+            pipenv sync --dev
       - save_cache:
           key: node-packages-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
           paths:
             - ~/.npm/
+      - save_cache:
+          key: pipenv-packages-v1-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+          paths:
+            - ~/.virtualenvs
       - run:
           name: Run Build
           command: |
             npm run build
-
       - run:
           name: Publish When Tagged Release
           command: |
