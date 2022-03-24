@@ -62,26 +62,12 @@ def describe_make_paginated_request():
                 'offset': 5,
             },
         )
-        for _ in range(20):
-            next(pag_req)
-        (_, kwargs) = make_request.call_args
-        assert kwargs['query']['limit'] == 20
-        assert kwargs['query']['offset'] == 5
 
-        for _ in range(20):
-            next(pag_req)
-        (_, kwargs) = make_request.call_args
-        assert kwargs['query']['limit'] == 20
-        assert kwargs['query']['offset'] == 25
+        assert(len(list(pag_req))) == 60
 
-        for _ in range(20):
-            next(pag_req)
         (_, kwargs) = make_request.call_args
         assert kwargs['query']['limit'] == 20
         assert kwargs['query']['offset'] == 45
-
-        with pytest.raises(StopIteration):
-            next(pag_req)
 
     def it_returns_when_last_record_reached(make_request):
         return_vals = [
@@ -101,11 +87,8 @@ def describe_make_paginated_request():
                 'offset': 5,
             },
         )
-        for _ in range(20):
-            next(pag_req)
 
-        with pytest.raises(StopIteration):
-            next(pag_req)
+        assert len(list(pag_req)) == 20
 
     def it_returns_when_limit_reached(make_request):
         return_vals = [
@@ -133,24 +116,11 @@ def describe_make_paginated_request():
                 'limit': 41,
             },
         )
-        for _ in range(20):
-            next(pag_req)
 
-        (_, kwargs) = make_request.call_args
-        assert kwargs['query']['limit'] == 20
-
-        for _ in range(20):
-            next(pag_req)
-        (_, kwargs) = make_request.call_args
-        assert kwargs['query']['limit'] == 20
-
-        next(pag_req)
+        assert len(list(pag_req)) == 41
 
         (_, kwargs) = make_request.call_args
         assert kwargs['query']['limit'] == 1
-
-        with pytest.raises(StopIteration):
-            next(pag_req)
 
 
 def describe_parse_content_range():

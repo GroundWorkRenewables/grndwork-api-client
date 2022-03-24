@@ -96,9 +96,8 @@ def describe_client():
         station_query = GetStationsQuery(
             client='client',
         )
-
-        my_request = my_client.get_stations(station_query)
-        assert next(my_request) == station
+        response = list(my_client.get_stations(station_query))
+        assert response == [station]
 
     def it_gets_stations_with_offset(get_refresh_token, get_access_token, make_paginated_request):
         station = get_station()
@@ -108,13 +107,8 @@ def describe_client():
             site='site',
         )
         my_client = client.create_client()
-        my_request = my_client.get_stations(query=station_query)
-        assert next(my_request) == station
-        assert next(my_request) == station
-        assert next(my_request) == station
-        assert next(my_request) == station
-        with pytest.raises(StopIteration):
-            next(my_request)
+        response = list(my_client.get_stations(station_query))
+        assert response == [station, station, station, station]
 
     def it_gets_data(get_refresh_token, get_access_token, make_paginated_request):
         data_file = get_datafile()
@@ -133,8 +127,8 @@ def describe_client():
             records_after=0,
             records_limit=0,
         )
-        my_request = my_client.get_data(query=data_query)
-        assert next(my_request) == data_file
+        response = list(my_client.get_data(data_query))
+        assert response == [data_file]
 
     def it_posts_data(get_refresh_token, get_access_token, make_request):
         make_request.side_effect = [
