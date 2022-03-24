@@ -1,4 +1,4 @@
-from typing import cast, Iterator
+from typing import cast, Iterator, Optional
 
 from .access_tokens import get_access_token
 from .config import DATA_URL, STATIONS_URL
@@ -24,7 +24,8 @@ class Client():
 
     def get_stations(
         self,
-        query: GetStationsQuery,
+        query: Optional[GetStationsQuery],
+        *,
         page_size: int = 100,
     ) -> Iterator[Station]:
         access_token = get_access_token(
@@ -45,7 +46,8 @@ class Client():
 
     def get_data(
         self,
-        query: GetDataQuery,
+        query: Optional[GetDataQuery],
+        *,
         page_size: int = 100,
     ) -> Iterator[DataFile]:
         access_token = get_access_token(
