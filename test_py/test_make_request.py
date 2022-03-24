@@ -124,18 +124,14 @@ def describe_make_paginated_request():
 
 
 def describe_parse_content_range():
-    def it_parses_range():
-        result = parse_content_range({'Content-Range': 'items 1-1/1'})
-        assert result == ContentRange(first=1, last=1, count=1)
-
-        result = parse_content_range({'Content-Range': 'items 1-20/65'})
-        assert result == ContentRange(first=1, last=20, count=65)
-
-        result = parse_content_range({'Content-Range': 'items 6-25/65'})
-        assert result == ContentRange(first=6, last=25, count=65)
-
-        result = parse_content_range({})
-        assert result == ContentRange(first=0, last=0, count=0)
+    @pytest.mark.parametrize('content_range, expected', [
+        ({'Content-Range': 'items 1-1/1'}, ContentRange(first=1, last=1, count=1)),
+        ({'Content-Range': 'items 1-20/65'}, ContentRange(first=1, last=20, count=65)),
+        ({'Content-Range': 'items 6-25/65'}, ContentRange(first=6, last=25, count=65)),
+        ({}, ContentRange(first=0, last=0, count=0)),
+    ])
+    def it_parses_range(content_range, expected):
+        assert parse_content_range(content_range) == expected
 
 
 def describe_make_request():
