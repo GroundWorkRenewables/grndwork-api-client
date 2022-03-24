@@ -71,7 +71,7 @@ def make_paginated_request(
                 },
                 token=token,
             )
-        yield from results[:query_limit]
+        yield from results
 
         if cont_range.last == cont_range.count:
             break

@@ -120,8 +120,8 @@ def describe_make_paginated_request():
                 ContentRange(first=21, last=40, count=105),
             ),
             (
-                ['' for i in range(20)],
-                ContentRange(first=41, last=60, count=105),
+                [''],
+                ContentRange(first=41, last=42, count=105),
             ),
         ]
         make_request.side_effect = return_vals
