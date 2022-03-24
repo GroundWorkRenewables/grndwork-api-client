@@ -19,14 +19,14 @@ def describe_client():
             units=[],
             processing=[],
         )
-        datafile = DataFile(
+        data_file = DataFile(
             source='src',
             filename='filename.dat',
             is_stale=False,
             headers=headers,
             records=[],
         )
-        return datafile
+        return data_file
 
     def get_station():
         station = Station(
@@ -117,8 +117,8 @@ def describe_client():
             next(my_request)
 
     def it_gets_data(get_refresh_token, get_access_token, make_paginated_request):
-        datafile = get_datafile()
-        make_paginated_request.return_value = iter([datafile])
+        data_file = get_datafile()
+        make_paginated_request.return_value = iter([data_file])
 
         my_client = client.create_client()
         data_query = GetDataQuery(
@@ -134,7 +134,7 @@ def describe_client():
             records_limit=0,
         )
         my_request = my_client.get_data(query=data_query)
-        assert next(my_request) == datafile
+        assert next(my_request) == data_file
 
     def it_posts_data(get_refresh_token, get_access_token, make_request):
         make_request.side_effect = [
