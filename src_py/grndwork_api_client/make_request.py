@@ -60,7 +60,9 @@ def make_paginated_request(
     offset = query.get('offset', 0)
 
     while True:
-        query_limit = min(limit, page_size) if limit else page_size
+        query_limit = page_size
+        if limit:
+            query_limit = min(limit, page_size)
         results, cont_range = make_request(
                 url=url,
                 method='GET',
