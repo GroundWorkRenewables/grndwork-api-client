@@ -2,7 +2,7 @@ import time
 
 import pytest
 from src_py.grndwork_api_client import access_tokens
-from src_py.grndwork_api_client.make_request import ContentRange
+from src_py.grndwork_api_client.dtos import ContentRange
 from src_py.grndwork_api_client.make_request import make_request
 
 
@@ -18,7 +18,7 @@ def fixture_requests(mocker):
         target='src_py.grndwork_api_client.access_tokens.make_request',
         spec=make_request,
     )
-    cont_range = ContentRange(count=1, first=1, last=1)
+    cont_range = ContentRange(count=0, first=0, last=0)
     mockpatch.return_value = {'token': 'access_token'}, cont_range
     return mockpatch
 
