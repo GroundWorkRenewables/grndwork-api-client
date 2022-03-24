@@ -3,13 +3,6 @@ from typing import Any, Dict, List, Optional, TypedDict
 
 
 @dataclass
-class ContentRange():
-    count: int
-    first: int
-    last: int
-
-
-@dataclass
 class DataFileHeaders():
     meta: Dict[str, Any]
     columns: List[str]

@@ -1,10 +1,16 @@
+from dataclasses import dataclass
 import json
 from typing import Any, Iterator, MutableMapping, Optional, Tuple
 
 import requests
 from requests.exceptions import RequestException
 
-from .dtos import ContentRange
+
+@dataclass
+class ContentRange():
+    count: int
+    first: int
+    last: int
 
 
 def make_request(
@@ -15,7 +21,7 @@ def make_request(
     headers: Optional[MutableMapping[str, Any]] = None,
     query: Any = None,
     body: Any = None,
-) -> Tuple[Any, ContentRange]:
+) -> Tuple[Any, MutableMapping[str, Any]]:
 
     if not headers:
         headers = {}
@@ -35,8 +41,6 @@ def make_request(
             data=json.dumps(body),
         )
 
-        cont_range = parse_content_range(response.headers)
-
     except RequestException:
         raise ConnectionError('Invalid response payload')
 
@@ -46,7 +50,7 @@ def make_request(
             response.reason,
         ))
 
-    return response.json(), cont_range
+    return response.json(), response.headers
 
 
 def make_paginated_request(
@@ -64,7 +68,8 @@ def make_paginated_request(
         query_limit = page_size
         if limit:
             query_limit = min(limit, page_size)
-        results, cont_range = make_request(
+
+        results, headers = make_request(
                 url=url,
                 method='GET',
                 query={
@@ -75,6 +80,10 @@ def make_paginated_request(
                 token=token,
             )
         yield from results
+
+        cont_range = parse_content_range(headers)
+        if not cont_range:
+            raise ValueError('Invalid header pagination values')
 
         if cont_range.last == cont_range.count:
             break
@@ -87,17 +96,18 @@ def make_paginated_request(
         offset = cont_range.last
 
 
-def parse_content_range(headers: MutableMapping[str, str]) -> ContentRange:
-    count = 0
-    first = 0
-    last = 0
+def parse_content_range(headers: MutableMapping[str, str]) -> Optional[ContentRange]:
+    cont_range = headers.get('Content-Range')
 
-    try:
-        cont_range = headers['Content-Range']
-        count = int(cont_range.split('/')[1])
-        first = int(cont_range.replace('items ', '').split('-')[0])
-        last = int(cont_range.replace('items ', '').split('-')[1].split('/')[0])
-    except (AttributeError, KeyError):
-        pass
+    if cont_range:
+        try:
+            return ContentRange(
+                count=int(cont_range.split('/')[1]),
+                first=int(cont_range.replace('items ', '').split('-')[0]),
+                last=int(cont_range.replace('items ', '').split('-')[1].split('/')[0]),
+            )
 
-    return ContentRange(count=count, first=first, last=last)
+        except (AttributeError, KeyError):
+            pass
+
+    return None
