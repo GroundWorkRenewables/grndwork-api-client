@@ -10,7 +10,6 @@ from .make_request import make_paginated_request, make_request
 
 LOGGERNET_PLATFORM = 'loggernet'
 TRACE_PLATFORM = 'trace'
-GET_INTERVAL = 20
 
 
 class Client():
