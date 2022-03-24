@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Iterator, Optional, Tuple
+from typing import Any, Iterator, MutableMapping, Optional, Tuple
 
 import requests
 from requests.exceptions import RequestException
@@ -12,7 +12,7 @@ def make_request(
     *,
     method: str,
     token: str,
-    headers: Optional[Dict[str, Any]] = None,
+    headers: Optional[MutableMapping[str, Any]] = None,
     query: Any = None,
     body: Any = None,
 ) -> Tuple[Any, ContentRange]:
@@ -34,7 +34,8 @@ def make_request(
             params=query,
             data=json.dumps(body),
         )
-        cont_range = parse_content_range(response.headers['Content-Range'])
+
+        cont_range = parse_content_range(response.headers)
 
     except RequestException:
         raise ConnectionError('Invalid response payload')
@@ -86,16 +87,17 @@ def make_paginated_request(
         offset = cont_range.last
 
 
-def parse_content_range(cont_range: str) -> ContentRange:
+def parse_content_range(headers: MutableMapping[str, str]) -> ContentRange:
     count = 0
     first = 0
     last = 0
 
     try:
+        cont_range = headers['Content-Range']
         count = int(cont_range.split('/')[1])
         first = int(cont_range.replace('items ', '').split('-')[0])
         last = int(cont_range.replace('items ', '').split('-')[1].split('/')[0])
-    except AttributeError:
+    except (AttributeError, KeyError):
         pass
 
     return ContentRange(count=count, first=first, last=last)

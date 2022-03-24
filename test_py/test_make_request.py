@@ -22,21 +22,19 @@ def fixture_requests(mocker):
     response = mocker.MagicMock()
     response.status_code = 200
     response.json.return_value = {}
-    response.headers = {'Content-Range': 'items 1-1/1'}
     req_mock.request.return_value = response
 
     return req_mock
 
 
-@pytest.fixture(name='make_request', autouse=False)
-def fixture_make_requests(mocker):
-    return mocker.patch(
-        target='src_py.grndwork_api_client.make_request.make_request',
-        spec=make_request,
-    )
-
-
 def describe_make_paginated_request():
+
+    @pytest.fixture(name='make_request', autouse=False)
+    def fixture_make_requests(mocker):
+        return mocker.patch(
+            target='src_py.grndwork_api_client.make_request.make_request',
+            spec=make_request,
+        )
 
     def it_updates_offset_and_limit(make_request):
         return_vals = [
@@ -157,16 +155,16 @@ def describe_make_paginated_request():
 
 def describe_parse_content_range():
     def it_parses_range():
-        result = parse_content_range('items 1-1/1')
+        result = parse_content_range({'Content-Range': 'items 1-1/1'})
         assert result == ContentRange(first=1, last=1, count=1)
 
-        result = parse_content_range('items 1-20/65')
+        result = parse_content_range({'Content-Range': 'items 1-20/65'})
         assert result == ContentRange(first=1, last=20, count=65)
 
-        result = parse_content_range('items 6-25/65')
+        result = parse_content_range({'Content-Range': 'items 6-25/65'})
         assert result == ContentRange(first=6, last=25, count=65)
 
-        result = parse_content_range(None)
+        result = parse_content_range({})
         assert result == ContentRange(first=0, last=0, count=0)
 
 
