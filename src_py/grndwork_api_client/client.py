@@ -2,14 +2,15 @@ from typing import cast, Iterator, Optional
 
 from .access_tokens import get_access_token
 from .config import DATA_URL, STATIONS_URL
-from .config import get_refresh_token
-from .dtos import DataFile, Station
-from .dtos import GetDataQuery, GetStationsQuery, PostDataPayload, RefreshToken
+from .dtos import (
+    DataFile,
+    GetDataQuery,
+    GetStationsQuery,
+    PostDataPayload,
+    RefreshToken,
+    Station,
+)
 from .make_request import make_paginated_request, make_request
-
-
-LOGGERNET_PLATFORM = 'loggernet'
-TRACE_PLATFORM = 'trace'
 
 
 class Client():
@@ -24,7 +25,7 @@ class Client():
 
     def get_stations(
         self,
-        query: Optional[GetStationsQuery],
+        query: Optional[GetStationsQuery] = None,
         *,
         page_size: int = 100,
     ) -> Iterator[Station]:
@@ -46,7 +47,7 @@ class Client():
 
     def get_data(
         self,
-        query: Optional[GetDataQuery],
+        query: Optional[GetDataQuery] = None,
         *,
         page_size: int = 100,
     ) -> Iterator[DataFile]:
@@ -81,13 +82,3 @@ class Client():
             body=payload,
             token=access_token,
         )
-
-
-def create_client(
-    platform: str = LOGGERNET_PLATFORM,
-) -> Client:
-    refresh_token: RefreshToken = get_refresh_token()
-    return Client(
-        refresh_token=refresh_token,
-        platform=platform,
-    )

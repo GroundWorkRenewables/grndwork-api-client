@@ -1,8 +1,7 @@
 import pytest
-from src_py.grndwork_api_client import client
 from src_py.grndwork_api_client.access_tokens import get_access_token
+from src_py.grndwork_api_client.client import Client
 from src_py.grndwork_api_client.config import DATA_URL
-from src_py.grndwork_api_client.config import get_refresh_token
 from src_py.grndwork_api_client.dtos import DataFile, DataFileHeaders, Station
 from src_py.grndwork_api_client.dtos import GetDataQuery, GetStationsQuery
 from src_py.grndwork_api_client.make_request import ContentRange
@@ -49,13 +48,6 @@ def describe_client():
         )
         return station
 
-    @pytest.fixture(name='get_refresh_token', autouse=False)
-    def fixture_get_token(mocker):
-        return mocker.patch(
-            target='src_py.grndwork_api_client.client.get_refresh_token',
-            spec=get_refresh_token,
-        )
-
     @pytest.fixture(name='get_access_token', autouse=False)
     def fixture_get_access_token(mocker):
         access_token_mock = mocker.patch(
@@ -79,42 +71,63 @@ def describe_client():
             spec=make_paginated_request,
         )
 
-    def it_creates_client(get_refresh_token):
-        refresh_token = {
-            'subject': 'uuid',
-            'token': 'refresh_token',
-        }
-        get_refresh_token.return_value = refresh_token
-        my_client = client.create_client()
+    @pytest.fixture(name='client_factory', autouse=True)
+    def fixture_client(mocker):
+
+        def create_client(**kwargs):
+            refresh_token = {
+                'subject': 'uuid',
+                'token': 'refresh_token',
+            }
+            client = Client(
+                **{
+                    'refresh_token': refresh_token,
+                    'platform': 'loggernet',
+                    **kwargs,
+                },
+            )
+            return client
+
+        return create_client
+
+    def it_creates_client(client_factory):
+        my_client = client_factory()
         assert my_client.refresh_token
         assert my_client.platform == 'loggernet'
 
-    def it_gets_stations(get_refresh_token, get_access_token, make_request, make_paginated_request):
+    def it_gets_stations(client_factory, get_access_token, make_paginated_request):
         station = get_station()
         make_paginated_request.return_value = iter([station])
-        my_client = client.create_client()
+        my_client = client_factory()
         station_query = GetStationsQuery(
             client='client',
         )
         response = list(my_client.get_stations(station_query))
         assert response == [station]
 
-    def it_gets_stations_with_offset(get_refresh_token, get_access_token, make_paginated_request):
+    def it_gets_stations_with_no_query(client_factory, get_access_token, make_paginated_request):
+        station = get_station()
+        make_paginated_request.return_value = iter([station])
+        my_client = client_factory()
+        response = list(my_client.get_stations())
+        assert response == [station]
+
+    def it_gets_stations_with_offset(client_factory, get_access_token, make_paginated_request):
         station = get_station()
         make_paginated_request.return_value = iter([station, station, station, station])
         station_query = GetStationsQuery(
             client='client',
             site='site',
         )
-        my_client = client.create_client()
+        my_client = client_factory()
         response = list(my_client.get_stations(station_query))
         assert response == [station, station, station, station]
 
-    def it_gets_data(get_refresh_token, get_access_token, make_paginated_request):
+    def it_gets_data(client_factory, get_access_token, make_paginated_request):
         data_file = get_datafile()
         make_paginated_request.return_value = iter([data_file])
 
-        my_client = client.create_client()
+        my_client = client_factory()
         data_query = GetDataQuery(
             client='client',
             site='site',
@@ -130,7 +143,14 @@ def describe_client():
         response = list(my_client.get_data(data_query))
         assert response == [data_file]
 
-    def it_posts_data(get_refresh_token, get_access_token, make_request):
+    def it_gets_data_with_no_query(client_factory, get_access_token, make_paginated_request):
+        data_file = get_datafile()
+        make_paginated_request.return_value = iter([data_file])
+        my_client = client_factory()
+        response = list(my_client.get_data())
+        assert response == [data_file]
+
+    def it_posts_data(client_factory, get_access_token, make_request):
         make_request.side_effect = [
             (
                 {'result': 1}, ContentRange(first=0, last=0, count=0),
@@ -153,7 +173,7 @@ def describe_client():
                 },
             ],
         }
-        my_client = client.create_client()
+        my_client = client_factory()
         my_client.post_data(payload=payload)
         (_, kwargs) = make_request.call_args
 
