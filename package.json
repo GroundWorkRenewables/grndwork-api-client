@@ -14,7 +14,7 @@
     "update:node": "updates --update --minor --exclude && (git diff-files --quiet package.json || (rimraf package-lock.json node_modules && npm install))",
     "update:python": "pipenv update --dev",
     "postupdate": "git diff-files --quiet package-lock.json Pipfile.lock || (npm test && npm run build)",
-    "prebuild": "rimraf dist_js dist_py",
+    "prebuild": "rimraf dist_js src_py/*.egg-info dist_py",
     "build": "npm run build:js && npm run build:py",
     "build:js": "tsc -p tsconfig.json",
     "build:py": "pipenv run python3 -m build --outdir dist_py",
@@ -29,7 +29,7 @@
     "publish": "npm run publish:py",
     "publish:test": "npm run publish:py -- --repository=testpypi",
     "publish:py": "pipenv run python3 -m twine upload dist_py/*"
-    },
+  },
   "dependencies": {
     "jsonwebtoken": "8.5.1",
     "node-fetch": "2.6.1"
