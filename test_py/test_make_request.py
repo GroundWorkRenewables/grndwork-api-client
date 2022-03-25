@@ -2,6 +2,7 @@ import json
 
 import pytest
 import requests
+from requests.exceptions import RequestException
 from src_py.grndwork_api_client.make_request import (
     ContentRange,
     make_paginated_request,
@@ -139,8 +140,21 @@ def describe_make_request():
     def it_makes_request(requests):
         make_request(url=API_URL, method='GET', token='token')
         (_, kwargs) = requests.request.call_args
-        assert kwargs['method'] == 'GET'
         assert kwargs['url'] == API_URL
+        assert kwargs['method'] == 'GET'
+        assert kwargs['headers']['Authorization'] == 'Bearer token'
+
+    def it_makes_request_with_headers(requests):
+        headers = {'key': 'value'}
+        token = 'token'
+        make_request(
+            url=API_URL,
+            method='POST',
+            token=token,
+            headers=headers,
+        )
+        (_, kwargs) = requests.request.call_args
+        assert kwargs['headers']['key'] == 'value'
 
     def it_makes_request_with_query_params(requests):
         query = {'key': 'value'}
@@ -148,46 +162,14 @@ def describe_make_request():
         (_, kwargs) = requests.request.call_args
         assert kwargs['params'] == query
 
-    def it_makes_request_with_method(requests):
-        make_request(url=API_URL, method='POST', token='token')
-        (_, kwargs) = requests.request.call_args
-        assert kwargs['method'] == 'POST'
-
     def it_makes_request_with_body(requests):
-        body = {'test': 'test'}
+        body = {'key': 'value'}
         make_request(url=API_URL, method='POST', body=body, token='token')
         (_, kwargs) = requests.request.call_args
-        assert kwargs['method'] == 'POST'
         assert kwargs['data'] == json.dumps(body)
 
-    def it_makes_request_with_auth_token(requests):
-        token = 'refresh_token'
-        body = {'test': 'test'}
-        make_request(url=API_URL, method='POST', body=body, token=token)
-        (_, kwargs) = requests.request.call_args
-        assert kwargs['method'] == 'POST'
-        assert kwargs['data'] == json.dumps(body)
-        assert kwargs['headers']['Authorization'] == 'Bearer refresh_token'
-
-    def it_makes_request_with_additional_headers(requests):
-        headers = {'X-Test': 'test_value'}
-        token = 'refresh_token'
-        body = {'test': 'test'}
-        make_request(
-            url=API_URL,
-            method='POST',
-            body=body,
-            token=token,
-            headers=headers,
-        )
-        (_, kwargs) = requests.request.call_args
-        assert kwargs['method'] == 'POST'
-        assert kwargs['data'] == json.dumps(body)
-        assert kwargs['headers']['Authorization'] == 'Bearer refresh_token'
-        assert kwargs['headers']['X-Test'] == 'test_value'
-
-    def it_parses_the_response_body(requests):
-        requests.request.return_value.json.return_value = {'token': 'access_token'}
+    def it_returns_the_response_body(requests):
+        requests.request.return_value.json.return_value = {'key': 'value'}
         requests.request.return_value.headers = {'Content-Range': 'items 1-20/20'}
         token = 'refresh_token'
         body = {'test': 'test'}
@@ -197,23 +179,18 @@ def describe_make_request():
             body=body,
             token=token,
         )
-        assert result['token'] == 'access_token'
+        assert result['key'] == 'value'
         assert headers == {'Content-Range': 'items 1-20/20'}
+
+    def it_handles_request_error(requests):
+        requests.request.side_effect = RequestException
+        token = 'token'
+        with pytest.raises(ConnectionError, match='Invalid response payload'):
+            make_request(url=API_URL, method='POST', token=token)
 
     def it_handles_bad_response(requests):
         requests.request.return_value.status_code = 404
         requests.request.return_value.reason = 'error message'
-        token = 'refresh_token'
+        token = 'token'
         with pytest.raises(ConnectionError):
             make_request(url=API_URL, method='POST', token=token)
-
-    def it_returns_result_and_content_range_for_get(requests):
-        result, headers = make_request(url=API_URL, method='GET', token='token')
-        assert result == {}
-        assert headers == {}
-
-    def it_returns_result_and_content_range_for_post(requests):
-        body = {'test': 'test'}
-        result, headers = make_request(url=API_URL, method='POST', body=body, token='token')
-        assert result == {}
-        assert headers == {}

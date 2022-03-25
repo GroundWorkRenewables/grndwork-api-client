@@ -1,7 +1,7 @@
 import pytest
 from src_py.grndwork_api_client.access_tokens import get_access_token
 from src_py.grndwork_api_client.client import Client
-from src_py.grndwork_api_client.config import DATA_URL
+from src_py.grndwork_api_client.config import DATA_URL, STATIONS_URL
 from src_py.grndwork_api_client.dtos import DataFile, DataFileHeaders, Station
 from src_py.grndwork_api_client.dtos import GetDataQuery, GetStationsQuery
 from src_py.grndwork_api_client.make_request import make_paginated_request
@@ -93,38 +93,35 @@ def describe_client():
         assert my_client.refresh_token
         assert my_client.platform == 'loggernet'
 
-    def it_gets_stations(client_factory, make_paginated_request):
-        station = get_station()
-        make_paginated_request.return_value = iter([station])
+    def it_gets_stations(client_factory, get_access_token, make_paginated_request):
         my_client = client_factory()
-        station_query = GetStationsQuery(
-            client='client',
-        )
-        response = list(my_client.get_stations(station_query))
-        assert response == [station]
-
-    def it_gets_stations_with_no_query(client_factory, make_paginated_request):
-        station = get_station()
-        make_paginated_request.return_value = iter([station])
-        my_client = client_factory()
-        response = list(my_client.get_stations())
-        assert response == [station]
-
-    def it_gets_stations_with_offset(client_factory, make_paginated_request):
-        station = get_station()
-        make_paginated_request.return_value = iter([station, station, station, station])
         station_query = GetStationsQuery(
             client='client',
             site='site',
-        )
+            station='station',
+            limit=1,
+            offset=1,
+            )
+        list(my_client.get_stations(station_query))
+        assert get_access_token.called
+
+        (_, kwargs) = make_paginated_request.call_args
+        assert kwargs['query'] == station_query
+        assert kwargs['url'] == STATIONS_URL
+
+    def it_gets_stations_with_no_query(client_factory, make_paginated_request):
         my_client = client_factory()
-        response = list(my_client.get_stations(station_query))
-        assert response == [station, station, station, station]
+        list(my_client.get_stations())
+        (_, kwargs) = make_paginated_request.call_args
+        assert kwargs['query'] is None
 
-    def it_gets_data(client_factory, make_paginated_request):
-        data_file = get_datafile()
-        make_paginated_request.return_value = iter([data_file])
+    def it_gets_stations_with_page_size(client_factory, make_paginated_request):
+        my_client = client_factory()
+        list(my_client.get_stations(page_size=50))
+        (_, kwargs) = make_paginated_request.call_args
+        assert kwargs['page_size'] == 50
 
+    def it_gets_data(client_factory, get_access_token, make_paginated_request):
         my_client = client_factory()
         data_query = GetDataQuery(
             client='client',
@@ -138,17 +135,26 @@ def describe_client():
             records_after=0,
             records_limit=0,
         )
-        response = list(my_client.get_data(data_query))
-        assert response == [data_file]
+        list(my_client.get_data(data_query))
+        assert get_access_token.called
+
+        (_, kwargs) = make_paginated_request.call_args
+        assert kwargs['query'] == data_query
+        assert kwargs['url'] == DATA_URL
 
     def it_gets_data_with_no_query(client_factory, make_paginated_request):
-        data_file = get_datafile()
-        make_paginated_request.return_value = iter([data_file])
         my_client = client_factory()
-        response = list(my_client.get_data())
-        assert response == [data_file]
+        list(my_client.get_data())
+        (_, kwargs) = make_paginated_request.call_args
+        assert kwargs['query'] is None
 
-    def it_posts_data(client_factory, make_request):
+    def it_gets_data_with_page_size(client_factory, make_paginated_request):
+        my_client = client_factory()
+        list(my_client.get_data(page_size=50))
+        (_, kwargs) = make_paginated_request.call_args
+        assert kwargs['page_size'] == 50
+
+    def it_posts_data(client_factory, get_access_token, make_request):
         make_request.side_effect = [
             (
                 {'result': 1}, {},
@@ -173,12 +179,13 @@ def describe_client():
         }
         my_client = client_factory()
         my_client.post_data(payload=payload)
-        (_, kwargs) = make_request.call_args
+        assert get_access_token.called
+        assert make_request.call_count == 1
 
+        (_, kwargs) = make_request.call_args
         assert kwargs == {
             'url': DATA_URL,
             'method': 'POST',
             'body': payload,
             'token': 'access_token',
         }
-        assert make_request.call_count == 1
