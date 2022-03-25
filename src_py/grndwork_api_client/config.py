@@ -1,5 +1,6 @@
 import json
 import os
+from typing import cast
 
 from .dtos import RefreshToken
 
@@ -16,8 +17,8 @@ def get_refresh_token() -> RefreshToken:
 
     if groundwork_token_path:
         with open(groundwork_token_path) as f:
-            data: str = f.read()
-        result: RefreshToken = json.loads(data)
+            data = f.read()
+        result = cast(RefreshToken, json.loads(data))
 
     elif groundwork_subject and groundwork_token:
         result = RefreshToken(

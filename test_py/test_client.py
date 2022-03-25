@@ -4,7 +4,6 @@ from src_py.grndwork_api_client.client import Client
 from src_py.grndwork_api_client.config import DATA_URL
 from src_py.grndwork_api_client.dtos import DataFile, DataFileHeaders, Station
 from src_py.grndwork_api_client.dtos import GetDataQuery, GetStationsQuery
-from src_py.grndwork_api_client.make_request import ContentRange
 from src_py.grndwork_api_client.make_request import make_paginated_request
 from src_py.grndwork_api_client.make_request import make_request
 
@@ -48,14 +47,13 @@ def describe_client():
         )
         return station
 
-    @pytest.fixture(name='get_access_token', autouse=False)
+    @pytest.fixture(name='get_access_token', autouse=True)
     def fixture_get_access_token(mocker):
-        access_token_mock = mocker.patch(
+        return mocker.patch(
             target='src_py.grndwork_api_client.client.get_access_token',
             spec=get_access_token,
+            return_value='access_token',
         )
-        access_token_mock.return_value = 'access_token'
-        return access_token_mock
 
     @pytest.fixture(name='make_request', autouse=True)
     def fixture_requests(mocker):
@@ -95,7 +93,7 @@ def describe_client():
         assert my_client.refresh_token
         assert my_client.platform == 'loggernet'
 
-    def it_gets_stations(client_factory, get_access_token, make_paginated_request):
+    def it_gets_stations(client_factory, make_paginated_request):
         station = get_station()
         make_paginated_request.return_value = iter([station])
         my_client = client_factory()
@@ -105,14 +103,14 @@ def describe_client():
         response = list(my_client.get_stations(station_query))
         assert response == [station]
 
-    def it_gets_stations_with_no_query(client_factory, get_access_token, make_paginated_request):
+    def it_gets_stations_with_no_query(client_factory, make_paginated_request):
         station = get_station()
         make_paginated_request.return_value = iter([station])
         my_client = client_factory()
         response = list(my_client.get_stations())
         assert response == [station]
 
-    def it_gets_stations_with_offset(client_factory, get_access_token, make_paginated_request):
+    def it_gets_stations_with_offset(client_factory, make_paginated_request):
         station = get_station()
         make_paginated_request.return_value = iter([station, station, station, station])
         station_query = GetStationsQuery(
@@ -123,7 +121,7 @@ def describe_client():
         response = list(my_client.get_stations(station_query))
         assert response == [station, station, station, station]
 
-    def it_gets_data(client_factory, get_access_token, make_paginated_request):
+    def it_gets_data(client_factory, make_paginated_request):
         data_file = get_datafile()
         make_paginated_request.return_value = iter([data_file])
 
@@ -143,17 +141,17 @@ def describe_client():
         response = list(my_client.get_data(data_query))
         assert response == [data_file]
 
-    def it_gets_data_with_no_query(client_factory, get_access_token, make_paginated_request):
+    def it_gets_data_with_no_query(client_factory, make_paginated_request):
         data_file = get_datafile()
         make_paginated_request.return_value = iter([data_file])
         my_client = client_factory()
         response = list(my_client.get_data())
         assert response == [data_file]
 
-    def it_posts_data(client_factory, get_access_token, make_request):
+    def it_posts_data(client_factory, make_request):
         make_request.side_effect = [
             (
-                {'result': 1}, ContentRange(first=0, last=0, count=0),
+                {'result': 1}, {},
             ),
         ]
 

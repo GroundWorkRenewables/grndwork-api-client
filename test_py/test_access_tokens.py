@@ -17,7 +17,7 @@ def fixture_requests(mocker):
         target='src_py.grndwork_api_client.access_tokens.make_request',
         spec=make_request,
     )
-    mockpatch.return_value = {'token': 'access_token'}, None
+    mockpatch.return_value = {'token': 'access_token'}, {}
     return mockpatch
 
 
@@ -44,8 +44,10 @@ def describe_access_tokens():
             platform='platform',
             scope='read:data',
         )
-        (_, kwargs) = make_request.call_args
 
+        assert make_request.call_count == 1
+
+        (_, kwargs) = make_request.call_args
         assert kwargs == {
             'url': 'https://api.grndwork.com/v1/tokens',
             'method': 'POST',
@@ -56,7 +58,6 @@ def describe_access_tokens():
             },
             'token': 'refresh_token',
         }
-        assert make_request.call_count == 1
 
     def it_does_not_request_new_access_token_with_cache(make_request):
         access_tokens.get_access_token(
