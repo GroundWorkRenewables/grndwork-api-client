@@ -43,7 +43,7 @@ export interface Station {
   longitude: number;
   altitude: number;
   timezone_offset: number | null;
-  start_timestamp: string| null;
+  start_timestamp: string | null;
   end_timestamp: string | null;
   data_file_prefix: string;
   data_files: Array<Required<Omit<DataFile, 'source' | 'records'>>>;

@@ -32,27 +32,27 @@
   },
   "dependencies": {
     "jsonwebtoken": "8.5.1",
-    "node-fetch": "2.6.1"
+    "node-fetch": "2.6.7"
   },
   "devDependencies": {
-    "@types/jest": "26.0.22",
-    "@types/jsonwebtoken": "8.5.1",
-    "@types/node": "14.14.37",
-    "@types/node-fetch": "2.5.8",
-    "@typescript-eslint/eslint-plugin": "4.20.0",
-    "@typescript-eslint/parser": "4.20.0",
-    "eslint": "7.23.0",
-    "eslint-config-airbnb-typescript": "12.3.1",
-    "eslint-plugin-import": "2.22.1",
-    "jest": "26.6.3",
-    "jest-junit": "12.0.0",
+    "@types/jest": "27.4.1",
+    "@types/jsonwebtoken": "8.5.8",
+    "@types/node": "16.11.26",
+    "@types/node-fetch": "2.6.1",
+    "@typescript-eslint/eslint-plugin": "5.16.0",
+    "@typescript-eslint/parser": "5.16.0",
+    "eslint": "8.11.0",
+    "eslint-config-airbnb-typescript": "16.1.4",
+    "eslint-plugin-import": "2.25.4",
+    "jest": "27.5.1",
     "jest-simple-dot-reporter": "1.0.5",
-    "nodemon": "2.0.7",
+    "node-notifier": "10.0.1",
+    "nodemon": "2.0.15",
     "replace": "1.2.1",
     "rimraf": "3.0.2",
-    "ts-jest": "26.5.4",
-    "ts-node": "9.1.1",
-    "typescript": "4.2.3",
-    "updates": "11.4.3"
+    "ts-jest": "27.1.4",
+    "ts-node": "10.7.0",
+    "typescript": "4.6.3",
+    "updates": "13.0.4"
   }
 }
