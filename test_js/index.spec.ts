@@ -1,7 +1,7 @@
-import {createClient} from '../src';
-import {getRefreshToken} from '../src/config';
+import {createClient} from '../src_js';
+import {getRefreshToken} from '../src_js/config';
 
-jest.mock('../src/config');
+jest.mock('../src_js/config');
 
 describe('createClient', () => {
   afterEach(() => {

@@ -2,22 +2,39 @@
 
 # Groundwork API Client
 
-API client for [GroundWork Renewables](grndwork.com)
+API client for [GroundWork Renewables](https://grndwork.com)
+
 
 ## Installation
 
+JavaScript:
 ```
 $ npm install @grndwork/api-client
 ```
 
+Python:
+```
+$ pip install grndwork-api-client
+```
+
 ## Usage
 
+JavaScript:
 ```js
 import {createClient} from '@grndwork/api-client';
 
 const client = createClient();
 
-const data = await client.getData();
+const stations = await client.getStations();
+```
+
+Python:
+```py
+from grndwork_api_client import create_client
+
+client = create_client()
+
+stations = list(client.get_stations())
 ```
 
 In order to access https://api.grndwork.com you must first obtain a refresh token from GroundWork Renewables.
@@ -28,12 +45,20 @@ Or the subject and token values from this file can be provided using the `GROUND
 
 When providing subject and token values `GROUNDWORK_TOKEN_PATH` must not be set.
 
+**Note**: Python returns an iterator. You can consume the iterator using `for station in client.get_stations()` or `list(client.get_stations())`.
+
 ## API
 
 ### Get Stations
 
+JavaScript:
 ```typescript
 client.getStations(query?: GetStationsQuery): Promise<Array<Station>>
+```
+
+Python:
+```py
+client.get_stations(query: GetStationsQuery = None, *, page_size: int = 100) -> Iterator[Station]
 ```
 
 Takes an optional get stations query object as an argument and returns an array of stations.
@@ -45,8 +70,8 @@ Takes an optional get stations query object as an argument and returns an array 
   | station | string | Only return stations with UUID, name, or name matching pattern |
   | site | string | Only return stations for site with UUID, name, or name matching pattern |
   | client | string | Only return stations for client with UUID, name, or name matching pattern |
-  | limit | number | Number of stations to return ( min: 1, max: 100, default: 20 ) |
-  | offset | number | Number of stations to skip over when paging results ( default: 0 ) |
+  | limit | number | Total number of stations to return |
+  | offset | number | Number of stations to skip over when paging results |
 
 ##### Pattern Matching
 
@@ -56,13 +81,33 @@ Pattern matching is case insensitive.
 
 For example:
 
+JavaScript:
 ```js
 const data = await client.getStations({
   station: 'Test*',
 });
 ```
 
+Python:
+```py
+stations = list(client.get_stations({
+    'station': 'Test*',
+}))
+```
+
+
 Would return all stations whose name starts with `Test`.
+
+#### Page Size
+
+You can set an optional page size to control the number of records returned from the API. ( min: 1, max: 100, default: 100 )
+
+Python:
+```py
+stations = list(client.get_stations({
+    'station': 'Test*',
+}, page_size=50))
+```
 
 #### Return Values
 
@@ -105,8 +150,14 @@ Stations are returned in alphabetical order by station name.
 
 ### Get Data
 
+JavaScript:
 ```typescript
 client.getData(query?: GetDataQuery): Promise<Array<DataFile>>
+```
+
+Python:
+```py
+client.get_data(query: GetDataQuery = None, *, page_size: int = 100) -> Iterator[DataFile]
 ```
 
 Takes an optional get data query object as an argument and returns an array of data files.
@@ -119,8 +170,8 @@ Takes an optional get data query object as an argument and returns an array of d
   | station | string | Only return data files for station with UUID, name, or name matching pattern |
   | site | string | Only return data files for site with UUID, name, or name matching pattern |
   | client | string | Only return data files for client with UUID, name, or name matching pattern |
-  | limit | number | Number of files to return ( min: 1, max: 100, default: 20 ) |
-  | offset | number | Number of files to skip over when paging results ( default: 0 ) |
+  | limit | number | Total number of files to return |
+  | offset | number | Number of files to skip over when paging results |
   | records_limit | number | Number of records to return per file ( min: 1, max: 1500, default: 1 ) |
   | records_before | timestamp | Only return records at or before timestamp ( format: `yyyy-mm-dd hh:mm:ss` ) |
   | records_after | timestamp | Only return records at or after timestamp ( format: `yyyy-mm-dd hh:mm:ss` ) |
@@ -133,13 +184,32 @@ Pattern matching is case insensitive.
 
 For example:
 
+JavaScript:
 ```js
-const data = await client.getData({
+const dataFiles = await client.getData({
   filename: '*_OneMin.dat',
 });
 ```
 
+Python:
+```py
+data_files = list(client.get_data({
+    'filename': '*_OneMin.dat',
+}))
+```
+
 Would return all one minute data files.
+
+#### Page Size
+
+You can set an optional page size to control the number of records returned from the API. ( min: 1, max: 100, default: 100 )
+
+Python:
+```py
+data_files = list(client.get_data({
+    'filename': '*_OneMin.dat',
+}, page_size=50))
+```
 
 #### Return Values
 
@@ -153,10 +223,20 @@ Only a single data file will be returned at a time when requesting multiple data
 
 For example:
 
+JavaScript:
 ```js
-const data = await client.getData({
+const dataFiles = await client.getData({
+  limit: 1,
   records_limit: 100,
 });
+```
+
+Python:
+```py
+data_files = list(client.get_data({
+    'limit': 1,
+    'records_limit': 100,
+}))
 ```
 
 Would return the most recent 100 records from the first file alphabetically.
@@ -189,8 +269,14 @@ Would return the most recent 100 records from the first file alphabetically.
 
 ### Post Data
 
+JavaScript:
 ```typescript
 client.postData(payload: PostDataPayload): Promise<void>
+```
+
+Python:
+```py
+client.post_data(payload: PostDataPayload) -> None
 ```
 
 Takes a post data payload object as an argument and uploads it to the cloud.

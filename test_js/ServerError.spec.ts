@@ -1,4 +1,4 @@
-import {ServerError} from '../src/ServerError';
+import {ServerError} from '../src_js/ServerError';
 
 describe('ServerError', () => {
   it('uses defaults', () => {
