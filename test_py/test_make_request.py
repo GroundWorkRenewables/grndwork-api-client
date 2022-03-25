@@ -103,7 +103,7 @@ def describe_make_paginated_request():
             ),
             (
                 [''],
-                {'Content-Range': 'items 41-42/105'},
+                {'Content-Range': 'items 41-41/105'},
             ),
         ]
         make_request.side_effect = return_vals
