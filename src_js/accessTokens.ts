@@ -31,7 +31,7 @@ async function createAccessToken(
   platform: string,
   scope: string,
 ): Promise<string> {
-  const {token: accessToken} = await makeRequest<{token: string}>({
+  const response = await makeRequest({
     url: TOKENS_URL,
     method: 'POST',
     token: refreshToken.token,
@@ -41,6 +41,8 @@ async function createAccessToken(
       scope,
     },
   });
+
+  const accessToken = response[0].token;
 
   return accessToken;
 }

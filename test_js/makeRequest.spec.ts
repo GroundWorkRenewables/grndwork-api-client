@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import {makeRequest} from '../src_js/makeRequest';
+import {makeRequest, makePaginatedRequest, parseContentRange} from '../src_js/makeRequest';
 import {ServerError} from '../src_js/ServerError';
 
 jest.mock('node-fetch');
@@ -14,10 +14,12 @@ describe('makeRequest', () => {
       token: 'access_token',
     }), {
       headers: {
-        'Content-Type': 'application/json',
+        'content-type': 'application/json',
       },
     }));
   });
+
+  afterEach(() => jest.clearAllMocks());
 
   it('makes request', async () => {
     await makeRequest({
@@ -129,9 +131,9 @@ describe('makeRequest', () => {
       url: API_URL,
       method: 'POST',
       token: 'refresh_token',
-    })).toStrictEqual({
+    })).toStrictEqual([{
       token: 'access_token',
-    });
+    }, {'content-type': 'application/json'}]);
   });
 
   it('handles bad response body', async () => {
@@ -167,4 +169,160 @@ describe('makeRequest', () => {
       token: 'refresh_token',
     })).rejects.toThrow(ServerError);
   });
+});
+
+describe('makePaginatedRequest', () => {
+  const API_URL = 'https://api.grndwork.com/v1/tokens';
+
+  afterEach(() => jest.clearAllMocks());
+
+  it('updates offset and limit', async () => {
+    (fetch as unknown as jest.Mock)
+    .mockReturnValueOnce(
+      new Response(JSON.stringify(
+        Array.from({length: 20}, (x, i) => i),
+      ), {
+        headers: {
+          'Content-Type': 'application/json',
+          'content-range': 'items 6-25/65',
+        },
+      }),
+    )
+    .mockReturnValueOnce(
+      new Response(JSON.stringify(
+        Array.from({length: 20}, (x, i) => i),
+      ), {
+        headers: {
+          'Content-Type': 'application/json',
+          'content-range': 'items 26-45/65',
+        },
+      }),
+    )
+    .mockReturnValueOnce(
+      new Response(JSON.stringify(
+        Array.from({length: 20}, (x, i) => i),
+      ), {
+        headers: {
+          'Content-Type': 'application/json',
+          'content-range': 'items 46-65/65',
+        },
+      }),
+    );
+
+    const token = 'token';
+    const url = API_URL;
+    const query = {offset: 5};
+    const pageSize = 20;
+
+    const records = [];
+    for await (const result of makePaginatedRequest(
+      token,
+      url,
+      query,
+      pageSize,
+    )
+    ) {
+      records.push(result);
+    }
+
+    expect(records.length).toEqual(60);
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it('updates returns_when_last_record_reached', async () => {
+    (fetch as unknown as jest.Mock)
+    .mockReturnValueOnce(
+      new Response(JSON.stringify(
+        Array.from({length: 20}, (x, i) => i),
+      ), {
+        headers: {
+          'Content-Type': 'application/json',
+          'content-range': 'items 6-25/25',
+        },
+      }),
+    );
+
+    const token = 'token';
+    const url = API_URL;
+    const query = {offset: 5};
+    const pageSize = 20;
+
+    const records = [];
+    for await (const result of makePaginatedRequest(
+      token,
+      url,
+      query,
+      pageSize,
+    )
+    ) {
+      records.push(result);
+    }
+
+    expect(records.length).toEqual(20);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('updates returns_when_limit_reached', async () => {
+    (fetch as unknown as jest.Mock)
+    .mockReturnValueOnce(
+      new Response(JSON.stringify(
+        Array.from({length: 20}, (x, i) => i),
+      ), {
+        headers: {
+          'Content-Type': 'application/json',
+          'content-range': 'items 1-20/105',
+        },
+      }),
+    )
+    .mockReturnValueOnce(
+      new Response(JSON.stringify(
+        Array.from({length: 20}, (x, i) => i),
+      ), {
+        headers: {
+          'Content-Type': 'application/json',
+          'content-range': 'items 21-40/105',
+        },
+      }),
+    )
+    .mockReturnValueOnce(
+      new Response(JSON.stringify(
+        Array.from({length: 1}, (x, i) => i),
+      ), {
+        headers: {
+          'Content-Type': 'application/json',
+          'content-range': 'items 41-60/105',
+        },
+      }),
+    );
+
+    const token = 'token';
+    const url = API_URL;
+    const query = {offset: 0, limit: 41};
+    const pageSize = 20;
+
+    const records = [];
+    for await (const result of makePaginatedRequest(
+      token,
+      url,
+      query,
+      pageSize,
+    )) {
+      records.push(result);
+    }
+    expect(records.length).toEqual(41);
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('parses content range', () => {
+  it.each([
+    [{'content-range': 'items 1-1/1'}, {first: 1, last: 1, count: 1}],
+    [{'content-range': 'items 1-20/65'}, {first: 1, last: 20, count: 65}],
+    [{'content-range': 'items 6-25/65'}, {first: 6, last: 25, count: 65}],
+  ])(
+    'Correctly parses content range',
+    (headers, result) => {
+      expect(parseContentRange(headers)).toEqual(result);
+    },
+  );
 });

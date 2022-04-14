@@ -18,9 +18,11 @@ describe('getAccessToken', () => {
       exp: new Date().getTime() + 1000,
     });
 
-    (makeRequest as jest.Mock).mockResolvedValue({
-      token: 'access_token',
-    });
+    (makeRequest as jest.Mock).mockResolvedValue(
+      [
+        {token: 'access_token'}, {},
+      ],
+    );
   });
 
   afterEach(() => jest.clearAllMocks());
