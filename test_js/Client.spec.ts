@@ -1,6 +1,6 @@
 import {Client} from '../src_js/Client';
 import {getAccessToken} from '../src_js/accessTokens';
-import {makeRequest} from '../src_js/makeRequest';
+import {makeRequest, makePaginatedRequest} from '../src_js/makeRequest';
 
 jest.mock('../src_js/makeRequest');
 jest.mock('../src_js/accessTokens');
@@ -18,6 +18,7 @@ describe('GroundworkClient', () => {
 
     (getAccessToken as jest.Mock).mockResolvedValue('access_token');
     (makeRequest as jest.Mock).mockReturnValue([]);
+    (makePaginatedRequest as jest.Mock).mockReturnValue([]);
   });
 
   afterEach(() => jest.clearAllMocks());
@@ -36,23 +37,23 @@ describe('GroundworkClient', () => {
     it('makes get stations request with default options', async () => {
       await client.getStations();
 
-      expect(makeRequest).toHaveBeenCalledWith({
-        url: 'https://api.grndwork.com/v1/stations',
-        method: 'GET',
-        query: undefined,
-        token: 'access_token',
-      });
+      expect(makePaginatedRequest).toHaveBeenCalledWith(
+        'access_token',
+        'https://api.grndwork.com/v1/stations',
+        100,
+        undefined,
+      );
     });
 
     it('makes get stations request with query', async () => {
       await client.getStations({limit: 10});
 
-      expect(makeRequest).toHaveBeenCalledWith({
-        url: 'https://api.grndwork.com/v1/stations',
-        method: 'GET',
-        query: {limit: 10},
-        token: 'access_token',
-      });
+      expect(makePaginatedRequest).toHaveBeenCalledWith(
+        'access_token',
+        'https://api.grndwork.com/v1/stations',
+        100,
+        {limit: 10},
+      );
     });
   });
 
@@ -70,23 +71,23 @@ describe('GroundworkClient', () => {
     it('makes get data request with default options', async () => {
       await client.getData();
 
-      expect(makeRequest).toHaveBeenCalledWith({
-        url: 'https://api.grndwork.com/v1/data',
-        method: 'GET',
-        query: undefined,
-        token: 'access_token',
-      });
+      expect(makePaginatedRequest).toHaveBeenCalledWith(
+        'access_token',
+        'https://api.grndwork.com/v1/data',
+        100,
+        undefined,
+      );
     });
 
     it('makes get data request with query', async () => {
       await client.getData({limit: 10});
 
-      expect(makeRequest).toHaveBeenCalledWith({
-        url: 'https://api.grndwork.com/v1/data',
-        method: 'GET',
-        query: {limit: 10},
-        token: 'access_token',
-      });
+      expect(makePaginatedRequest).toHaveBeenCalledWith(
+        'access_token',
+        'https://api.grndwork.com/v1/data',
+        100,
+        {limit: 10},
+      );
     });
   });
 

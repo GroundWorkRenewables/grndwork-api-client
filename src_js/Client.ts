@@ -1,6 +1,6 @@
 import {STATIONS_URL, DATA_URL} from './config';
 import {getAccessToken} from './accessTokens';
-import {makeRequest} from './makeRequest';
+import {makeRequest, makePaginatedRequest} from './makeRequest';
 import {
   RefreshToken,
   GetStationsQuery,
@@ -16,30 +16,39 @@ export class Client {
     private readonly platform: string,
   ) {}
 
-  public async getStations(query?: GetStationsQuery): Promise<Array<Required<Station>>> {
+  public async getStations(
+    query?: GetStationsQuery,
+  ): Promise<AsyncGenerator<Station>> {
     const accessToken = await getAccessToken(this.refreshToken, this.platform, 'read:stations');
 
-    const result = await makeRequest({
-      url: STATIONS_URL,
-      method: 'GET',
-      query,
-      token: accessToken,
-    });
+    const url = STATIONS_URL;
+    const pageSize = 100;
 
-    return result[0];
+    const result = makePaginatedRequest(
+      accessToken,
+      url,
+      pageSize,
+      query,
+    ) as AsyncGenerator<Station>;
+    return result;
   }
 
-  public async getData(query?: GetDataQuery): Promise<Array<Required<DataFile>>> {
+  public async getData(
+    query?: GetDataQuery,
+  ): Promise<AsyncGenerator<DataFile>> {
     const accessToken = await getAccessToken(this.refreshToken, this.platform, 'read:data');
 
-    const result = await makeRequest({
-      url: DATA_URL,
-      method: 'GET',
-      query,
-      token: accessToken,
-    });
+    const url = DATA_URL;
+    const pageSize = 100;
 
-    return result[0];
+    const result = makePaginatedRequest(
+      accessToken,
+      url,
+      pageSize,
+      query,
+    ) as AsyncGenerator<DataFile>;
+
+    return result;
   }
 
   public async postData(payload: PostDataPayload): Promise<void> {

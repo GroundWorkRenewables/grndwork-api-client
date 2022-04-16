@@ -218,8 +218,8 @@ describe('makePaginatedRequest', () => {
     for await (const result of makePaginatedRequest(
       token,
       url,
-      query,
       pageSize,
+      query,
     )
     ) {
       records.push(result);
@@ -251,10 +251,9 @@ describe('makePaginatedRequest', () => {
     for await (const result of makePaginatedRequest(
       token,
       url,
-      query,
       pageSize,
-    )
-    ) {
+      query,
+    )) {
       records.push(result);
     }
 
@@ -304,8 +303,8 @@ describe('makePaginatedRequest', () => {
     for await (const result of makePaginatedRequest(
       token,
       url,
-      query,
       pageSize,
+      query,
     )) {
       records.push(result);
     }

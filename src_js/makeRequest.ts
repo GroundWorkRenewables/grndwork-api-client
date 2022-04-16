@@ -62,9 +62,9 @@ export async function makeRequest(options: RequestOptions): Promise<Array<any>> 
 export async function* makePaginatedRequest(
   token: string,
   url: string,
-  query: any = {},
   pageSize: number,
-): AsyncGenerator<any> {
+  query: any = {},
+): AsyncGenerator<Promise<any>> {
   let offset = query.offset === undefined ? 0 : query.offset;
   let {limit} = query;
 
