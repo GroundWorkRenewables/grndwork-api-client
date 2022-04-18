@@ -25,7 +25,10 @@ import {createClient} from '@grndwork/api-client';
 
 const client = createClient();
 
-const stations = await client.getStations();
+const stations = [];
+for await (const station of await client.getStations()){
+  stations.push(station);
+}
 ```
 
 Python:
@@ -53,15 +56,15 @@ When providing subject and token values `GROUNDWORK_TOKEN_PATH` must not be set.
 
 JavaScript:
 ```typescript
-client.getStations(query?: GetStationsQuery): Promise<Array<Station>>
+client.getStations(query?: GetStationsQuery): Promise<AsyncGenerator<Station>>
 ```
 
 Python:
 ```py
-client.get_stations(query: GetStationsQuery = None, *, page_size: int = 100) -> Iterator[Station]
+client.get_stations(query: GetStationsQuery = None) -> Iterator[Station]
 ```
 
-Takes an optional get stations query object as an argument and returns an array of stations.
+Takes an optional get stations query object as an argument and returns a station iterator.
 
 #### Get Stations Query Parameters
 
@@ -83,9 +86,10 @@ For example:
 
 JavaScript:
 ```js
-const data = await client.getStations({
-  station: 'Test*',
-});
+const stations = [];
+for await (const station of await client.getStations(station: 'Test*')){
+  stations.push(station);
+}
 ```
 
 Python:
@@ -98,16 +102,7 @@ stations = list(client.get_stations({
 
 Would return all stations whose name starts with `Test`.
 
-#### Page Size
 
-You can set an optional page size to control the number of records returned from the API. ( min: 1, max: 100, default: 100 )
-
-Python:
-```py
-stations = list(client.get_stations({
-    'station': 'Test*',
-}, page_size=50))
-```
 
 #### Return Values
 
@@ -152,15 +147,15 @@ Stations are returned in alphabetical order by station name.
 
 JavaScript:
 ```typescript
-client.getData(query?: GetDataQuery): Promise<Array<DataFile>>
+client.getData(query?: GetDataQuery): Promise<AsyncGenerator<DataFile>>
 ```
 
 Python:
 ```py
-client.get_data(query: GetDataQuery = None, *, page_size: int = 100) -> Iterator[DataFile]
+client.get_data(query: GetDataQuery = None) -> Iterator[DataFile]
 ```
 
-Takes an optional get data query object as an argument and returns an array of data files.
+Takes an optional get data query object as an argument and returns a data file iterator.
 
 #### Get Data Query Parameters
 
@@ -186,9 +181,10 @@ For example:
 
 JavaScript:
 ```js
-const dataFiles = await client.getData({
-  filename: '*_OneMin.dat',
-});
+const dataFiles = [];
+for await (const file of await client.getData({filename: '*_OneMin.dat'})){
+  data.push(file);
+}
 ```
 
 Python:
@@ -200,16 +196,6 @@ data_files = list(client.get_data({
 
 Would return all one minute data files.
 
-#### Page Size
-
-You can set an optional page size to control the number of records returned from the API. ( min: 1, max: 100, default: 100 )
-
-Python:
-```py
-data_files = list(client.get_data({
-    'filename': '*_OneMin.dat',
-}, page_size=50))
-```
 
 #### Return Values
 
@@ -225,10 +211,10 @@ For example:
 
 JavaScript:
 ```js
-const dataFiles = await client.getData({
-  limit: 1,
-  records_limit: 100,
-});
+const dataFiles = [];
+for await (const file of await client.getData({limit: 1, records_limit: 100})){
+  data.push(file);
+}
 ```
 
 Python:
