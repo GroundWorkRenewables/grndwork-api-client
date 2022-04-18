@@ -26,14 +26,13 @@ class Client():
     def get_stations(
         self,
         query: Optional[GetStationsQuery] = None,
-        *,
-        page_size: int = 100,
     ) -> Iterator[Station]:
         access_token = get_access_token(
             refresh_token=self.refresh_token,
             platform=self.platform,
             scope='read:stations',
         )
+        page_size = 100
 
         return cast(
             Iterator[Station],
@@ -48,14 +47,13 @@ class Client():
     def get_data(
         self,
         query: Optional[GetDataQuery] = None,
-        *,
-        page_size: int = 100,
     ) -> Iterator[DataFile]:
         access_token = get_access_token(
             refresh_token=self.refresh_token,
             platform=self.platform,
             scope='read:data',
         )
+        page_size = 100
 
         return cast(
             Iterator[DataFile],

@@ -115,12 +115,6 @@ def describe_client():
         (_, kwargs) = make_paginated_request.call_args
         assert kwargs['query'] is None
 
-    def it_gets_stations_with_page_size(client_factory, make_paginated_request):
-        my_client = client_factory()
-        list(my_client.get_stations(page_size=50))
-        (_, kwargs) = make_paginated_request.call_args
-        assert kwargs['page_size'] == 50
-
     def it_gets_data(client_factory, get_access_token, make_paginated_request):
         my_client = client_factory()
         data_query = GetDataQuery(
@@ -147,12 +141,6 @@ def describe_client():
         list(my_client.get_data())
         (_, kwargs) = make_paginated_request.call_args
         assert kwargs['query'] is None
-
-    def it_gets_data_with_page_size(client_factory, make_paginated_request):
-        my_client = client_factory()
-        list(my_client.get_data(page_size=50))
-        (_, kwargs) = make_paginated_request.call_args
-        assert kwargs['page_size'] == 50
 
     def it_posts_data(client_factory, get_access_token, make_request):
         make_request.side_effect = [
