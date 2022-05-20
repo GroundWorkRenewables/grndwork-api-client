@@ -61,7 +61,7 @@ client.getStations(query?: GetStationsQuery): Promise<AsyncGenerator<Station>>
 
 Python:
 ```py
-client.get_stations(query: GetStationsQuery = None) -> Iterator[Station]
+client.get_stations(query: GetStationsQuery = None, *, page_size: int = 100) -> Iterator[Station]
 ```
 
 Takes an optional get stations query object as an argument and returns a station iterator.
@@ -102,7 +102,17 @@ stations = list(client.get_stations({
 
 Would return all stations whose name starts with `Test`.
 
+#### Page Size
 
+
+You can set an optional page size to control the number of records returned from the API. ( min: 1, max: 100, default: 100 )
+
+Python:
+```py
+stations = list(client.get_stations({
+    'station': 'Test*',
+}, page_size=50))
+```
 
 #### Return Values
 
@@ -152,7 +162,7 @@ client.getData(query?: GetDataQuery): Promise<AsyncGenerator<DataFile>>
 
 Python:
 ```py
-client.get_data(query: GetDataQuery = None) -> Iterator[DataFile]
+client.get_data(query: GetDataQuery = None, *, page_size: int = 100) -> Iterator[DataFile]
 ```
 
 Takes an optional get data query object as an argument and returns a data file iterator.
@@ -196,6 +206,16 @@ data_files = list(client.get_data({
 
 Would return all one minute data files.
 
+#### Page Size
+
+You can set an optional page size to control the number of records returned from the API. ( min: 1, max: 100, default: 100 )
+
+Python:
+```py
+data_files = list(client.get_data({
+    'filename': '*_OneMin.dat',
+}, page_size=50))
+```
 
 #### Return Values
 
