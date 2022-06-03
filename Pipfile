@@ -7,7 +7,7 @@ verify_ssl = true
 python_version = "3.9"
 
 [packages]
-pyjwt = "~=2.3"
+pyjwt = "~=2.4"
 requests = "~=2.27"
 
 [dev-packages]

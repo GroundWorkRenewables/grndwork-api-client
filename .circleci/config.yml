@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 
 jobs:
   test:
@@ -6,68 +6,97 @@ jobs:
       - image: cimg/python:3.9-node
     steps:
       - checkout
+
       - restore_cache:
+          name: Restore node package cache
           keys:
-            - node-packages-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
-            - node-packages-v1-{{ .Branch }}-
+            - node-packages-v1-{{ checksum "package-lock.json" }}
             - node-packages-v1-
+
       - restore_cache:
+          name: Restore python package cache
           keys:
-            - pipenv-packages-v1-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
-            - pipenv-packages-v1-{{ .Branch }}-
-            - pipenv-packages-v1-
+            - python-packages-v1-{{ checksum "Pipfile.lock" }}
+            - python-packages-v1-
+
       - run:
-          name: Install Dependencies
+          name: Install test dependencies
           command: |
             npm install
             pipenv sync --dev
+            npm install --no-save jest-junit
+
       - save_cache:
-          key: node-packages-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
+          name: Save node package cache
+          key: node-packages-v1-{{ checksum "package-lock.json" }}
           paths:
             - ~/.npm/
+
       - save_cache:
-          key: pipenv-packages-v1-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+          name: Save python package cache
+          key: python-packages-v1-{{ checksum "Pipfile.lock" }}
           paths:
             - ~/.virtualenvs
+
       - run:
-          name: Run Unit Tests
+          name: Run tests
           command: |
-            npm test
+            mkdir -p ./test-results/junit
+
+            npm run pretest
+            npm run test:jest -- --ci --runInBand --reporters=default --reporters=jest-junit
+            npm run test:pytest -- --junitxml=./test-results/junit/pytest-results.xml
+          environment:
+            JEST_JUNIT_OUTPUT_DIR: ./test-results/junit/
+            JEST_JUNIT_OUTPUT_NAME: jest-results.xml
+
+      - store_test_results:
+          path: ./test-results/
 
   build:
     docker:
       - image: cimg/python:3.9-node
+
     steps:
       - checkout
+
       - restore_cache:
+          name: Restore node package cache
           keys:
-            - node-packages-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
-            - node-packages-v1-{{ .Branch }}-
+            - node-packages-v1-{{ checksum "package-lock.json" }}
             - node-packages-v1-
+
       - restore_cache:
+          name: Restore python package cache
           keys:
-            - pipenv-packages-v1-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
-            - pipenv-packages-v1-{{ .Branch }}-
-            - pipenv-packages-v1-
+            - python-packages-v1-{{ checksum "Pipfile.lock" }}
+            - python-packages-v1-
+
       - run:
-          name: Install Dependencies
+          name: Install build dependencies
           command: |
             npm install
             pipenv sync --dev
+
       - save_cache:
-          key: node-packages-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
+          name: Save node package cache
+          key: node-packages-v1-{{ checksum "package-lock.json" }}
           paths:
             - ~/.npm/
+
       - save_cache:
-          key: pipenv-packages-v1-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+          name: Save python package cache
+          key: python-packages-v1-{{ checksum "Pipfile.lock" }}
           paths:
             - ~/.virtualenvs
+
       - run:
           name: Run Build
           command: |
             npm run build
+
       - run:
-          name: Publish When Tagged Release
+          name: Publish tagged release
           command: |
             if [[ $CIRCLE_TAG =~ ^v[0-9].* ]]; then
               case $CIRCLE_TAG in
@@ -87,7 +116,6 @@ jobs:
             fi
 
 workflows:
-  version: 2
   main:
     jobs:
       - test:
