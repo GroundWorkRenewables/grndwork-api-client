@@ -6,23 +6,23 @@ export const TOKENS_URL = `${ API_URL }/v1/tokens`;
 export const STATIONS_URL = `${ API_URL }/v1/stations`;
 export const DATA_URL = `${ API_URL }/v1/data`;
 
-export function getRefreshToken(): RefreshToken | null {
+export function getRefreshToken(): RefreshToken {
   const {
     GROUNDWORK_TOKEN_PATH,
     GROUNDWORK_SUBJECT,
     GROUNDWORK_TOKEN,
   } = process.env;
 
-  let result: RefreshToken | null = null;
-
   if (GROUNDWORK_TOKEN_PATH) {
-    result = JSON.parse(fs.readFileSync(GROUNDWORK_TOKEN_PATH, 'utf8'));
-  } else if (GROUNDWORK_SUBJECT && GROUNDWORK_TOKEN) {
-    result = {
+    return JSON.parse(fs.readFileSync(GROUNDWORK_TOKEN_PATH, 'utf8'));
+  }
+
+  if (GROUNDWORK_SUBJECT && GROUNDWORK_TOKEN) {
+    return {
       subject: GROUNDWORK_SUBJECT,
       token: GROUNDWORK_TOKEN,
     };
   }
 
-  return result;
+  throw new Error('Could not get refresh token from environment');
 }

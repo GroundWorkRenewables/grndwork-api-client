@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import {TOKENS_URL} from './config';
-import {makeRequest} from './makeRequest';
 import {RefreshToken} from './interfaces';
+import {makeRequest} from './make_request';
 
 let accessTokenCache: Record<string, string> = {};
 
@@ -16,7 +16,7 @@ export async function getAccessToken(
 ): Promise<string> {
   const cacheKey = `${ platform }:${ scope }`;
 
-  let accessToken: string = accessTokenCache[cacheKey];
+  let accessToken = accessTokenCache[cacheKey];
 
   if (!accessToken || hasExpired(accessToken)) {
     accessToken = await createAccessToken(refreshToken, platform, scope);
@@ -31,7 +31,7 @@ async function createAccessToken(
   platform: string,
   scope: string,
 ): Promise<string> {
-  const {token: accessToken} = await makeRequest<{token: string}>({
+  const [{token: accessToken}] = await makeRequest<{token: string}>({
     url: TOKENS_URL,
     method: 'POST',
     token: refreshToken.token,
