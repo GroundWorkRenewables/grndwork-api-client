@@ -2,7 +2,7 @@ import json
 import os
 from typing import cast
 
-from .dtos import RefreshToken
+from .interfaces import RefreshToken
 
 API_URL = os.environ.get('GROUNDWORK_API_URL', 'https://api.grndwork.com')
 TOKENS_URL = f'{ API_URL }/v1/tokens'
@@ -17,15 +17,12 @@ def get_refresh_token() -> RefreshToken:
 
     if groundwork_token_path:
         with open(groundwork_token_path) as f:
-            data = f.read()
-        result = cast(RefreshToken, json.loads(data))
+            return cast(RefreshToken, json.loads(f.read()))
 
-    elif groundwork_subject and groundwork_token:
-        result = RefreshToken(
+    if groundwork_subject and groundwork_token:
+        return RefreshToken(
             subject=groundwork_subject,
             token=groundwork_token,
         )
-    else:
-        raise OSError('Could not get refresh token from environment')
 
-    return result
+    raise OSError('Could not get refresh token from environment')
