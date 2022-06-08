@@ -1,10 +1,10 @@
 import time
-from typing import Dict
+from typing import cast, Dict
 
 import jwt
 
 from .config import TOKENS_URL
-from .dtos import RefreshToken
+from .interfaces import RefreshToken
 from .make_request import make_request
 
 
@@ -22,6 +22,7 @@ def get_access_token(
     scope: str,
 ) -> str:
     cache_key = f'{platform}:{scope}'
+
     access_token = access_token_cache.get(cache_key)
 
     if not access_token or has_expired(access_token):
@@ -47,12 +48,7 @@ def create_access_token(
         },
     )
 
-    access_token = result.get('token')
-
-    if isinstance(access_token, str):
-        return access_token
-
-    raise ValueError('No token returned')
+    return cast(str, result.get('token'))
 
 
 def has_expired(token: str) -> bool:

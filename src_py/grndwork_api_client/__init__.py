@@ -1,41 +1,51 @@
 from .client import Client
 from .config import get_refresh_token
-from .dtos import (
+from .interfaces import (
     DataFile,
     DataFileHeaders,
     DataRecord,
     GetDataQuery,
     GetStationsQuery,
+    PostDataFile,
     PostDataPayload,
     RefreshToken,
     Station,
+    StationDataFile,
 )
+from .make_request import RequestError
 
 LOGGERNET_PLATFORM = 'loggernet'
 TRACE_PLATFORM = 'trace'
 
 
-def create_client(
-    platform: str = LOGGERNET_PLATFORM,
-) -> Client:
-    refresh_token: RefreshToken = get_refresh_token()
+def create_client(platform: str = LOGGERNET_PLATFORM) -> Client:
     return Client(
-        refresh_token=refresh_token,
+        refresh_token=get_refresh_token(),
         platform=platform,
     )
 
 
 __all__ = [
-    'LOGGERNET_PLATFORM',
-    'TRACE_PLATFORM',
+    # Api client
     'create_client',
     'Client',
-    'RefreshToken',
-    'GetStationsQuery',
-    'GetDataQuery',
-    'PostDataPayload',
-    'Station',
+
+    # Platform constants
+    'LOGGERNET_PLATFORM',
+    'TRACE_PLATFORM',
+
+    # Interfaces
     'DataFile',
     'DataFileHeaders',
     'DataRecord',
+    'GetDataQuery',
+    'GetStationsQuery',
+    'PostDataFile',
+    'PostDataPayload',
+    'RefreshToken',
+    'Station',
+    'StationDataFile',
+
+    # Errors
+    'RequestError',
 ]
