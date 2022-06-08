@@ -25,7 +25,7 @@ import {createClient} from '@grndwork/api-client';
 
 const client = createClient();
 
-const stations = await client.getStations();
+const stations = await client.getStations().toArray();
 ```
 
 Python:
@@ -53,7 +53,7 @@ When providing subject and token values `GROUNDWORK_TOKEN_PATH` must not be set.
 
 JavaScript:
 ```typescript
-client.getStations(query?: GetStationsQuery): Promise<Array<Station>>
+client.getStations(query?: GetStationsQuery, pageSize: number = 100): IterableResponse<Station>
 ```
 
 Python:
@@ -83,9 +83,9 @@ For example:
 
 JavaScript:
 ```js
-const data = await client.getStations({
+const stations = await client.getStations({
   station: 'Test*',
-});
+}).toArray();
 ```
 
 Python:
@@ -100,7 +100,14 @@ Would return all stations whose name starts with `Test`.
 
 #### Page Size
 
-You can set an optional page size to control the number of records returned from the API. ( min: 1, max: 100, default: 100 )
+You can set an optional page size to control the number of records returned per request from the API. ( min: 1, max: 100, default: 100 )
+
+JavaScript:
+```js
+const stations = await client.getStations({
+  station: 'Test*',
+}, 50).toArray();
+```
 
 Python:
 ```py
@@ -152,7 +159,7 @@ Stations are returned in alphabetical order by station name.
 
 JavaScript:
 ```typescript
-client.getData(query?: GetDataQuery): Promise<Array<DataFile>>
+client.getData(query?: GetDataQuery, pageSize: number = 100): IterableResponse<DataFile>
 ```
 
 Python:
@@ -188,7 +195,7 @@ JavaScript:
 ```js
 const dataFiles = await client.getData({
   filename: '*_OneMin.dat',
-});
+}).toArray();
 ```
 
 Python:
@@ -202,7 +209,14 @@ Would return all one minute data files.
 
 #### Page Size
 
-You can set an optional page size to control the number of records returned from the API. ( min: 1, max: 100, default: 100 )
+You can set an optional page size to control the number of records returned per request from the API. ( min: 1, max: 100, default: 100 )
+
+JavaScript:
+```js
+const dataFiles = await client.getData({
+  filename: '*_OneMin.dat',
+}, 50).toArray();
+```
 
 Python:
 ```py
@@ -228,7 +242,7 @@ JavaScript:
 const dataFiles = await client.getData({
   limit: 1,
   records_limit: 100,
-});
+}).toArray();
 ```
 
 Python:

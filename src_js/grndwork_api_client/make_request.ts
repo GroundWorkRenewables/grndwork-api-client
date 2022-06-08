@@ -1,8 +1,19 @@
-import fetch from 'node-fetch';
+import {STATUS_CODES} from 'http';
+import fetch, {Headers} from 'node-fetch';
 import {RequestOptions} from './interfaces';
-import {ServerError} from './ServerError';
 
-export async function makeRequest<T>(options: RequestOptions): Promise<T> {
+export class RequestError extends Error {
+  constructor(
+    message: string,
+    public readonly errors: Array<{field: string, message: string}> = [],
+  ) {
+    super(message);
+  }
+}
+
+export async function makeRequest<T>(
+  options: RequestOptions,
+): Promise<[T, Headers]> {
   const url = new URL(options.url);
 
   if (options.query) {
@@ -38,12 +49,15 @@ export async function makeRequest<T>(options: RequestOptions): Promise<T> {
   try {
     payload = await resp.json();
   } catch (err) {
-    throw new ServerError('Invalid response payload', resp.status);
+    throw new RequestError('Failed to parse response payload');
   }
 
   if (resp.status >= 400) {
-    throw new ServerError(payload.message, resp.status, payload.errors);
+    throw new RequestError(
+      payload.message || STATUS_CODES[resp.status],
+      payload.errors,
+    );
   }
 
-  return payload;
+  return [payload as T, resp.headers];
 }

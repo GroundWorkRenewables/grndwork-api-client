@@ -38,11 +38,11 @@ module.exports = {
     'no-this-before-super': 'error',
     'no-underscore-dangle': 'off',
     'prefer-destructuring': ['error', {
-      'VariableDeclarator': {
+      VariableDeclarator: {
         array: false,
         object: true,
       },
-      'AssignmentExpression': {
+      AssignmentExpression: {
         array: false,
         object: true,
       }
@@ -53,6 +53,13 @@ module.exports = {
     'template-curly-spacing': ['error', 'always'],
 
     'import/named': 'error',
+    'import/order': ['error', {
+      groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index', 'object', 'type'],
+      alphabetize: {
+        order: 'asc',
+        caseInsensitive: true,
+      },
+    }],
     'import/prefer-default-export': 'off',
 
     '@typescript-eslint/array-type': ['error', {
@@ -63,7 +70,7 @@ module.exports = {
       allowExpressions: true,
     }],
     '@typescript-eslint/explicit-member-accessibility': ['error', {
-      'overrides': {
+      overrides: {
         constructors: 'no-public',
       }
     }],
