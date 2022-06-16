@@ -101,6 +101,17 @@ describe('makePaginatedRequest', () => {
     expect(results).toEqual(generateItems(6, 161));
   });
 
+  it('throws when invalid content range', async () => {
+    (makeRequest as jest.Mock).mockReturnValue([[], new Headers({
+      'Content-Range': 'items 1-100/165',
+    })]);
+
+    await expect(() => consumeItems(makePaginatedRequest({
+      url: API_URL,
+      token: 'auth token',
+    }))).rejects.toThrow(new Error('Invalid content range'));
+  });
+
   function generateItems(start: number, end: number): Array<{id: number}> {
     const items = [];
 

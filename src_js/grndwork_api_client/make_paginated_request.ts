@@ -33,10 +33,14 @@ export async function* makePaginatedRequest<T>(
 
     const contentRange = ContentRange.parse(headers.get('content-range') || '');
 
-    if (contentRange.last === contentRange.count) {
-      break;
-    }
+    if (offset < contentRange.last) {
+      offset = contentRange.last;
 
-    offset = contentRange.last;
+      if (offset >= contentRange.count) {
+        break;
+      }
+    } else {
+      throw new Error('Invalid content range');
+    }
   }
 }

@@ -95,3 +95,15 @@ def describe_make_paginated_request():
         assert results == [
             {'id': item} for item in range(6, 161)
         ]
+
+    def it_raises_error_when_invalid_content_range(make_request):
+        make_request.side_effect = None
+        make_request.return_value = ([], {
+            'Content-Range': 'items 1-100/165',
+        })
+
+        with pytest.raises(ValueError, match='Invalid content range'):
+            list(make_paginated_request(
+                url=API_URL,
+                token='auth token',
+            ))
