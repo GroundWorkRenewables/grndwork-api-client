@@ -12,6 +12,7 @@ import {
   Station,
   StationDataFile,
 } from './interfaces';
+import {IterableResponse} from './iterable_response';
 import {RequestError} from './make_request';
 
 const LOGGERNET_PLATFORM = 'loggernet';
@@ -39,6 +40,7 @@ export {
   DataRecord,
   GetDataQuery,
   GetStationsQuery,
+  IterableResponse,
   PostDataFile,
   PostDataPayload,
   RefreshToken,

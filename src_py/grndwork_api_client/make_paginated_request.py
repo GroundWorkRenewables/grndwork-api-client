@@ -39,7 +39,10 @@ def make_paginated_request(
 
         content_range = ContentRange.parse(headers.get('Content-Range') or '')
 
-        if content_range.last == content_range.count:
-            break
+        if offset < content_range.last:
+            offset = content_range.last
 
-        offset = content_range.last
+            if offset >= content_range.count:
+                break
+        else:
+            raise ValueError('Invalid content range')
