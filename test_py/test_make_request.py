@@ -133,7 +133,7 @@ def describe_make_request():
             )
 
     def it_raises_error_when_bad_response_body(requests):
-        requests.request.return_value.json.side_effect = _requests.JSONDecodeError
+        requests.request.return_value.json.side_effect = _requests.JSONDecodeError('Invalid', '', 0)
 
         with pytest.raises(RequestError, match='Failed to parse response payload'):
             make_request(
