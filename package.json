@@ -3,8 +3,8 @@
   "description": "API client for GroundWork Renewables Inc",
   "version": "1.0.0-alpha.4",
   "license": "MIT",
-  "main": "dist_js/grndwork_api_client/index.js",
-  "types": "dist_js/grndwork_api_client/index.d.ts",
+  "main": "dist_js/index.js",
+  "types": "dist_js/index.d.ts",
   "repository": "https://github.com/GroundWorkRenewables/grndwork-api-client",
   "engines": {
     "node": ">=14"
