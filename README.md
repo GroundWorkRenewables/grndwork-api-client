@@ -24,8 +24,6 @@ JavaScript:
 import {createClient} from '@grndwork/api-client';
 
 const client = createClient();
-
-const stations = await client.getStations().toArray();
 ```
 
 Python:
@@ -33,8 +31,6 @@ Python:
 from grndwork_api_client import create_client
 
 client = create_client()
-
-stations = list(client.get_stations())
 ```
 
 In order to access https://api.grndwork.com you must first obtain a refresh token from GroundWork Renewables.
@@ -45,7 +41,36 @@ Or the subject and token values from this file can be provided using the `GROUND
 
 When providing subject and token values `GROUNDWORK_TOKEN_PATH` must not be set.
 
-**Note**: Python returns an iterator. You can consume the iterator using `for station in client.get_stations()` or `list(client.get_stations())`.
+### Javascript Client
+
+For methods that return lists, the javascript client returns a custom async iterable. You can consume this using:
+
+```js
+for await (const station of client.getStations()) {
+  ...
+}
+```
+
+or
+
+```js
+const stations = await client.getStations().toArray();
+```
+
+### Python Client
+
+For methods that return lists, the python client returns a standard iterator. You can consume this using:
+
+```py
+for station in client.get_stations():
+  ...
+```
+
+or
+
+```py
+stations = list(client.get_stations())
+```
 
 ## API
 
@@ -70,8 +95,8 @@ Takes an optional get stations query object as an argument and returns an array 
   | station | string | Only return stations with UUID, name, or name matching pattern |
   | site | string | Only return stations for site with UUID, name, or name matching pattern |
   | client | string | Only return stations for client with UUID, name, or name matching pattern |
-  | limit | number | Total number of stations to return |
-  | offset | number | Number of stations to skip over when paging results |
+  | limit | number | Only return a limited number of stations |
+  | offset | number | Number of stations to skip over before returning results |
 
 ##### Pattern Matching
 
@@ -83,37 +108,30 @@ For example:
 
 JavaScript:
 ```js
-const stations = await client.getStations({
-  station: 'Test*',
-}).toArray();
+const stations = await client.getStations({station: 'Test*'}).toArray();
 ```
 
 Python:
 ```py
-stations = list(client.get_stations({
-    'station': 'Test*',
-}))
+stations = list(client.get_stations({'station': 'Test*'}))
 ```
 
 
 Would return all stations whose name starts with `Test`.
 
-#### Page Size
+##### Page Size
 
-You can set an optional page size to control the number of records returned per request from the API. ( min: 1, max: 100, default: 100 )
+You can set an optional page size to control the number of stations returned per request from the API.
+( min: 1, max: 100, default: 100 )
 
 JavaScript:
 ```js
-const stations = await client.getStations({
-  station: 'Test*',
-}, 50).toArray();
+const stations = await client.getStations({}, 50).toArray();
 ```
 
 Python:
 ```py
-stations = list(client.get_stations({
-    'station': 'Test*',
-}, page_size=50))
+stations = list(client.get_stations({}, page_size=50))
 ```
 
 #### Return Values
@@ -145,9 +163,9 @@ Stations are returned in alphabetical order by station name.
         "filename": "Test_OneMin.dat",
         "is_stale": false,
         "headers": {
-          "columns": "Ambient_Temp",
-          "units": "Deg_C",
-          "processing": "Avg"
+          "columns": ["Ambient_Temp"],
+          "units": ["Deg_C"],
+          "processing": ["Avg"]
         }
       }
     ]
@@ -177,9 +195,9 @@ Takes an optional get data query object as an argument and returns an array of d
   | station | string | Only return data files for station with UUID, name, or name matching pattern |
   | site | string | Only return data files for site with UUID, name, or name matching pattern |
   | client | string | Only return data files for client with UUID, name, or name matching pattern |
-  | limit | number | Total number of files to return |
-  | offset | number | Number of files to skip over when paging results |
-  | records_limit | number | Number of records to return per file ( min: 1, max: 1500, default: 1 ) |
+  | limit | number | Only return a limited number of files |
+  | offset | number | Number of files to skip over before returning results |
+  | records_limit | number | Number of records to return per file ( min: 0, max: 1500, default: 0 ) |
   | records_before | timestamp | Only return records at or before timestamp ( format: `yyyy-mm-dd hh:mm:ss` ) |
   | records_after | timestamp | Only return records at or after timestamp ( format: `yyyy-mm-dd hh:mm:ss` ) |
 
@@ -193,64 +211,48 @@ For example:
 
 JavaScript:
 ```js
-const dataFiles = await client.getData({
-  filename: '*_OneMin.dat',
-}).toArray();
+const dataFiles = await client.getData({filename: '*_OneMin.dat'}).toArray();
 ```
 
 Python:
 ```py
-data_files = list(client.get_data({
-    'filename': '*_OneMin.dat',
-}))
+data_files = list(client.get_data({'filename': '*_OneMin.dat'}))
 ```
 
 Would return all one minute data files.
 
-#### Page Size
+##### Page Size
 
-You can set an optional page size to control the number of records returned per request from the API. ( min: 1, max: 100, default: 100 )
+You can set an optional page size to control the number of files returned per request from the API.
+( min: 1, max: 100, default: 100 )
 
 JavaScript:
 ```js
-const dataFiles = await client.getData({
-  filename: '*_OneMin.dat',
-}, 50).toArray();
+const dataFiles = await client.getData({}, 50).toArray();
 ```
 
 Python:
 ```py
-data_files = list(client.get_data({
-    'filename': '*_OneMin.dat',
-}, page_size=50))
+data_files = list(client.get_data({}, page_size=50))
 ```
 
 #### Return Values
 
 Data files are returned in alphabetical order by filename.
 
-Records are returned in reverse chronological order starting at the most recent timestamp.
-
-By default each data file includes the most recent data record.
-
-Only a single data file will be returned at a time when requesting multiple data records.
+When `records_limit` is included in the query, records are returned in reverse chronological order starting at the most recent timestamp.
+When `records_limit` is greater then 1, only a single data file will be returned per request ( equivalent to page size of 1 ).
 
 For example:
 
 JavaScript:
 ```js
-const dataFiles = await client.getData({
-  limit: 1,
-  records_limit: 100,
-}).toArray();
+const dataFiles = await client.getData({limit: 1, records_limit: 100}).toArray();
 ```
 
 Python:
 ```py
-data_files = list(client.get_data({
-    'limit': 1,
-    'records_limit': 100,
-}))
+data_files = list(client.get_data({'limit': 1, 'records_limit': 100}))
 ```
 
 Would return the most recent 100 records from the first file alphabetically.
@@ -264,9 +266,9 @@ Would return the most recent 100 records from the first file alphabetically.
     "filename": "Test_OneMin.dat",
     "is_stale": false,
     "headers": {
-      "columns": "Ambient_Temp",
-      "units": "Deg_C",
-      "processing": "Avg"
+      "columns": ["Ambient_Temp"],
+      "units": ["Deg_C"],
+      "processing": ["Avg"]
     },
     "records": [
       {
