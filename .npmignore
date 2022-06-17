@@ -1,5 +1,6 @@
 src*
 test*
+dist_py
 coverage
 jest.config.js
 tsconfig*
