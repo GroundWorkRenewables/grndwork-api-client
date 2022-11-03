@@ -2,9 +2,8 @@ import json
 
 import pytest
 import requests as _requests
+from src_py.grndwork_api_client.config import TOKENS_URL as API_URL
 from src_py.grndwork_api_client.make_request import make_request, RequestError
-
-API_URL = 'https://api.grndwork.com/v1/tokens'
 
 
 @pytest.fixture(name='requests', autouse=True)

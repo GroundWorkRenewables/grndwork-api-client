@@ -1,8 +1,7 @@
 import pytest
+from src_py.grndwork_api_client.config import TOKENS_URL as API_URL
 from src_py.grndwork_api_client.make_paginated_request import make_paginated_request
 from src_py.grndwork_api_client.make_request import make_request as _make_request
-
-API_URL = 'https://api.grndwork.com/v1/tokens'
 
 
 def describe_make_paginated_request():
