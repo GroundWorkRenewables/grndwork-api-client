@@ -59,7 +59,7 @@ def has_expired(token: str) -> bool:
     )
 
     expiration = int(decoded_token.get('exp', 0))
-    now = int(time.time() * 1000)
+    now = int(time.time())
 
     if expiration and now - expiration >= 0:
         return True

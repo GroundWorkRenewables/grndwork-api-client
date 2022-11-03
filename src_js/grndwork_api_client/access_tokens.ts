@@ -47,7 +47,6 @@ async function createAccessToken(
 
 function hasExpired(token: string): boolean {
   const {exp: expiration} = (jwt.decode(token) || {}) as {exp?: number};
-
   const now = Math.floor(Date.now() / 1000);
 
   if (expiration && now - expiration >= 0) {
