@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import {getAccessToken, resetAccessTokenCache} from '../src_js/grndwork_api_client/access_tokens';
+import {TOKENS_URL} from '../src_js/grndwork_api_client/config';
 import {makeRequest} from '../src_js/grndwork_api_client/make_request';
 
 jest.mock('jsonwebtoken');
@@ -31,7 +32,7 @@ describe('getAccessToken', () => {
     expect(makeRequest).toHaveBeenCalledTimes(1);
 
     expect(makeRequest).toHaveBeenCalledWith({
-      url: 'https://api.grndwork.com/v1/tokens',
+      url: TOKENS_URL,
       token: 'refresh_token',
       method: 'POST',
       body: {

@@ -1,10 +1,9 @@
 import {Headers} from 'node-fetch';
+import {TOKENS_URL as API_URL} from '../src_js/grndwork_api_client/config';
 import {makePaginatedRequest} from '../src_js/grndwork_api_client/make_paginated_request';
 import {makeRequest} from '../src_js/grndwork_api_client/make_request';
 
 jest.mock('../src_js/grndwork_api_client/make_request');
-
-const API_URL = 'https://api.grndwork.com/v1/tokens';
 
 describe('makePaginatedRequest', () => {
   beforeEach(() => {

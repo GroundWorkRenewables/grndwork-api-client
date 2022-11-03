@@ -1,11 +1,10 @@
 import fetch from 'node-fetch';
+import {TOKENS_URL as API_URL} from '../src_js/grndwork_api_client/config';
 import {makeRequest, RequestError} from '../src_js/grndwork_api_client/make_request';
 
 jest.mock('node-fetch');
 
 const {Response} = jest.requireActual('node-fetch');
-
-const API_URL = 'https://api.grndwork.com/v1/tokens';
 
 describe('makeRequest', () => {
   beforeEach(() => {

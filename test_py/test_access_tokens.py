@@ -3,6 +3,7 @@ import time
 import jwt
 import pytest
 from src_py.grndwork_api_client.access_tokens import get_access_token, reset_access_token_cache
+from src_py.grndwork_api_client.config import TOKENS_URL
 from src_py.grndwork_api_client.make_request import make_request as _make_request
 
 
@@ -46,7 +47,7 @@ def describe_get_access_token():
         (_, kwargs) = make_request.call_args
 
         assert kwargs == {
-            'url': 'https://api.grndwork.com/v1/tokens',
+            'url': TOKENS_URL,
             'token': 'refresh_token',
             'method': 'POST',
             'body': {
