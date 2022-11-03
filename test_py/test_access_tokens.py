@@ -25,7 +25,9 @@ def describe_get_access_token():
         return mocker.patch(
             target='src_py.grndwork_api_client.access_tokens.jwt.decode',
             spec=jwt.decode,
-            return_value={'exp': int(time.time() * 1000) + 1000},
+            return_value={
+                'exp': int(time.time()) + 1000,
+            },
         )
 
     @pytest.fixture(autouse=True)
@@ -103,7 +105,7 @@ def describe_get_access_token():
 
     def it_requests_new_access_token_when_existing_has_expired(make_request, decode):
         decode.return_value = {
-            'exp': int(time.time() * 1000) - 1000,
+            'exp': int(time.time()) - 1000,
         }
 
         get_access_token(

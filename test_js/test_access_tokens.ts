@@ -15,7 +15,7 @@ describe('getAccessToken', () => {
     resetAccessTokenCache();
 
     (jwt.decode as jest.Mock).mockReturnValue({
-      exp: new Date().getTime() + 1000,
+      exp: Math.floor(Date.now() / 1000) + 1000,
     });
 
     (makeRequest as jest.Mock).mockResolvedValue([{
@@ -67,7 +67,7 @@ describe('getAccessToken', () => {
 
   it('requests new access token when existing has expired', async () => {
     (jwt.decode as jest.Mock).mockReturnValueOnce({
-      exp: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) - 1000,
     });
 
     await getAccessToken(refreshToken, 'platform', 'read:data');
