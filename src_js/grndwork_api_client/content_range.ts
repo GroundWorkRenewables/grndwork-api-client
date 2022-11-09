@@ -7,19 +7,23 @@ export class ContentRange {
   ) {}
 
   public static parse(header: string): ContentRange {
-    const result = /^(\w+) (\d+)-(\d+)\/(\d+)$/.exec(header);
+    if (header) {
+      const result = /^(\w+) (\d+)-(\d+)\/(\d+)$/.exec(header);
 
-    if (result) {
-      const [, unit, first, last, count] = result;
+      if (result) {
+        const [, unit, first, last, count] = result;
 
-      return new ContentRange(
-        parseInt(first, 10),
-        parseInt(last, 10),
-        parseInt(count, 10),
-        unit,
-      );
+        return new ContentRange(
+          parseInt(first, 10),
+          parseInt(last, 10),
+          parseInt(count, 10),
+          unit,
+        );
+      }
+
+      throw new Error('Could not parse content range');
+    } else {
+      throw new Error('Missing content range');
     }
-
-    throw new Error('Could not parse content range');
   }
 }

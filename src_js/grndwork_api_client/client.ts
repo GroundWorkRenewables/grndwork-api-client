@@ -19,41 +19,49 @@ export class Client {
   ) {}
 
   public getStations(
-    query: GetStationsQuery = {},
-    pageSize = 100,
+    query: GetStationsQuery | null = null,
+    pageSize: number | null = null,
   ): IterableResponse<Station> {
+    const iterator = this._requestStations(query, pageSize);
+
+    return new IterableResponse(iterator);
+  }
+
+  private async* _requestStations(
+    query: GetStationsQuery | null,
+    pageSize: number | null,
+  ): AsyncIterableIterator<Station> {
     const {refreshToken, platform} = this;
+    const accessToken = await getAccessToken(refreshToken, platform, 'read:stations');
 
-    async function* request(): AsyncIterableIterator<Station> {
-      const accessToken = await getAccessToken(refreshToken, platform, 'read:stations');
-
-      yield* makePaginatedRequest<Station>({
-        url: STATIONS_URL,
-        token: accessToken,
-        query,
-      }, pageSize);
-    }
-
-    return new IterableResponse(request());
+    yield* makePaginatedRequest<Station>({
+      url: STATIONS_URL,
+      token: accessToken,
+      query: query || {},
+    }, pageSize || 100);
   }
 
   public getData(
-    query: GetDataQuery = {},
-    pageSize = 100,
+    query: GetDataQuery | null = null,
+    pageSize: number | null = null,
   ): IterableResponse<DataFile> {
+    const iterator = this._requestDataFiles(query, pageSize);
+
+    return new IterableResponse(iterator);
+  }
+
+  private async* _requestDataFiles(
+    query: GetDataQuery | null,
+    pageSize: number | null,
+  ): AsyncIterableIterator<DataFile> {
     const {refreshToken, platform} = this;
+    const accessToken = await getAccessToken(refreshToken, platform, 'read:data');
 
-    async function* request(): AsyncIterableIterator<DataFile> {
-      const accessToken = await getAccessToken(refreshToken, platform, 'read:data');
-
-      yield* makePaginatedRequest<DataFile>({
-        url: DATA_URL,
-        token: accessToken,
-        query,
-      }, pageSize);
-    }
-
-    return new IterableResponse(request());
+    yield* makePaginatedRequest<DataFile>({
+      url: DATA_URL,
+      token: accessToken,
+      query: query || {},
+    }, pageSize || 100);
   }
 
   public async postData(payload: PostDataPayload): Promise<void> {

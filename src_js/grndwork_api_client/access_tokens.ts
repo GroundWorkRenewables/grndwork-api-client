@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import {TOKENS_URL} from './config';
-import {RefreshToken} from './interfaces';
+import {AccessToken, RefreshToken} from './interfaces';
 import {makeRequest} from './make_request';
 
 let accessTokenCache: Record<string, string> = {};
@@ -31,7 +31,7 @@ async function createAccessToken(
   platform: string,
   scope: string,
 ): Promise<string> {
-  const [{token: accessToken}] = await makeRequest<{token: string}>({
+  const result = (await makeRequest<AccessToken>({
     url: TOKENS_URL,
     method: 'POST',
     token: refreshToken.token,
@@ -40,9 +40,9 @@ async function createAccessToken(
       platform,
       scope,
     },
-  });
+  }))[0];
 
-  return accessToken;
+  return result.token;
 }
 
 function hasExpired(token: string): boolean {

@@ -10,7 +10,7 @@ def make_paginated_request(
     token: str,
     headers: Optional[MutableMapping[str, Any]] = None,
     query: Any = None,
-    page_size: int = 100,
+    page_size: int,
 ) -> Iterator[Any]:
     headers = headers or {}
     query = query or {}
@@ -18,7 +18,7 @@ def make_paginated_request(
     offset = query.get('offset') or 0
 
     while True:
-        results, headers = make_request(
+        results, resp = make_request(
             url=url,
             token=token,
             headers=headers,
@@ -29,7 +29,10 @@ def make_paginated_request(
             },
         )
 
-        yield from results
+        if results:
+            yield from results
+        else:
+            break
 
         if limit:
             limit -= len(results)
@@ -37,7 +40,7 @@ def make_paginated_request(
             if limit <= 0:
                 break
 
-        content_range = ContentRange.parse(headers.get('Content-Range') or '')
+        content_range = ContentRange.parse(resp.headers.get('Content-Range') or '')
 
         if offset < content_range.last:
             offset = content_range.last

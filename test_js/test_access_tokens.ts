@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import {Response} from 'node-fetch';
 import {getAccessToken, resetAccessTokenCache} from '../src_js/grndwork_api_client/access_tokens';
 import {TOKENS_URL} from '../src_js/grndwork_api_client/config';
 import {makeRequest} from '../src_js/grndwork_api_client/make_request';
@@ -19,9 +20,10 @@ describe('getAccessToken', () => {
       exp: Math.floor(Date.now() / 1000) + 1000,
     });
 
-    (makeRequest as jest.Mock).mockResolvedValue([{
-      token: 'access_token',
-    }]);
+    (makeRequest as jest.Mock).mockResolvedValue([
+      {token: 'access_token'},
+      new Response(),
+    ]);
   });
 
   afterEach(() => jest.clearAllMocks());

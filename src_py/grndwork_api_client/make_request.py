@@ -19,7 +19,7 @@ def make_request(
     headers: Optional[MutableMapping[str, Any]] = None,
     query: Any = None,
     body: Any = None,
-) -> Tuple[Any, MutableMapping[str, Any]]:
+) -> Tuple[Any, requests.Response]:
     headers = headers or {}
     query = query or {}
 
@@ -48,4 +48,4 @@ def make_request(
             errors=payload.get('errors'),
         )
 
-    return payload, resp.headers
+    return payload, resp

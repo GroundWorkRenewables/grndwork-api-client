@@ -13,16 +13,20 @@ class ContentRange:
 
     @classmethod
     def parse(cls, header: str) -> 'ContentRange':
-        result = cls._pattern.search(header)
+        if header:
+            result = cls._pattern.search(header)
 
-        if result:
-            unit, first, last, count = result.groups()
+            if result:
+                unit, first, last, count = result.groups()
 
-            return ContentRange(
-                first=int(first),
-                last=int(last),
-                count=int(count),
-                unit=unit,
-            )
+                return ContentRange(
+                    first=int(first),
+                    last=int(last),
+                    count=int(count),
+                    unit=unit,
+                )
 
-        raise ValueError('Could not parse content range')
+            raise ValueError('Could not parse content range')
+
+        else:
+            raise ValueError('Missing content range')
