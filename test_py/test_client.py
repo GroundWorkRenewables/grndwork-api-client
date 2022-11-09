@@ -1,7 +1,5 @@
 import pytest
-from src_py.grndwork_api_client.access_tokens import (
-    get_access_token as _get_access_token,
-)
+from src_py.grndwork_api_client.access_tokens import get_access_token as _get_access_token
 from src_py.grndwork_api_client.client import Client
 from src_py.grndwork_api_client.config import DATA_URL, STATIONS_URL
 from src_py.grndwork_api_client.make_paginated_request import make_paginated_request as _make_paginated_request  # noqa: E501
@@ -35,17 +33,17 @@ def describe_client():
         return mocker.patch(
             target='src_py.grndwork_api_client.client.make_request',
             spec=_make_request,
-            return_value=({}, {}),
+            return_value=(None, mocker.MagicMock()),
         )
 
     def describe_get_stations():
-        def it_gets_access_token(get_access_token):
+        def it_gets_read_stations_access_token(get_access_token):
             client = Client(
                 refresh_token=refresh_token,
                 platform='platform',
             )
 
-            client.get_stations()
+            list(client.get_stations())
 
             assert get_access_token.call_count == 1
 
@@ -55,13 +53,13 @@ def describe_client():
             assert kwargs.get('platform') == 'platform'
             assert kwargs.get('scope') == 'read:stations'
 
-        def it_makes_request_with_default_options(make_paginated_request):
+        def it_makes_get_stations_request_with_default_options(make_paginated_request):
             client = Client(
                 refresh_token=refresh_token,
                 platform='platform',
             )
 
-            client.get_stations()
+            list(client.get_stations())
 
             assert make_paginated_request.call_count == 1
 
@@ -72,48 +70,48 @@ def describe_client():
             assert kwargs.get('query') == {}
             assert kwargs.get('page_size') == 100
 
-        def it_makes_request_with_query(make_paginated_request):
+        def it_makes_get_stations_request_with_query(make_paginated_request):
             client = Client(
                 refresh_token=refresh_token,
                 platform='platform',
             )
 
-            client.get_stations(
-                query={
-                    'limit': 10,
-                },
-            )
+            list(client.get_stations({'limit': 10}))
 
             assert make_paginated_request.call_count == 1
 
             (_, kwargs) = make_paginated_request.call_args
 
+            assert kwargs.get('url') == STATIONS_URL
+            assert kwargs.get('token') == 'access_token'
             assert kwargs.get('query') == {'limit': 10}
+            assert kwargs.get('page_size') == 100
 
-        def it_makes_request_with_page_size(make_paginated_request):
+        def it_makes_get_stations_request_with_page_size(make_paginated_request):
             client = Client(
                 refresh_token=refresh_token,
                 platform='platform',
             )
 
-            client.get_stations(
-                page_size=50,
-            )
+            list(client.get_stations(page_size=50))
 
             assert make_paginated_request.call_count == 1
 
             (_, kwargs) = make_paginated_request.call_args
 
+            assert kwargs.get('url') == STATIONS_URL
+            assert kwargs.get('token') == 'access_token'
+            assert kwargs.get('query') == {}
             assert kwargs.get('page_size') == 50
 
     def describe_get_data():
-        def it_gets_access_token(get_access_token):
+        def it_gets_read_data_access_token(get_access_token):
             client = Client(
                 refresh_token=refresh_token,
                 platform='platform',
             )
 
-            client.get_data()
+            list(client.get_data())
 
             assert get_access_token.call_count == 1
 
@@ -123,13 +121,13 @@ def describe_client():
             assert kwargs.get('platform') == 'platform'
             assert kwargs.get('scope') == 'read:data'
 
-        def it_makes_request_with_default_options(make_paginated_request):
+        def it_makes_get_data_request_with_default_options(make_paginated_request):
             client = Client(
                 refresh_token=refresh_token,
                 platform='platform',
             )
 
-            client.get_data()
+            list(client.get_data())
 
             assert make_paginated_request.call_count == 1
 
@@ -140,38 +138,38 @@ def describe_client():
             assert kwargs.get('query') == {}
             assert kwargs.get('page_size') == 100
 
-        def it_makes_request_with_query(make_paginated_request):
+        def it_makes_get_data_request_with_query(make_paginated_request):
             client = Client(
                 refresh_token=refresh_token,
                 platform='platform',
             )
 
-            client.get_data(
-                query={
-                    'limit': 10,
-                },
-            )
+            list(client.get_data({'limit': 10}))
 
             assert make_paginated_request.call_count == 1
 
             (_, kwargs) = make_paginated_request.call_args
 
+            assert kwargs.get('url') == DATA_URL
+            assert kwargs.get('token') == 'access_token'
             assert kwargs.get('query') == {'limit': 10}
+            assert kwargs.get('page_size') == 100
 
-        def it_makes_request_with_page_size(make_paginated_request):
+        def it_makes_get_data_request_with_page_size(make_paginated_request):
             client = Client(
                 refresh_token=refresh_token,
                 platform='platform',
             )
 
-            client.get_data(
-                page_size=50,
-            )
+            list(client.get_data(page_size=50))
 
             assert make_paginated_request.call_count == 1
 
             (_, kwargs) = make_paginated_request.call_args
 
+            assert kwargs.get('url') == DATA_URL
+            assert kwargs.get('token') == 'access_token'
+            assert kwargs.get('query') == {}
             assert kwargs.get('page_size') == 50
 
     def describe_post_data():
@@ -183,7 +181,7 @@ def describe_client():
             }],
         }
 
-        def it_gets_access_token(get_access_token):
+        def it_gets_write_data_access_token(get_access_token):
             client = Client(
                 refresh_token=refresh_token,
                 platform='platform',
@@ -201,7 +199,7 @@ def describe_client():
             assert kwargs.get('platform') == 'platform'
             assert kwargs.get('scope') == 'write:data'
 
-        def it_makes_request_with_payload(make_request):
+        def it_makes_post_data_request_with_payload(make_request):
             client = Client(
                 refresh_token=refresh_token,
                 platform='platform',

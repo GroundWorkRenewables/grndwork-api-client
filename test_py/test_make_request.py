@@ -140,8 +140,8 @@ def describe_make_request():
                 token='auth token',
             )
 
-    def it_returns_headers_and_payload(requests):
-        payload, headers = make_request(
+    def it_returns_payload_and_response(requests):
+        payload, resp = make_request(
             url=API_URL,
             token='auth token',
         )
@@ -150,4 +150,4 @@ def describe_make_request():
             'token': 'access_token',
         }
 
-        assert headers.get('Content-Type') == 'application/json'
+        assert resp.headers.get('Content-Type') == 'application/json'

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Dict, List, Optional, TypedDict, Union
 
 
 class RefreshToken(TypedDict):
@@ -6,24 +6,37 @@ class RefreshToken(TypedDict):
     token: str
 
 
+class AccessToken(TypedDict):
+    token: str
+
+
+DataValue = Union[float, int, str, bool, None]
+
+
 class DataRecord(TypedDict):
     timestamp: str
     record_num: int
-    data: Dict[str, Any]
+    data: Dict[str, DataValue]
 
 
-class DataFileHeaders(TypedDict):
-    meta: Optional[Dict[str, Any]]
+class _DataFileHeadersRequired(TypedDict):
     columns: List[str]
     units: List[str]
+
+
+class DataFileHeaders(_DataFileHeadersRequired, total=False):
+    meta: Dict[str, str]
     processing: List[str]
 
 
-class DataFile(TypedDict):
+class _DataFileRequired(TypedDict):
     source: str
     filename: str
     is_stale: bool
     headers: DataFileHeaders
+
+
+class DataFile(_DataFileRequired, total=False):
     records: List[DataRecord]
 
 
@@ -52,34 +65,46 @@ class Station(TypedDict):
     data_files: List[StationDataFile]
 
 
-class GetStationsQuery(TypedDict):
-    client: Optional[str]
-    site: Optional[str]
-    station: Optional[str]
-    limit: Optional[int]
-    offset: Optional[int]
+class GetStationsQuery(TypedDict, total=False):
+    client: str
+    site: str
+    station: str
+    limit: int
+    offset: int
 
 
-class GetDataQuery(TypedDict):
-    client: Optional[str]
-    site: Optional[str]
-    gateway: Optional[str]
-    station: Optional[str]
-    filename: Optional[str]
-    limit: Optional[int]
-    offset: Optional[int]
-    records_before: Optional[str]
-    records_after: Optional[str]
-    records_limit: Optional[str]
-
-
-class PostDataFile(TypedDict):
+class GetDataQuery(TypedDict, total=False):
+    client: str
+    site: str
+    gateway: str
+    station: str
     filename: str
-    headers: Optional[DataFileHeaders]
-    records: Optional[List[DataRecord]]
+    limit: int
+    offset: int
+    records_before: str
+    records_after: str
+    records_limit: int
 
 
-class PostDataPayload(TypedDict):
+class PostDataRecord(TypedDict):
+    timestamp: str
+    record_num: int
+    data: Dict[str, DataValue]
+
+
+class _PostDataFileRequired(TypedDict):
+    filename: str
+
+
+class PostDataFile(_PostDataFileRequired, total=False):
+    headers: DataFileHeaders
+    records: List[PostDataRecord]
+
+
+class _PostDataPayloadRequired(TypedDict):
     source: str
     files: List[PostDataFile]
-    overwrite: Optional[bool]
+
+
+class PostDataPayload(_PostDataPayloadRequired, total=False):
+    overwrite: bool

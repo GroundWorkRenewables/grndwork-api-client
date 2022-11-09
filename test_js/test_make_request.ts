@@ -141,4 +141,17 @@ describe('makeRequest', () => {
       token: 'auth token',
     })).rejects.toThrow(new RequestError('Failed to parse response payload'));
   });
+
+  it('returns payload and response', async () => {
+    const [payload, resp] = await makeRequest({
+      url: API_URL,
+      token: 'auth token',
+    });
+
+    expect(payload).toEqual({
+      token: 'access_token',
+    });
+
+    expect(resp.headers.get('Content-Type')).toEqual('application/json');
+  });
 });

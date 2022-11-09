@@ -27,7 +27,20 @@ class Client():
         self,
         query: Optional[GetStationsQuery] = None,
         *,
-        page_size: int = 100,
+        page_size: Optional[int] = None,
+    ) -> Iterator[Station]:
+        iterator = self._request_stations(
+            query=query,
+            page_size=page_size,
+        )
+
+        return iterator
+
+    def _request_stations(
+        self,
+        *,
+        query: Optional[GetStationsQuery],
+        page_size: Optional[int],
     ) -> Iterator[Station]:
         access_token = get_access_token(
             refresh_token=self.refresh_token,
@@ -35,20 +48,33 @@ class Client():
             scope='read:stations',
         )
 
-        result = make_paginated_request(
+        iterator = cast(Iterator[Station], make_paginated_request(
             url=STATIONS_URL,
             token=access_token,
             query=query or {},
-            page_size=page_size,
-        )
+            page_size=page_size or 100,
+        ))
 
-        return cast(Iterator[Station], result)
+        return iterator
 
     def get_data(
         self,
         query: Optional[GetDataQuery] = None,
         *,
-        page_size: int = 100,
+        page_size: Optional[int] = None,
+    ) -> Iterator[DataFile]:
+        iterator = self._request_data(
+            query=query,
+            page_size=page_size,
+        )
+
+        return iterator
+
+    def _request_data(
+        self,
+        *,
+        query: Optional[GetDataQuery],
+        page_size: Optional[int],
     ) -> Iterator[DataFile]:
         access_token = get_access_token(
             refresh_token=self.refresh_token,
@@ -56,14 +82,14 @@ class Client():
             scope='read:data',
         )
 
-        result = make_paginated_request(
+        iterator = cast(Iterator[DataFile], make_paginated_request(
             url=DATA_URL,
             token=access_token,
             query=query or {},
-            page_size=page_size,
-        )
+            page_size=page_size or 100,
+        ))
 
-        return cast(Iterator[DataFile], result)
+        return iterator
 
     def post_data(
         self,

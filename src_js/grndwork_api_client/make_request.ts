@@ -1,5 +1,5 @@
 import {STATUS_CODES} from 'http';
-import fetch, {Headers} from 'node-fetch';
+import fetch, {Response} from 'node-fetch';
 import {RequestOptions} from './interfaces';
 
 export class RequestError extends Error {
@@ -13,7 +13,7 @@ export class RequestError extends Error {
 
 export async function makeRequest<T>(
   options: RequestOptions,
-): Promise<[T, Headers]> {
+): Promise<[T, Response]> {
   const url = new URL(options.url);
 
   if (options.query) {
@@ -59,5 +59,5 @@ export async function makeRequest<T>(
     );
   }
 
-  return [payload as T, resp.headers];
+  return [payload as T, resp];
 }

@@ -4,7 +4,7 @@ from typing import cast, Dict
 import jwt
 
 from .config import TOKENS_URL
-from .interfaces import RefreshToken
+from .interfaces import AccessToken, RefreshToken
 from .make_request import make_request
 
 
@@ -37,7 +37,7 @@ def create_access_token(
     platform: str,
     scope: str,
 ) -> str:
-    result, _ = make_request(
+    result = cast(AccessToken, make_request(
         url=TOKENS_URL,
         method='POST',
         token=refresh_token['token'],
@@ -46,9 +46,9 @@ def create_access_token(
             'platform': platform,
             'scope': scope,
         },
-    )
+    )[0])
 
-    return cast(str, result.get('token'))
+    return result['token']
 
 
 def has_expired(token: str) -> bool:

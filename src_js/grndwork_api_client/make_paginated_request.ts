@@ -4,14 +4,14 @@ import {makeRequest} from './make_request';
 
 export async function* makePaginatedRequest<T>(
   options: RequestOptions,
-  pageSize = 100,
+  pageSize: number,
 ): AsyncIterableIterator<T> {
-  const {query = {}} = options;
+  const query = options.query || {};
   let limit = query.limit || null;
   let offset = query.offset || 0;
 
   while (true) {
-    const [results, headers] = await makeRequest<Array<T>>({
+    const [results, resp] = await makeRequest<Array<T>>({
       ...options,
       method: 'GET',
       query: {
@@ -21,7 +21,11 @@ export async function* makePaginatedRequest<T>(
       },
     });
 
-    yield* results;
+    if (results.length) {
+      yield* results;
+    } else {
+      break;
+    }
 
     if (limit) {
       limit -= results.length;
@@ -31,7 +35,7 @@ export async function* makePaginatedRequest<T>(
       }
     }
 
-    const contentRange = ContentRange.parse(headers.get('content-range') || '');
+    const contentRange = ContentRange.parse(resp.headers.get('content-range') || '');
 
     if (offset < contentRange.last) {
       offset = contentRange.last;

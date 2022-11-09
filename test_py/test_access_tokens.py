@@ -18,7 +18,10 @@ def describe_get_access_token():
         return mocker.patch(
             target='src_py.grndwork_api_client.access_tokens.make_request',
             spec=_make_request,
-            return_value=({'token': 'access_token'}, {}),
+            return_value=(
+                {'token': 'access_token'},
+                mocker.MagicMock(),
+            ),
         )
 
     @pytest.fixture(name='decode', autouse=True)

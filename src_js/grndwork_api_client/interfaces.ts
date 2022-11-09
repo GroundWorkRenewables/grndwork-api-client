@@ -12,14 +12,20 @@ export interface RefreshToken {
   token: string;
 }
 
+export interface AccessToken {
+  token: string;
+}
+
+export type DataValue = number | string | boolean | null;
+
 export interface DataRecord {
   timestamp: string;
   record_num: number;
-  data: Record<string, any>;
+  data: Record<string, DataValue>;
 }
 
 export interface DataFileHeaders {
-  meta?: Record<string, any>;
+  meta?: Record<string, string>;
   columns: Array<string>;
   units: Array<string>;
   processing?: Array<string>;
@@ -30,7 +36,7 @@ export interface DataFile {
   filename: string;
   is_stale: boolean;
   headers: DataFileHeaders;
-  records: Array<DataRecord>;
+  records?: Array<DataRecord>;
 }
 
 export interface StationDataFile {
@@ -79,10 +85,16 @@ export interface GetDataQuery {
   records_limit?: number;
 }
 
+export interface PostDataRecord {
+  timestamp: string;
+  record_num: number;
+  data: Record<string, DataValue>;
+}
+
 export interface PostDataFile {
   filename: string;
   headers?: DataFileHeaders;
-  records?: Array<DataRecord>;
+  records?: Array<PostDataRecord>;
 }
 
 export interface PostDataPayload {

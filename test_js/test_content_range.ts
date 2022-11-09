@@ -11,11 +11,11 @@ describe('ContentRange', () => {
     });
 
     it.each([
-      [''],
-      ['items'],
-      ['items a-b/c'],
-    ])('throws error when invalid', header => {
-      expect(() => ContentRange.parse(header)).toThrow('Could not parse content range');
+      ['', 'Missing content range'],
+      ['items', 'Could not parse content range'],
+      ['items a-b/c', 'Could not parse content range'],
+    ])('throws error when invalid', (header, error) => {
+      expect(() => ContentRange.parse(header)).toThrow(error);
     });
   });
 });

@@ -78,12 +78,12 @@ stations = list(client.get_stations())
 
 JavaScript:
 ```typescript
-client.getStations(query?: GetStationsQuery, pageSize: number = 100): IterableResponse<Station>
+client.getStations(query: GetStationsQuery | null, pageSize: number | null): IterableResponse<Station>
 ```
 
 Python:
 ```py
-client.get_stations(query: GetStationsQuery = None, *, page_size: int = 100) -> Iterator[Station]
+client.get_stations(query: GetStationsQuery | None, *, page_size: int | None) -> Iterator[Station]
 ```
 
 Takes an optional get stations query object as an argument and returns an array of stations.
@@ -126,12 +126,12 @@ You can set an optional page size to control the number of stations returned per
 
 JavaScript:
 ```js
-const stations = await client.getStations({}, 50).toArray();
+const stations = await client.getStations(null, 50).toArray();
 ```
 
 Python:
 ```py
-stations = list(client.get_stations({}, page_size=50))
+stations = list(client.get_stations(page_size=50))
 ```
 
 #### Return Values
@@ -177,12 +177,12 @@ Stations are returned in alphabetical order by station name.
 
 JavaScript:
 ```typescript
-client.getData(query?: GetDataQuery, pageSize: number = 100): IterableResponse<DataFile>
+client.getData(query: GetDataQuery | null, pageSize: number | null): IterableResponse<DataFile>
 ```
 
 Python:
 ```py
-client.get_data(query: GetDataQuery = None, *, page_size: int = 100) -> Iterator[DataFile]
+client.get_data(query: GetDataQuery | None, *, page_size: int | None) -> Iterator[DataFile]
 ```
 
 Takes an optional get data query object as an argument and returns an array of data files.
@@ -228,12 +228,12 @@ You can set an optional page size to control the number of files returned per re
 
 JavaScript:
 ```js
-const dataFiles = await client.getData({}, 50).toArray();
+const dataFiles = await client.getData(null, 50).toArray();
 ```
 
 Python:
 ```py
-data_files = list(client.get_data({}, page_size=50))
+data_files = list(client.get_data(page_size=50))
 ```
 
 #### Return Values

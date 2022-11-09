@@ -12,11 +12,11 @@ def describe_content_range():
         def it_parses_content_range(header, expected):
             assert ContentRange.parse(header) == expected
 
-        @pytest.mark.parametrize('header', [
-            '',
-            'items',
-            'items a-b/c',
+        @pytest.mark.parametrize('header, error', [
+            ('', 'Missing content range'),
+            ('items', 'Could not parse content range'),
+            ('items a-b/c', 'Could not parse content range'),
         ])
-        def it_raises_error_when_invalid(header):
-            with pytest.raises(ValueError, match='Could not parse content range'):
+        def it_raises_error_when_invalid(header, error):
+            with pytest.raises(ValueError, match=error):
                 ContentRange.parse(header)

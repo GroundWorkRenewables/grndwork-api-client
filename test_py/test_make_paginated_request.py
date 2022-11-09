@@ -11,12 +11,17 @@ def describe_make_paginated_request():
             query = kwargs.get('query') or {}
             limit = query.get('limit') or 100
             offset = query.get('offset') or 0
+
             first = offset + 1
             last = min(offset + limit, 165)
 
             return (
                 [{'id': item} for item in range(first, last + 1)],
-                {'Content-Range': f'items {first}-{last}/165'},
+                mocker.MagicMock(**{
+                    'headers': {
+                        'Content-Range': f'items {first}-{last}/165',
+                    },
+                }),
             )
 
         return mocker.patch(
@@ -29,6 +34,7 @@ def describe_make_paginated_request():
         results = list(make_paginated_request(
             url=API_URL,
             token='auth token',
+            page_size=100,
         ))
 
         assert make_request.call_count == 2
@@ -46,6 +52,7 @@ def describe_make_paginated_request():
             query={
                 'limit': 155,
             },
+            page_size=100,
         ))
 
         assert make_request.call_count == 2
@@ -64,6 +71,7 @@ def describe_make_paginated_request():
                 'limit': 155,
                 'offset': 5,
             },
+            page_size=100,
         ))
 
         assert make_request.call_count == 2
@@ -95,14 +103,36 @@ def describe_make_paginated_request():
             {'id': item} for item in range(6, 161)
         ]
 
-    def it_raises_error_when_invalid_content_range(make_request):
+    def it_handles_empty_results(mocker, make_request):
+        make_request.return_value = ([], mocker.MagicMock())
         make_request.side_effect = None
-        make_request.return_value = ([], {
-            'Content-Range': 'items 1-100/165',
-        })
+
+        results = list(make_paginated_request(
+            url=API_URL,
+            token='auth token',
+            page_size=100,
+        ))
+
+        assert results == []
+
+    def it_raises_error_when_invalid_content_range(mocker, make_request):
+        make_request.return_value = (
+            [{'id': item} for item in range(1, 101)],
+            mocker.MagicMock(**{
+                'headers': {
+                    'Content-Range': 'items 1-100/165',
+                },
+            }),
+        )
+        make_request.side_effect = None
 
         with pytest.raises(ValueError, match='Invalid content range'):
             list(make_paginated_request(
                 url=API_URL,
                 token='auth token',
+                page_size=100,
             ))
+
+        assert make_request.call_count == 2
+        assert make_request.call_args_list[0][1].get('query') == {'limit': 100, 'offset': 0}
+        assert make_request.call_args_list[1][1].get('query') == {'limit': 100, 'offset': 100}
