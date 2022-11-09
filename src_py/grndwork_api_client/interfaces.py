@@ -11,12 +11,22 @@ class AccessToken(TypedDict):
 
 
 DataValue = Union[float, int, str, bool, None]
+QCValue = Union[float, int, str, bool, None]
 
 
-class DataRecord(TypedDict):
+class _DataRecordRequired(TypedDict):
     timestamp: str
     record_num: int
     data: Dict[str, DataValue]
+
+
+class DataRecord(_DataRecordRequired, total=False):
+    qc_flags: Dict[str, QCValue]
+
+
+class QCRecord(TypedDict):
+    timestamp: str
+    qc_flags: Dict[str, QCValue]
 
 
 class _DataFileHeadersRequired(TypedDict):
@@ -84,6 +94,16 @@ class GetDataQuery(TypedDict, total=False):
     records_before: str
     records_after: str
     records_limit: int
+
+
+class _GetQCQueryRequired(TypedDict):
+    filename: str
+
+
+class GetQCQuery(_GetQCQueryRequired, total=False):
+    before: str
+    after: str
+    limit: int
 
 
 class PostDataRecord(TypedDict):

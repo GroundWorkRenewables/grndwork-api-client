@@ -1,7 +1,7 @@
 import pytest
 from src_py.grndwork_api_client.access_tokens import get_access_token as _get_access_token
 from src_py.grndwork_api_client.client import Client
-from src_py.grndwork_api_client.config import DATA_URL, STATIONS_URL
+from src_py.grndwork_api_client.config import DATA_URL, QC_URL, STATIONS_URL
 from src_py.grndwork_api_client.make_paginated_request import make_paginated_request as _make_paginated_request  # noqa: E501
 from src_py.grndwork_api_client.make_request import make_request as _make_request
 
@@ -154,6 +154,89 @@ def describe_client():
             assert kwargs.get('token') == 'access_token'
             assert kwargs.get('query') == {'limit': 10}
             assert kwargs.get('page_size') == 100
+
+        def it_gets_read_qc_access_token_when_requesting_records(get_access_token):
+            client = Client(
+                refresh_token=refresh_token,
+                platform='platform',
+            )
+
+            list(client.get_data({'records_limit': 1}))
+
+            assert get_access_token.call_count == 2
+
+            (_, kwargs) = get_access_token.call_args_list[1]
+
+            assert kwargs.get('refresh_token') == refresh_token
+            assert kwargs.get('platform') == 'platform'
+            assert kwargs.get('scope') == 'read:qc'
+
+        def it_makes_get_qc_requests_per_data_file(mocker, make_paginated_request, make_request):
+            make_paginated_request.return_value = [{
+                'source': 'station:uuid',
+                'filename': 'Test_OneMin.dat',
+                'is_stale': False,
+                'headers': {
+                    'columns': [],
+                    'units': [],
+                },
+                'records': [{
+                    'timestamp': '2020-01-01 00:00:00',
+                    'record_num': 1,
+                    'data': {'SOME_KEY': 'VALUE'},
+                }],
+            }]
+
+            make_request.return_value = ([{
+                'timestamp': '2020-01-01 00:00:00',
+                'qc_flags': {'SOME_KEY': 'FLAG'},
+            }], mocker.MagicMock())
+
+            client = Client(
+                refresh_token=refresh_token,
+                platform='platform',
+            )
+
+            results = list(client.get_data({'records_limit': 1}))
+
+            assert make_request.call_count == 1
+
+            (_, kwargs) = make_request.call_args
+
+            assert kwargs.get('url') == QC_URL
+            assert kwargs.get('token') == 'access_token'
+            assert kwargs.get('query') == {
+                'filename': 'Test_OneMin.dat',
+                'before': '2020-01-01 00:00:00',
+                'after': '2020-01-01 00:00:00',
+                'limit': 1500,
+            }
+
+            assert results == [{
+                'source': 'station:uuid',
+                'filename': 'Test_OneMin.dat',
+                'is_stale': False,
+                'headers': {
+                    'columns': [],
+                    'units': [],
+                },
+                'records': [{
+                    'timestamp': '2020-01-01 00:00:00',
+                    'record_num': 1,
+                    'data': {'SOME_KEY': 'VALUE'},
+                    'qc_flags': {'SOME_KEY': 'FLAG'},
+                }],
+            }]
+
+        def it_does_not_get_read_qc_access_token_when_disabled(get_access_token):
+            client = Client(
+                refresh_token=refresh_token,
+                platform='platform',
+            )
+
+            list(client.get_data({'records_limit': 1}, include_qc_flags=False))
+
+            assert get_access_token.call_count == 1
 
         def it_makes_get_data_request_with_page_size(make_paginated_request):
             client = Client(

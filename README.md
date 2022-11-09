@@ -177,12 +177,12 @@ Stations are returned in alphabetical order by station name.
 
 JavaScript:
 ```typescript
-client.getData(query: GetDataQuery | null, pageSize: number | null): IterableResponse<DataFile>
+client.getData(query: GetDataQuery | null, includeQCFlags: boolean | null, pageSize: number | null): IterableResponse<DataFile>
 ```
 
 Python:
 ```py
-client.get_data(query: GetDataQuery | None, *, page_size: int | None) -> Iterator[DataFile]
+client.get_data(query: GetDataQuery | None, *, include_qc_flags: bool | None, page_size: int | None) -> Iterator[DataFile]
 ```
 
 Takes an optional get data query object as an argument and returns an array of data files.
@@ -228,7 +228,7 @@ You can set an optional page size to control the number of files returned per re
 
 JavaScript:
 ```js
-const dataFiles = await client.getData(null, 50).toArray();
+const dataFiles = await client.getData(null, null, 50).toArray();
 ```
 
 Python:
@@ -239,6 +239,8 @@ data_files = list(client.get_data(page_size=50))
 #### Return Values
 
 Data files are returned in alphabetical order by filename.
+
+###### Data Records
 
 When `records_limit` is included in the query, records are returned in reverse chronological order starting at the most recent timestamp.
 When `records_limit` is greater then 1, only a single data file will be returned per request ( equivalent to page size of 1 ).
@@ -256,6 +258,24 @@ data_files = list(client.get_data({'limit': 1, 'records_limit': 100}))
 ```
 
 Would return the most recent 100 records from the first file alphabetically.
+
+###### QC Flags
+
+By default each record will include the qc flags that apply to that data record. This behavior can be disabled.
+
+For example:
+
+JavaScript:
+```js
+const dataFiles = await client.getData({limit: 1, records_limit: 100}, false).toArray();
+```
+
+Python:
+```py
+data_files = list(client.get_data({'limit': 1, 'records_limit': 100}, include_qc_flags=False))
+```
+
+Would return records without qc flags.
 
 ##### Sample Output
 
@@ -276,6 +296,9 @@ Would return the most recent 100 records from the first file alphabetically.
         "record_num": 1000,
         "data": {
           "Ambient_Temp": 50
+        },
+        "qc_flags": {
+          "Ambient_Temp": 1
         }
       }
     ]

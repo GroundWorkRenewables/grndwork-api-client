@@ -1,16 +1,19 @@
 import {getAccessToken} from './access_tokens';
-import {DATA_URL, STATIONS_URL} from './config';
+import {DATA_URL, QC_URL, STATIONS_URL} from './config';
 import {
   DataFile,
   GetDataQuery,
+  GetQCQuery,
   GetStationsQuery,
   PostDataPayload,
+  QCRecord,
   RefreshToken,
   Station,
 } from './interfaces';
 import {IterableResponse} from './iterable_response';
 import {makePaginatedRequest} from './make_paginated_request';
 import {makeRequest} from './make_request';
+import {combineDataAndQCRecords} from './utils';
 
 export class Client {
   constructor(
@@ -43,9 +46,14 @@ export class Client {
 
   public getData(
     query: GetDataQuery | null = null,
+    includeQCFlags: boolean | null = null,
     pageSize: number | null = null,
   ): IterableResponse<DataFile> {
-    const iterator = this._requestDataFiles(query, pageSize);
+    let iterator = this._requestDataFiles(query, pageSize);
+
+    if ((query || {}).records_limit && includeQCFlags !== false) {
+      iterator = this._includeQCFlags(iterator);
+    }
 
     return new IterableResponse(iterator);
   }
@@ -62,6 +70,39 @@ export class Client {
       token: accessToken,
       query: query || {},
     }, pageSize || 100);
+  }
+
+  private async* _includeQCFlags(
+    iterator: AsyncIterableIterator<DataFile>,
+  ): AsyncIterableIterator<DataFile> {
+    const {refreshToken, platform} = this;
+    const accessToken = await getAccessToken(refreshToken, platform, 'read:qc');
+
+    for await (const dataFile of iterator) {
+      const records = dataFile.records || [];
+
+      if (records.length) {
+        const query: GetQCQuery = {
+          filename: dataFile.filename,
+          before: records[0].timestamp,
+          after: records[records.length - 1].timestamp,
+          limit: 1500,
+        };
+
+        const results = (await makeRequest<Array<QCRecord>>({
+          url: QC_URL,
+          token: accessToken,
+          query,
+        }))[0];
+
+        yield {
+          ...dataFile,
+          records: combineDataAndQCRecords(records, results),
+        };
+      } else {
+        yield dataFile;
+      }
+    }
   }
 
   public async postData(payload: PostDataPayload): Promise<void> {

@@ -8,6 +8,7 @@ API_URL = os.environ.get('GROUNDWORK_API_URL', 'https://api.grndwork.com')
 TOKENS_URL = f'{ API_URL }/v1/tokens'
 STATIONS_URL = f'{ API_URL }/v1/stations'
 DATA_URL = f'{ API_URL }/v1/data'
+QC_URL = f'{ API_URL }/v1/qc'
 
 
 def get_refresh_token() -> RefreshToken:

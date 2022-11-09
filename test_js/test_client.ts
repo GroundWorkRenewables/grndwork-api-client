@@ -1,7 +1,7 @@
 import {Response} from 'node-fetch';
 import {getAccessToken} from '../src_js/grndwork_api_client/access_tokens';
 import {Client} from '../src_js/grndwork_api_client/client';
-import {DATA_URL, STATIONS_URL} from '../src_js/grndwork_api_client/config';
+import {DATA_URL, QC_URL, STATIONS_URL} from '../src_js/grndwork_api_client/config';
 import {makePaginatedRequest} from '../src_js/grndwork_api_client/make_paginated_request';
 import {makeRequest} from '../src_js/grndwork_api_client/make_request';
 
@@ -102,8 +102,76 @@ describe('Client', () => {
       }, 100);
     });
 
+    it('gets read:qc access token when requesting records', async () => {
+      await client.getData({records_limit: 1}).toArray();
+
+      expect(getAccessToken).toHaveBeenCalledTimes(2);
+      expect(getAccessToken).toHaveBeenCalledWith(
+        refreshToken,
+        'platform',
+        'read:qc',
+      );
+    });
+
+    it('makes get qc requests per data file', async () => {
+      (makePaginatedRequest as jest.Mock).mockReturnValue([{
+        source: 'station:uuid',
+        filename: 'Test_OneMin.dat',
+        is_stale: false,
+        headers: {
+          columns: [],
+          units: [],
+        },
+        records: [{
+          timestamp: '2020-01-01 00:00:00',
+          record_num: 1,
+          data: {SOME_KEY: 'VALUE'},
+        }],
+      }]);
+
+      (makeRequest as jest.Mock).mockResolvedValue([[{
+        timestamp: '2020-01-01 00:00:00',
+        qc_flags: {SOME_KEY: 'FLAG'},
+      }], new Response()]);
+
+      const results = await client.getData({records_limit: 1}).toArray();
+
+      expect(makeRequest).toHaveBeenCalledWith({
+        url: QC_URL,
+        token: 'access_token',
+        query: {
+          filename: 'Test_OneMin.dat',
+          before: '2020-01-01 00:00:00',
+          after: '2020-01-01 00:00:00',
+          limit: 1500,
+        },
+      });
+
+      expect(results).toEqual([{
+        source: 'station:uuid',
+        filename: 'Test_OneMin.dat',
+        is_stale: false,
+        headers: {
+          columns: [],
+          units: [],
+        },
+        records: [{
+          timestamp: '2020-01-01 00:00:00',
+          record_num: 1,
+          data: {SOME_KEY: 'VALUE'},
+          qc_flags: {SOME_KEY: 'FLAG'},
+        }],
+      }]);
+    });
+
+    it('does not get read:qc access token when disabled', async () => {
+      await client.getData({records_limit: 1}, false).toArray();
+
+      expect(getAccessToken).toHaveBeenCalledTimes(1);
+    });
+
     it('makes get data request with page size', async () => {
-      await client.getData(null, 50).toArray();
+      await client.getData(null, null, 50).toArray();
 
       expect(makePaginatedRequest).toHaveBeenCalledWith({
         url: DATA_URL,
