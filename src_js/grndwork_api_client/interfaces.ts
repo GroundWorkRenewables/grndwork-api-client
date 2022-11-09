@@ -17,11 +17,18 @@ export interface AccessToken {
 }
 
 export type DataValue = number | string | boolean | null;
+export type QCValue = number | string | boolean | null;
 
 export interface DataRecord {
   timestamp: string;
   record_num: number;
   data: Record<string, DataValue>;
+  qc_flags?: Record<string, QCValue>;
+}
+
+export interface QCRecord {
+  timestamp: string;
+  qc_flags: Record<string, QCValue>;
 }
 
 export interface DataFileHeaders {
@@ -83,6 +90,13 @@ export interface GetDataQuery {
   records_before?: string;
   records_after?: string;
   records_limit?: number;
+}
+
+export interface GetQCQuery {
+  filename: string;
+  before?: string;
+  after?: string;
+  limit?: number;
 }
 
 export interface PostDataRecord {
