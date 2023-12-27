@@ -1,17 +1,21 @@
 import jwt from 'jsonwebtoken';
-import {Response} from 'node-fetch';
+import * as undici from 'undici';
 import {getAccessToken, resetAccessTokenCache} from '../src_js/grndwork_api_client/access_tokens';
-import {TOKENS_URL} from '../src_js/grndwork_api_client/config';
-import {makeRequest} from '../src_js/grndwork_api_client/make_request';
+import {API_URL, TOKENS_URL} from '../src_js/grndwork_api_client/config';
 
 jest.mock('jsonwebtoken');
-jest.mock('../src_js/grndwork_api_client/make_request');
 
 describe('getAccessToken', () => {
+  const TOKENS_PATH = new URL(TOKENS_URL).pathname;
+
   const refreshToken = {
     subject: 'uuid',
     token: 'refresh_token',
   };
+
+  let globalAgent: undici.Dispatcher;
+  let mockAgent: undici.MockAgent;
+  let apiMock: undici.MockPool;
 
   beforeEach(() => {
     resetAccessTokenCache();
@@ -20,52 +24,159 @@ describe('getAccessToken', () => {
       exp: Math.floor(Date.now() / 1000) + 1000,
     });
 
-    (makeRequest as jest.Mock).mockResolvedValue([
-      {token: 'access_token'},
-      new Response(),
-    ]);
+    globalAgent = undici.getGlobalDispatcher();
+
+    mockAgent = new undici.MockAgent();
+    mockAgent.disableNetConnect();
+    undici.setGlobalDispatcher(mockAgent);
+
+    apiMock = mockAgent.get(API_URL);
   });
 
-  afterEach(() => jest.clearAllMocks());
+  afterEach(async () => {
+    jest.clearAllMocks();
+
+    undici.setGlobalDispatcher(globalAgent);
+    mockAgent.assertNoPendingInterceptors();
+    await mockAgent.close();
+  });
 
   it('requests new access token', async () => {
-    const accessToken = await getAccessToken(refreshToken, 'platform', 'read:data');
-
-    expect(makeRequest).toHaveBeenCalledTimes(1);
-
-    expect(makeRequest).toHaveBeenCalledWith({
-      url: TOKENS_URL,
-      token: 'refresh_token',
+    apiMock.intercept({
+      path: TOKENS_PATH,
       method: 'POST',
-      body: {
-        subject: 'uuid',
+      headers: {Authorization: 'Bearer refresh_token'},
+      body: JSON.stringify({
+        subject: refreshToken.subject,
         platform: 'platform',
-        scope: 'read:data',
-      },
+        scope: 'test:scope',
+      }),
+    })
+    .reply(201, {
+      token: 'access_token',
     });
+
+    const accessToken = await getAccessToken(
+      refreshToken,
+      'platform',
+      'test:scope',
+    );
 
     expect(accessToken).toEqual('access_token');
   });
 
   it('does not request new access token when using cache', async () => {
-    await getAccessToken(refreshToken, 'platform', 'read:data');
-    await getAccessToken(refreshToken, 'platform', 'read:data');
+    apiMock.intercept({
+      path: TOKENS_PATH,
+      method: 'POST',
+    })
+    .reply(201, {
+      token: 'access_token',
+    });
 
-    expect(makeRequest).toHaveBeenCalledTimes(1);
+    let accessToken = await getAccessToken(
+      refreshToken,
+      'platform',
+      'test:scope',
+    );
+
+    expect(accessToken).toEqual('access_token');
+
+    accessToken = await getAccessToken(
+      refreshToken,
+      'platform',
+      'test:scope',
+    );
+
+    expect(accessToken).toEqual('access_token');
   });
 
   it('requests new access token for other platform', async () => {
-    await getAccessToken(refreshToken, 'platform', 'read:data');
-    await getAccessToken(refreshToken, 'other', 'read:data');
+    apiMock.intercept({
+      path: TOKENS_PATH,
+      method: 'POST',
+      body: JSON.stringify({
+        subject: refreshToken.subject,
+        platform: 'platform',
+        scope: 'test:scope',
+      }),
+    })
+    .reply(201, {
+      token: 'access_token_1',
+    });
 
-    expect(makeRequest).toHaveBeenCalledTimes(2);
+    let accessToken = await getAccessToken(
+      refreshToken,
+      'platform',
+      'test:scope',
+    );
+
+    expect(accessToken).toEqual('access_token_1');
+
+    apiMock.intercept({
+      path: TOKENS_PATH,
+      method: 'POST',
+      body: JSON.stringify({
+        subject: refreshToken.subject,
+        platform: 'other',
+        scope: 'test:scope',
+      }),
+    })
+    .reply(201, {
+      token: 'access_token_2',
+    });
+
+    accessToken = await getAccessToken(
+      refreshToken,
+      'other',
+      'test:scope',
+    );
+
+    expect(accessToken).toEqual('access_token_2');
   });
 
   it('requests new access token for other scope', async () => {
-    await getAccessToken(refreshToken, 'platform', 'read:data');
-    await getAccessToken(refreshToken, 'platform', 'write:data');
+    apiMock.intercept({
+      path: TOKENS_PATH,
+      method: 'POST',
+      body: JSON.stringify({
+        subject: refreshToken.subject,
+        platform: 'platform',
+        scope: 'test:scope',
+      }),
+    })
+    .reply(201, {
+      token: 'access_token_1',
+    });
 
-    expect(makeRequest).toHaveBeenCalledTimes(2);
+    let accessToken = await getAccessToken(
+      refreshToken,
+      'platform',
+      'test:scope',
+    );
+
+    expect(accessToken).toEqual('access_token_1');
+
+    apiMock.intercept({
+      path: TOKENS_PATH,
+      method: 'POST',
+      body: JSON.stringify({
+        subject: refreshToken.subject,
+        platform: 'platform',
+        scope: 'other:scope',
+      }),
+    })
+    .reply(201, {
+      token: 'access_token_2',
+    });
+
+    accessToken = await getAccessToken(
+      refreshToken,
+      'platform',
+      'other:scope',
+    );
+
+    expect(accessToken).toEqual('access_token_2');
   });
 
   it('requests new access token when existing has expired', async () => {
@@ -73,9 +184,46 @@ describe('getAccessToken', () => {
       exp: Math.floor(Date.now() / 1000) - 1000,
     });
 
-    await getAccessToken(refreshToken, 'platform', 'read:data');
-    await getAccessToken(refreshToken, 'platform', 'read:data');
+    apiMock.intercept({
+      path: TOKENS_PATH,
+      method: 'POST',
+      body: JSON.stringify({
+        subject: refreshToken.subject,
+        platform: 'platform',
+        scope: 'test:scope',
+      }),
+    })
+    .reply(201, {
+      token: 'access_token_1',
+    });
 
-    expect(makeRequest).toHaveBeenCalledTimes(2);
+    let accessToken = await getAccessToken(
+      refreshToken,
+      'platform',
+      'test:scope',
+    );
+
+    expect(accessToken).toEqual('access_token_1');
+
+    apiMock.intercept({
+      path: TOKENS_PATH,
+      method: 'POST',
+      body: JSON.stringify({
+        subject: refreshToken.subject,
+        platform: 'platform',
+        scope: 'test:scope',
+      }),
+    })
+    .reply(201, {
+      token: 'access_token_2',
+    });
+
+    accessToken = await getAccessToken(
+      refreshToken,
+      'platform',
+      'test:scope',
+    );
+
+    expect(accessToken).toEqual('access_token_2');
   });
 });

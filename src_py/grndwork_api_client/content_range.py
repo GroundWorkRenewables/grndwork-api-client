@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 import re
 
+from .make_request import Response
+
 
 @dataclass
 class ContentRange:
@@ -12,8 +14,10 @@ class ContentRange:
     _pattern = re.compile(r'^(\w+) (\d+)-(\d+)\/(\d+)$')
 
     @classmethod
-    def parse(cls, header: str) -> 'ContentRange':
-        if header:
+    def parse(cls, resp: Response) -> 'ContentRange':
+        header = resp['headers'].get('content-range')
+
+        if header and isinstance(header, str):
             result = cls._pattern.search(header)
 
             if result:

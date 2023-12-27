@@ -2,9 +2,11 @@ import time
 
 import jwt
 import pytest
+from responses import RequestsMock
+from responses.matchers import header_matcher, json_params_matcher
+from responses.registries import OrderedRegistry
 from src_py.grndwork_api_client.access_tokens import get_access_token, reset_access_token_cache
 from src_py.grndwork_api_client.config import TOKENS_URL
-from src_py.grndwork_api_client.make_request import make_request as _make_request
 
 
 def describe_get_access_token():
@@ -13,16 +15,9 @@ def describe_get_access_token():
         'token': 'refresh_token',
     }
 
-    @pytest.fixture(name='make_request', autouse=True)
-    def fixture_make_request(mocker):
-        return mocker.patch(
-            target='src_py.grndwork_api_client.access_tokens.make_request',
-            spec=_make_request,
-            return_value=(
-                {'token': 'access_token'},
-                mocker.MagicMock(),
-            ),
-        )
+    @pytest.fixture(autouse=True)
+    def _reset_access_token_cache():
+        reset_access_token_cache()
 
     @pytest.fixture(name='decode', autouse=True)
     def fixture_decode(mocker):
@@ -34,94 +29,202 @@ def describe_get_access_token():
             },
         )
 
-    @pytest.fixture(autouse=True)
-    def _reset_access_token_cache():
-        reset_access_token_cache()
+    @pytest.fixture(name='api_mock', autouse=True)
+    def fixture_api_mock():
+        with RequestsMock(registry=OrderedRegistry) as api_mock:
+            yield api_mock
 
-    def it_requests_new_access_token(make_request):
+    def it_requests_new_access_token(api_mock):
+        api_mock.post(
+            url=TOKENS_URL,
+            match=[
+                header_matcher({'Authorization': 'Bearer refresh_token'}),
+                json_params_matcher({
+                    'subject': refresh_token['subject'],
+                    'platform': 'platform',
+                    'scope': 'test:scope',
+                }),
+            ],
+            status=201,
+            json={
+                'token': 'access_token',
+            },
+        )
+
         access_token = get_access_token(
             refresh_token=refresh_token,
             platform='platform',
-            scope='read:data',
+            scope='test:scope',
         )
-
-        assert make_request.call_count == 1
-
-        (_, kwargs) = make_request.call_args
-
-        assert kwargs == {
-            'url': TOKENS_URL,
-            'token': 'refresh_token',
-            'method': 'POST',
-            'body': {
-                'subject': 'uuid',
-                'platform': 'platform',
-                'scope': 'read:data',
-            },
-        }
 
         assert access_token == 'access_token'
 
-    def it_does_not_request_new_access_token_when_using_cache(make_request):
-        get_access_token(
-            refresh_token=refresh_token,
-            platform='platform',
-            scope='read:data',
+    def it_does_not_request_new_access_token_when_using_cache(api_mock):
+        api_mock.post(
+            url=TOKENS_URL,
+            status=201,
+            json={
+                'token': 'access_token',
+            },
         )
 
-        get_access_token(
+        access_token = get_access_token(
             refresh_token=refresh_token,
             platform='platform',
-            scope='read:data',
+            scope='test:scope',
         )
 
-        assert make_request.call_count == 1
+        assert access_token == 'access_token'
 
-    def it_requests_new_access_token_for_other_platform(make_request):
-        get_access_token(
+        access_token = get_access_token(
             refresh_token=refresh_token,
             platform='platform',
-            scope='read:data',
+            scope='test:scope',
         )
 
-        get_access_token(
+        assert access_token == 'access_token'
+
+    def it_requests_new_access_token_for_other_platform(api_mock):
+        api_mock.post(
+            url=TOKENS_URL,
+            match=[
+                json_params_matcher({
+                    'subject': refresh_token['subject'],
+                    'platform': 'platform',
+                    'scope': 'test:scope',
+                }),
+            ],
+            status=201,
+            json={
+                'token': 'access_token_1',
+            },
+        )
+
+        access_token = get_access_token(
+            refresh_token=refresh_token,
+            platform='platform',
+            scope='test:scope',
+        )
+
+        assert access_token == 'access_token_1'
+
+        api_mock.post(
+            url=TOKENS_URL,
+            match=[
+                json_params_matcher({
+                    'subject': refresh_token['subject'],
+                    'platform': 'other',
+                    'scope': 'test:scope',
+                }),
+            ],
+            status=201,
+            json={
+                'token': 'access_token_2',
+            },
+        )
+
+        access_token = get_access_token(
             refresh_token=refresh_token,
             platform='other',
-            scope='read:data',
+            scope='test:scope',
         )
 
-        assert make_request.call_count == 2
+        assert access_token == 'access_token_2'
 
-    def it_requests_new_access_token_for_other_scope(make_request):
-        get_access_token(
+    def it_requests_new_access_token_for_other_scope(api_mock):
+        api_mock.post(
+            url=TOKENS_URL,
+            match=[
+                json_params_matcher({
+                    'subject': refresh_token['subject'],
+                    'platform': 'platform',
+                    'scope': 'test:scope',
+                }),
+            ],
+            status=201,
+            json={
+                'token': 'access_token_1',
+            },
+        )
+
+        access_token = get_access_token(
             refresh_token=refresh_token,
             platform='platform',
-            scope='read:data',
+            scope='test:scope',
         )
 
-        get_access_token(
+        assert access_token == 'access_token_1'
+
+        api_mock.post(
+            url=TOKENS_URL,
+            match=[
+                json_params_matcher({
+                    'subject': refresh_token['subject'],
+                    'platform': 'platform',
+                    'scope': 'other:scope',
+                }),
+            ],
+            status=201,
+            json={
+                'token': 'access_token_2',
+            },
+        )
+
+        access_token = get_access_token(
             refresh_token=refresh_token,
             platform='platform',
-            scope='write:data',
+            scope='other:scope',
         )
 
-        assert make_request.call_count == 2
+        assert access_token == 'access_token_2'
 
-    def it_requests_new_access_token_when_existing_has_expired(make_request, decode):
+    def it_requests_new_access_token_when_existing_has_expired(decode, api_mock):
         decode.return_value = {
             'exp': int(time.time()) - 1000,
         }
 
-        get_access_token(
-            refresh_token=refresh_token,
-            platform='platform',
-            scope='read:data',
+        api_mock.post(
+            url=TOKENS_URL,
+            match=[
+                json_params_matcher({
+                    'subject': refresh_token['subject'],
+                    'platform': 'platform',
+                    'scope': 'test:scope',
+                }),
+            ],
+            status=201,
+            json={
+                'token': 'access_token_1',
+            },
         )
 
-        get_access_token(
+        access_token = get_access_token(
             refresh_token=refresh_token,
             platform='platform',
-            scope='read:data',
+            scope='test:scope',
         )
 
-        assert make_request.call_count == 2
+        assert access_token == 'access_token_1'
+
+        api_mock.post(
+            url=TOKENS_URL,
+            match=[
+                json_params_matcher({
+                    'subject': refresh_token['subject'],
+                    'platform': 'platform',
+                    'scope': 'test:scope',
+                }),
+            ],
+            status=201,
+            json={
+                'token': 'access_token_2',
+            },
+        )
+
+        access_token = get_access_token(
+            refresh_token=refresh_token,
+            platform='platform',
+            scope='test:scope',
+        )
+
+        assert access_token == 'access_token_2'

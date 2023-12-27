@@ -1,51 +1,116 @@
 from http.client import responses as status_codes
 import json
-from typing import Any, List, MutableMapping, Optional, Tuple
+from time import sleep
+from typing import Any, Dict, List, Literal, MutableMapping, Optional, Tuple, TypedDict, Union
 
-import requests
+from requests import HTTPError, request, RequestException
+
+HttpMethod = Union[Literal['GET'], Literal['POST']]
+ResponseHeaders = Dict[str, str]
+
+
+class Response(TypedDict):
+    status_code: int
+    headers: ResponseHeaders
+
+
+class ErrorMessage(TypedDict):
+    field: str
+    message: str
 
 
 class RequestError(Exception):
-    def __init__(self, *args: Any, errors: Optional[List[Any]] = None) -> None:
-        super().__init__(*args)
+    errors: List[ErrorMessage]
+
+    def __init__(
+        self,
+        message: str,
+        errors: Optional[List[ErrorMessage]] = None,
+    ) -> None:
+        super().__init__(message)
         self.errors = errors or []
 
 
 def make_request(
-    url: str,
     *,
-    token: str,
-    method: str = 'GET',
+    url: str,
+    method: Optional[HttpMethod] = None,
+    token: Optional[str] = None,
     headers: Optional[MutableMapping[str, Any]] = None,
     query: Any = None,
     body: Any = None,
-) -> Tuple[Any, requests.Response]:
-    headers = headers or {}
-    query = query or {}
+    timeout: Optional[float] = None,
+    retries: Optional[int] = None,
+    backoff: Optional[float] = None,
+) -> Tuple[Any, Response]:
+    method = method or 'GET'
+    headers = dict(headers) if headers else {}
+    timeout = timeout if timeout is not None else 30.0
+    retries = retries if retries is not None else 3
+    backoff = backoff if backoff is not None else 30.0
 
     if token:
         headers['Authorization'] = f'Bearer {token}'
 
-    if body:
+    params = {
+        key: value for key, value in (query or {}).items() if value is not None
+    }
+
+    if body is not None and not isinstance(body, str):
         headers['Content-Type'] = 'application/json'
+        body = json.dumps(body)
 
-    resp = requests.request(
-        url=url,
-        method=method,
-        headers=headers,
-        params=query,
-        data=json.dumps(body),
-    )
+    while True:
+        try:
+            resp = request(
+                url=url,
+                method=method,
+                headers=headers,
+                params=params,
+                data=body,
+                timeout=timeout,
+            )
 
+            resp.raise_for_status()
+
+        except HTTPError as err:
+            if method == 'GET' and retries > 0 and should_retry(err.response.status_code):
+                wait(backoff)
+                retries -= 1
+                backoff *= 2
+                continue
+
+            raise RequestError(*parse_error_response(err))
+
+        except RequestException:
+            raise RequestError('Failed to make request')
+
+        try:
+            payload = resp.json()
+        except RequestException:
+            raise RequestError('Failed to parse response payload')
+
+        return payload, {
+            'status_code': resp.status_code,
+            'headers': dict(resp.headers.lower_items()),
+        }
+
+
+def should_retry(status_code: int) -> bool:
+    return status_code in [429, 502, 503, 504]
+
+
+def wait(delay: float) -> None:
+    sleep(delay)
+
+
+def parse_error_response(err: HTTPError) -> Tuple[str, List[ErrorMessage]]:
     try:
-        payload = resp.json()
-    except requests.RequestException:
-        raise RequestError('Failed to parse response payload')
+        payload = err.response.json()
+    except RequestException:
+        payload = {}
 
-    if resp.status_code >= 400:
-        raise RequestError(
-            payload.get('message') or status_codes[resp.status_code],
-            errors=payload.get('errors'),
-        )
-
-    return payload, resp
+    return (
+        payload.get('message') or status_codes[err.response.status_code] or 'Unknown response',
+        payload.get('errors') or [],
+    )

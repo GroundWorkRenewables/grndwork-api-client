@@ -1,98 +1,139 @@
 import {getAccessToken} from './access_tokens';
-import {DATA_URL, QC_URL, STATIONS_URL} from './config';
 import {
-  DataFile,
+  DATA_URL,
+  QC_URL,
+  STATIONS_URL,
+} from './config';
+import {
+  ClientOptions,
+  DataFileWithRecords,
   GetDataQuery,
-  GetQCQuery,
   GetStationsQuery,
   PostDataPayload,
   QCRecord,
   RefreshToken,
-  Station,
+  StationWithDataFiles,
 } from './interfaces';
 import {IterableResponse} from './iterable_response';
 import {makePaginatedRequest} from './make_paginated_request';
-import {makeRequest} from './make_request';
+import {HttpMethod, makeRequest, Response} from './make_request';
 import {combineDataAndQCRecords} from './utils';
 
 export class Client {
   constructor(
-    private readonly refreshToken: RefreshToken,
-    private readonly platform: string,
+    private _refreshToken: RefreshToken,
+    private _platform: string,
+    private _options: ClientOptions,
   ) {}
 
   public getStations(
     query: GetStationsQuery | null = null,
-    pageSize: number | null = null,
-  ): IterableResponse<Station> {
-    const iterator = this._requestStations(query, pageSize);
+    options: {
+      page_size?: number | null,
+    } = {},
+  ): IterableResponse<StationWithDataFiles> {
+    const iterator = this._requestStations(
+      query || {},
+      options.page_size || 100,
+    );
 
     return new IterableResponse(iterator);
   }
 
-  private async* _requestStations(
-    query: GetStationsQuery | null,
-    pageSize: number | null,
-  ): AsyncIterableIterator<Station> {
-    const {refreshToken, platform} = this;
-    const accessToken = await getAccessToken(refreshToken, platform, 'read:stations');
-
-    yield* makePaginatedRequest<Station>({
-      url: STATIONS_URL,
-      token: accessToken,
-      query: query || {},
-    }, pageSize || 100);
-  }
-
   public getData(
     query: GetDataQuery | null = null,
-    includeQCFlags: boolean | null = null,
-    pageSize: number | null = null,
-  ): IterableResponse<DataFile> {
-    let iterator = this._requestDataFiles(query, pageSize);
+    options: {
+      include_qc_flags?: boolean | null,
+      page_size?: number | null,
+    } = {},
+  ): IterableResponse<DataFileWithRecords> {
+    let iterator = this._requestDataFiles(
+      query || {},
+      options.page_size || 100,
+    );
 
-    if ((query || {}).records_limit && includeQCFlags !== false) {
+    if ((query || {}).records_limit && options.include_qc_flags !== false) {
       iterator = this._includeQCFlags(iterator);
     }
 
     return new IterableResponse(iterator);
   }
 
-  private async* _requestDataFiles(
-    query: GetDataQuery | null,
-    pageSize: number | null,
-  ): AsyncIterableIterator<DataFile> {
-    const {refreshToken, platform} = this;
-    const accessToken = await getAccessToken(refreshToken, platform, 'read:data');
+  public async postData(
+    payload: PostDataPayload,
+  ): Promise<void> {
+    const accessToken = await getAccessToken(
+      this._refreshToken,
+      this._platform,
+      'write:data',
+    );
 
-    yield* makePaginatedRequest<DataFile>({
+    await this._makeRequest<void>({
+      url: DATA_URL,
+      method: 'POST',
+      token: accessToken,
+      body: payload,
+    });
+  }
+
+  private async* _requestStations(
+    query: GetStationsQuery,
+    pageSize: number,
+  ): AsyncIterableIterator<StationWithDataFiles> {
+    const accessToken = await getAccessToken(
+      this._refreshToken,
+      this._platform,
+      'read:stations',
+    );
+
+    yield* this._makePaginatedRequest<StationWithDataFiles>({
+      url: STATIONS_URL,
+      token: accessToken,
+      query,
+      page_size: pageSize,
+    });
+  }
+
+  private async* _requestDataFiles(
+    query: GetDataQuery,
+    pageSize: number,
+  ): AsyncIterableIterator<DataFileWithRecords> {
+    const accessToken = await getAccessToken(
+      this._refreshToken,
+      this._platform,
+      'read:data',
+    );
+
+    yield* this._makePaginatedRequest<DataFileWithRecords>({
       url: DATA_URL,
       token: accessToken,
-      query: query || {},
-    }, pageSize || 100);
+      query,
+      page_size: pageSize,
+    });
   }
 
   private async* _includeQCFlags(
-    iterator: AsyncIterableIterator<DataFile>,
-  ): AsyncIterableIterator<DataFile> {
-    const {refreshToken, platform} = this;
-    const accessToken = await getAccessToken(refreshToken, platform, 'read:qc');
+    iterator: AsyncIterableIterator<DataFileWithRecords>,
+  ): AsyncIterableIterator<DataFileWithRecords> {
+    const accessToken = await getAccessToken(
+      this._refreshToken,
+      this._platform,
+      'read:qc',
+    );
 
     for await (const dataFile of iterator) {
       const records = dataFile.records || [];
 
       if (records.length) {
-        const query: GetQCQuery = {
-          filename: dataFile.filename,
-          before: records[0].timestamp,
-          after: records[records.length - 1].timestamp,
-          limit: 1500,
-        };
-
-        const results = (await makeRequest<Array<QCRecord>>({
+        const results = (await this._makeRequest<Array<QCRecord>>({
           url: QC_URL,
           token: accessToken,
-          query,
+          query: {
+            filename: dataFile.filename,
+            limit: 1500,
+            before: records[0].timestamp,
+            after: records[records.length - 1].timestamp,
+          },
         }))[0];
 
         yield {
@@ -105,14 +146,36 @@ export class Client {
     }
   }
 
-  public async postData(payload: PostDataPayload): Promise<void> {
-    const accessToken = await getAccessToken(this.refreshToken, this.platform, 'write:data');
+  private _makeRequest<T>(
+    options: {
+      url: string,
+      method?: HttpMethod,
+      token?: string,
+      query?: Record<string, any>,
+      body?: any,
+    },
+  ): Promise<[T, Response]> {
+    return makeRequest<T>({
+      ...options,
+      timeout: this._options.request_timeout,
+      retries: this._options.request_retries,
+      backoff: this._options.request_backoff,
+    });
+  }
 
-    await makeRequest<void>({
-      url: DATA_URL,
-      token: accessToken,
-      method: 'POST',
-      body: payload,
+  private _makePaginatedRequest<T>(
+    options: {
+      url: string,
+      token?: string,
+      query?: Record<string, any>,
+      page_size: number,
+    },
+  ): AsyncIterableIterator<T> {
+    return makePaginatedRequest({
+      ...options,
+      timeout: this._options.request_timeout,
+      retries: this._options.request_retries,
+      backoff: this._options.request_backoff,
     });
   }
 }
