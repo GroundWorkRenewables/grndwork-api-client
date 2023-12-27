@@ -1,33 +1,33 @@
 ![GroundView](https://user-images.githubusercontent.com/7266242/151395564-54000ba1-f7a4-4ea8-84b4-66367e14cc90.png)
 
-# Groundwork API Client
+# GroundWork API Client
 
 API client for [GroundWork Renewables](https://grndwork.com)
 
 
 ## Installation
 
-JavaScript:
+__JavaScript__:
 ```
 $ npm install @grndwork/api-client
 ```
 
-Python:
+__Python__:
 ```
 $ pip install grndwork-api-client
 ```
 
 ## Usage
 
-JavaScript:
-```js
+__JavaScript__:
+```typescript
 import {createClient} from '@grndwork/api-client';
 
 const client = createClient();
 ```
 
-Python:
-```py
+__Python__:
+```python
 from grndwork_api_client import create_client
 
 client = create_client()
@@ -41,11 +41,11 @@ Or the subject and token values from this file can be provided using the `GROUND
 
 When providing subject and token values `GROUNDWORK_TOKEN_PATH` must not be set.
 
-### Javascript Client
+### JavaScript Client
 
 For methods that return lists, the javascript client returns a custom async iterable. You can consume this using:
 
-```js
+```typescript
 for await (const station of client.getStations()) {
   ...
 }
@@ -53,7 +53,7 @@ for await (const station of client.getStations()) {
 
 or
 
-```js
+```typescript
 const stations = await client.getStations().toArray();
 ```
 
@@ -61,41 +61,83 @@ const stations = await client.getStations().toArray();
 
 For methods that return lists, the python client returns a standard iterator. You can consume this using:
 
-```py
+```python
 for station in client.get_stations():
   ...
 ```
 
 or
 
-```py
+```python
 stations = list(client.get_stations())
 ```
 
+
+
 ## API
 
+### Create Client
+
+__JavaScript__:
+```typescript
+createClient(
+    platform?: string | null,
+    options?: ClientOptions | null,
+): Client
+```
+
+__Python__:
+```python
+create_client(
+    platform: str | None,
+    options: ClientOptions | None,
+) -> Client
+```
+
+Takes an optional platform string and options object and returns an API client instance.
+
+#### Client Options
+
+  | Param | Type | Description |
+  |---|---|---|
+  | request_timeout | number | Seconds to wait between responses from server ( default: 30.0 ) |
+  | request_retries | number | Number of times to retry failed request to server ( default: 3 ) |
+  | request_backoff | number | Seconds to wait between retries to server ( default: 30.0 ) |
+
+---
 ### Get Stations
 
-JavaScript:
+Provides the ability to get stations
+
+__JavaScript__:
 ```typescript
-client.getStations(query: GetStationsQuery | null, pageSize: number | null): IterableResponse<Station>
+client.getStations(
+    query?: GetStationsQuery | null,
+    options?: {
+        page_size?: number | null,
+    },
+): IterableResponse<StationWithDataFiles>
 ```
 
-Python:
-```py
-client.get_stations(query: GetStationsQuery | None, *, page_size: int | None) -> Iterator[Station]
+__Python__:
+```python
+client.get_stations(
+    query: GetStationsQuery | None,
+    *,
+    page_size: int | None,
+) -> Iterator[StationWithDataFiles]
 ```
 
-Takes an optional get stations query object as an argument and returns an array of stations.
+Takes an optional get stations query object as an argument and returns a list of stations.
 
-#### Get Stations Query Parameters
+#### Get Stations Query
 
   | Param | Type | Description |
   |---|---|---|
   | station | string | Only return stations with UUID, name, or name matching pattern |
   | site | string | Only return stations for site with UUID, name, or name matching pattern |
   | client | string | Only return stations for client with UUID, name, or name matching pattern |
-  | limit | number | Only return a limited number of stations |
+  | limit | number | Maximum number of stations to return |
   | offset | number | Number of stations to skip over before returning results |
 
 ##### Pattern Matching
@@ -106,32 +148,43 @@ Pattern matching is case insensitive.
 
 For example:
 
-JavaScript:
-```js
-const stations = await client.getStations({station: 'Test*'}).toArray();
+__JavaScript__:
+```typescript
+const stations = await client.getStations(
+    {station: 'Test*'},
+).toArray();
 ```
 
-Python:
-```py
-stations = list(client.get_stations({'station': 'Test*'}))
+__Python__:
+```python
+stations = list(client.get_stations(
+    {'station': 'Test*'},
+))
 ```
-
 
 Would return all stations whose name starts with `Test`.
+
+#### Options
 
 ##### Page Size
 
 You can set an optional page size to control the number of stations returned per request from the API.
 ( min: 1, max: 100, default: 100 )
 
-JavaScript:
-```js
-const stations = await client.getStations(null, 50).toArray();
+__JavaScript__:
+```typescript
+const stations = await client.getStations(
+    null,
+    {page_size: 50},
+).toArray();
 ```
 
-Python:
-```py
-stations = list(client.get_stations(page_size=50))
+__Python__:
+```python
+stations = list(client.get_stations(
+    None,
+    page_size=50,
+))
 ```
 
 #### Return Values
@@ -151,13 +204,24 @@ Stations are returned in alphabetical order by station name.
     "station_uuid": "9a8ebbee-ddd1-4071-b17f-356f42867b5e",
     "station_full_name": "TestStation",
     "description": "",
+    "model": "",
+    "type": "",
+    "status": "",
+    "project_manager": {
+        "full_name": "",
+        "email": ""
+    },
+    "maintenance_frequency": "",
+    "maintenance_log": "",
+    "location_region": "",
     "latitude": 0,
     "longitude": 0,
     "altitude": 0,
     "timezone_offset": -5,
     "start_timestamp": "2020-01-01 00:00:00",
     "end_timestamp": "2020-12-31 23:59:59",
-    "data_file_prefix": "Test_",
+    "created_at": "2020-01-12T15:31:35.338369Z",
+    "updated_at": "2021-01-08T22:10:36.904328Z",
     "data_files": [
       {
         "filename": "Test_OneMin.dat",
@@ -166,28 +230,45 @@ Stations are returned in alphabetical order by station name.
           "columns": ["Ambient_Temp"],
           "units": ["Deg_C"],
           "processing": ["Avg"]
-        }
+        },
+        "created_at": "2020-01-12T15:31:35.338369Z",
+        "updated_at": "2021-01-08T22:10:36.904328Z"
       }
-    ]
+    ],
+    "data_file_prefix": "Test_"
   }
 ]
 ```
 
+---
 ### Get Data
 
-JavaScript:
+Provides the ability to get data
+
+__JavaScript__:
 ```typescript
-client.getData(query: GetDataQuery | null, includeQCFlags: boolean | null, pageSize: number | null): IterableResponse<DataFile>
+client.getData(
+    query?: GetDataQuery | null,
+    options?: {
+        include_qc_flags?: boolean | null,
+        page_size?: number | null,
+    },
+): IterableResponse<DataFileWithRecords>
 ```
 
-Python:
-```py
-client.get_data(query: GetDataQuery | None, *, include_qc_flags: bool | None, page_size: int | None) -> Iterator[DataFile]
+__Python__:
+```python
+client.get_data(
+    query: GetDataQuery | None,
+    *,
+    include_qc_flags: bool | None,
+    page_size: int | None,
+) -> Iterator[DataFileWithRecords]
 ```
 
-Takes an optional get data query object as an argument and returns an array of data files.
+Takes an optional get data query object as an argument and returns a list of data files.
 
-#### Get Data Query Parameters
+#### Get Data Query
 
   | Param | Type | Description |
   |---|---|---|
@@ -195,11 +276,11 @@ Takes an optional get data query object as an argument and returns an array of d
   | station | string | Only return data files for station with UUID, name, or name matching pattern |
   | site | string | Only return data files for site with UUID, name, or name matching pattern |
   | client | string | Only return data files for client with UUID, name, or name matching pattern |
-  | limit | number | Only return a limited number of files |
+  | limit | number | Maximum number of files to return |
   | offset | number | Number of files to skip over before returning results |
-  | records_limit | number | Number of records to return per file ( min: 0, max: 1500, default: 0 ) |
-  | records_before | timestamp | Only return records at or before timestamp ( format: `yyyy-mm-dd hh:mm:ss` ) |
-  | records_after | timestamp | Only return records at or after timestamp ( format: `yyyy-mm-dd hh:mm:ss` ) |
+  | records_limit | number | Maximum number of records to return per file ( min: 0, max: 1500, default: 0 ) |
+  | records_before | timestamp | Only return records at or before timestamp ( format: `YYYY-MM-DD hh:mm:ss` ) |
+  | records_after | timestamp | Only return records at or after timestamp ( format: `YYYY-MM-DD hh:mm:ss` ) |
 
 ##### Pattern Matching
 
@@ -209,73 +290,75 @@ Pattern matching is case insensitive.
 
 For example:
 
-JavaScript:
-```js
-const dataFiles = await client.getData({filename: '*_OneMin.dat'}).toArray();
+__JavaScript__:
+```typescript
+const dataFiles = await client.getData(
+    {filename: '*_OneMin.dat'},
+).toArray();
 ```
 
-Python:
-```py
-data_files = list(client.get_data({'filename': '*_OneMin.dat'}))
+__Python__:
+```python
+data_files = list(client.get_data(
+    {'filename': '*_OneMin.dat'},
+))
 ```
 
 Would return all one minute data files.
+
+#### Options
+
+##### Include QC Flags
+
+By default each record will include the qc flags that apply to that data record. This behavior can be disabled.
+
+For example:
+
+__JavaScript__:
+```typescript
+for await (const dataFile of client.getData(
+    null,
+    {include_qc_flags: false},
+)) {
+    const dataRecords = await dataFile.records.toArray();
+}
+```
+
+__Python__:
+```python
+for data_file in client.get_data(
+    None,
+    include_qc_flags=False,
+):
+    data_records = list(data_file['records'])
+```
+
+Would return records without qc flags.
 
 ##### Page Size
 
 You can set an optional page size to control the number of files returned per request from the API.
 ( min: 1, max: 100, default: 100 )
 
-JavaScript:
-```js
-const dataFiles = await client.getData(null, null, 50).toArray();
+__JavaScript__:
+```typescript
+const dataFiles = await client.getData(
+    null,
+    {page_size: 50},
+).toArray();
 ```
 
-Python:
-```py
-data_files = list(client.get_data(page_size=50))
+__Python__:
+```python
+data_files = list(client.get_data(
+    None,
+    page_size=50,
+))
 ```
 
 #### Return Values
 
 Data files are returned in alphabetical order by filename.
-
-###### Data Records
-
-When `records_limit` is included in the query, records are returned in reverse chronological order starting at the most recent timestamp.
-When `records_limit` is greater then 1, only a single data file will be returned per request ( equivalent to page size of 1 ).
-
-For example:
-
-JavaScript:
-```js
-const dataFiles = await client.getData({limit: 1, records_limit: 100}).toArray();
-```
-
-Python:
-```py
-data_files = list(client.get_data({'limit': 1, 'records_limit': 100}))
-```
-
-Would return the most recent 100 records from the first file alphabetically.
-
-###### QC Flags
-
-By default each record will include the qc flags that apply to that data record. This behavior can be disabled.
-
-For example:
-
-JavaScript:
-```js
-const dataFiles = await client.getData({limit: 1, records_limit: 100}, false).toArray();
-```
-
-Python:
-```py
-data_files = list(client.get_data({'limit': 1, 'records_limit': 100}, include_qc_flags=False))
-```
-
-Would return records without qc flags.
 
 ##### Sample Output
 
@@ -283,6 +366,8 @@ Would return records without qc flags.
 [
   {
     "source": "station:9a8ebbee-ddd1-4071-b17f-356f42867b5e",
+    "source_start_timestamp": "2020-01-01 00:00:00",
+    "source_end_timestamp": "2020-12-31 23:59:59",
     "filename": "Test_OneMin.dat",
     "is_stale": false,
     "headers": {
@@ -290,6 +375,8 @@ Would return records without qc flags.
       "units": ["Deg_C"],
       "processing": ["Avg"]
     },
+    "created_at": "2020-01-12T15:31:35.338369Z",
+    "updated_at": "2021-01-08T22:10:36.904328Z",
     "records": [
       {
         "timestamp": "2020-01-01 00:00:00",
@@ -306,16 +393,23 @@ Would return records without qc flags.
 ]
 ```
 
+---
 ### Post Data
 
-JavaScript:
+Provides the ability to create data files and upload records to those files
+
+__JavaScript__:
 ```typescript
-client.postData(payload: PostDataPayload): Promise<void>
+client.postData(
+    payload: PostDataPayload,
+): Promise<void>
 ```
 
-Python:
-```py
-client.post_data(payload: PostDataPayload) -> None
+__Python__:
+```python
+client.post_data(
+    payload: PostDataPayload,
+) -> None
 ```
 
 Takes a post data payload object as an argument and uploads it to the cloud.
@@ -333,7 +427,7 @@ Takes a post data payload object as an argument and uploads it to the cloud.
   | files[].headers.units | Array<string> | Array of units for the columns |
   | files[].headers.processing | Array<string> | Array of processing used for column data (Min, Max, Avg) |
   | files[].records | Array<DataRecord> | Array of data records for file ( max length: 100 combined across all files ) |
-  | files[].records[].timestamp | timestamp | The timestamp of the data record in UTC ( format: `yyyy-mm-dd hh:mm:ss` ) |
+  | files[].records[].timestamp | timestamp | The timestamp of the data record in UTC ( format: `YYYY-MM-DD hh:mm:ss` ) |
   | files[].records[].record_num | number | Positive sequential number for records in file |
   | files[].records[].data | Record<string, any> | Data for record, keys should match `header.columns` |
   | overwrite | boolean | Whether to overwrite existing data records when timestamps match |

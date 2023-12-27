@@ -1,62 +1,51 @@
-from typing import cast, Iterator, List, Optional
+from typing import Any, cast, Iterator, List, Optional, Tuple
 
 from .access_tokens import get_access_token
-from .config import DATA_URL, QC_URL, STATIONS_URL
+from .config import (
+    DATA_URL,
+    QC_URL,
+    STATIONS_URL,
+)
 from .interfaces import (
-    DataFile,
+    ClientOptions,
+    DataFileWithRecords,
     GetDataQuery,
-    GetQCQuery,
     GetStationsQuery,
     PostDataPayload,
     QCRecord,
     RefreshToken,
-    Station,
+    StationWithDataFiles,
 )
 from .make_paginated_request import make_paginated_request
-from .make_request import make_request
+from .make_request import HttpMethod, make_request, Response
 from .utils import combine_data_and_qc_records
 
 
 class Client():
+    _refresh_token: RefreshToken
+    _platform: str
+    _options: ClientOptions
+
     def __init__(
         self,
         refresh_token: RefreshToken,
         platform: str,
+        options: ClientOptions,
     ) -> None:
-        self.refresh_token = refresh_token
-        self.platform = platform
+        self._refresh_token = refresh_token
+        self._platform = platform
+        self._options = options
 
     def get_stations(
         self,
         query: Optional[GetStationsQuery] = None,
         *,
         page_size: Optional[int] = None,
-    ) -> Iterator[Station]:
+    ) -> Iterator[StationWithDataFiles]:
         iterator = self._request_stations(
-            query=query,
-            page_size=page_size,
-        )
-
-        return iterator
-
-    def _request_stations(
-        self,
-        *,
-        query: Optional[GetStationsQuery],
-        page_size: Optional[int],
-    ) -> Iterator[Station]:
-        access_token = get_access_token(
-            refresh_token=self.refresh_token,
-            platform=self.platform,
-            scope='read:stations',
-        )
-
-        iterator = cast(Iterator[Station], make_paginated_request(
-            url=STATIONS_URL,
-            token=access_token,
             query=query or {},
             page_size=page_size or 100,
-        ))
+        )
 
         return iterator
 
@@ -66,10 +55,10 @@ class Client():
         *,
         include_qc_flags: Optional[bool] = None,
         page_size: Optional[int] = None,
-    ) -> Iterator[DataFile]:
-        iterator = self._request_data(
-            query=query,
-            page_size=page_size,
+    ) -> Iterator[DataFileWithRecords]:
+        iterator = self._request_data_files(
+            query=query or {},
+            page_size=page_size or 100,
         )
 
         if (query or {}).get('records_limit') and include_qc_flags is not False:
@@ -77,34 +66,72 @@ class Client():
 
         return iterator
 
-    def _request_data(
+    def post_data(
+        self,
+        payload: PostDataPayload,
+    ) -> None:
+        access_token = get_access_token(
+            refresh_token=self._refresh_token,
+            platform=self._platform,
+            scope='write:data',
+        )
+
+        self._make_request(
+            url=DATA_URL,
+            method='POST',
+            token=access_token,
+            body=payload,
+        )
+
+    def _request_stations(
         self,
         *,
-        query: Optional[GetDataQuery],
-        page_size: Optional[int],
-    ) -> Iterator[DataFile]:
+        query: GetStationsQuery,
+        page_size: int,
+    ) -> Iterator[StationWithDataFiles]:
         access_token = get_access_token(
-            refresh_token=self.refresh_token,
-            platform=self.platform,
+            refresh_token=self._refresh_token,
+            platform=self._platform,
+            scope='read:stations',
+        )
+
+        iterator = cast(Iterator[StationWithDataFiles], self._make_paginated_request(
+            url=STATIONS_URL,
+            token=access_token,
+            query=query,
+            page_size=page_size,
+        ))
+
+        return iterator
+
+    def _request_data_files(
+        self,
+        *,
+        query: GetDataQuery,
+        page_size: int,
+    ) -> Iterator[DataFileWithRecords]:
+        access_token = get_access_token(
+            refresh_token=self._refresh_token,
+            platform=self._platform,
             scope='read:data',
         )
 
-        iterator = cast(Iterator[DataFile], make_paginated_request(
+        iterator = cast(Iterator[DataFileWithRecords], self._make_paginated_request(
             url=DATA_URL,
             token=access_token,
-            query=query or {},
-            page_size=page_size or 100,
+            query=query,
+            page_size=page_size,
         ))
 
         return iterator
 
     def _include_qc_flags(
         self,
-        iterator: Iterator[DataFile],
-    ) -> Iterator[DataFile]:
+        iterator: Iterator[DataFileWithRecords],
+    ) -> Iterator[DataFileWithRecords]:
         access_token = get_access_token(
-            refresh_token=self.refresh_token,
-            platform=self.platform,
+            refresh_token=self._refresh_token,
+            platform=self._platform,
             scope='read:qc',
         )
 
@@ -112,17 +139,15 @@ class Client():
             records = data_file.get('records', [])
 
             if records:
-                query: GetQCQuery = {
-                    'filename': data_file['filename'],
-                    'before': records[0]['timestamp'],
-                    'after': records[-1]['timestamp'],
-                    'limit': 1500,
-                }
-
-                results = cast(List[QCRecord], make_request(
+                results = cast(List[QCRecord], self._make_request(
                     url=QC_URL,
                     token=access_token,
-                    query=query,
+                    query={
+                        'filename': data_file['filename'],
+                        'limit': 1500,
+                        'before': records[0]['timestamp'],
+                        'after': records[-1]['timestamp'],
+                    },
                 )[0])
 
                 yield {
@@ -133,19 +158,40 @@ class Client():
             else:
                 yield data_file
 
-    def post_data(
+    def _make_request(
         self,
-        payload: PostDataPayload,
-    ) -> None:
-        access_token = get_access_token(
-            refresh_token=self.refresh_token,
-            platform=self.platform,
-            scope='write:data',
+        *,
+        url: str,
+        method: Optional[HttpMethod] = None,
+        token: Optional[str] = None,
+        query: Any = None,
+        body: Any = None,
+    ) -> Tuple[Any, Response]:
+        return make_request(
+            url=url,
+            method=method,
+            token=token,
+            query=query,
+            body=body,
+            timeout=self._options.get('request_timeout'),
+            retries=self._options.get('request_retries'),
+            backoff=self._options.get('request_backoff'),
         )
 
-        make_request(
-            url=DATA_URL,
-            token=access_token,
-            method='POST',
-            body=payload,
+    def _make_paginated_request(
+        self,
+        *,
+        url: str,
+        token: Optional[str] = None,
+        query: Any = None,
+        page_size: int,
+    ) -> Iterator[Any]:
+        return make_paginated_request(
+            url=url,
+            token=token,
+            query=query,
+            page_size=page_size,
+            timeout=self._options.get('request_timeout'),
+            retries=self._options.get('request_retries'),
+            backoff=self._options.get('request_backoff'),
         )

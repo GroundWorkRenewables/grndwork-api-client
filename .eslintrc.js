@@ -23,6 +23,9 @@ module.exports = {
     'handle-callback-err': 'error',
     'no-await-in-loop': 'off',
     'no-class-assign': 'error',
+    'no-constant-condition': ['error', {
+      checkLoops: false,
+    }],
     'no-continue': 'off',
     'no-mixed-operators': ['error', {
       allowSamePrecedence: true,
@@ -52,6 +55,10 @@ module.exports = {
     'strict': ['error', 'global'],
 
     'import/named': 'error',
+    'import/no-extraneous-dependencies': ['error', {
+      devDependencies: true,
+      optionalDependencies: false,
+    }],
     'import/order': ['error', {
       groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index', 'object', 'type'],
       alphabetize: {

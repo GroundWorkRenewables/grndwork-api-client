@@ -1,16 +1,21 @@
 import {Client} from './client';
 import {getRefreshToken} from './config';
 import {
+  ClientOptions,
   DataFile,
   DataFileHeaders,
+  DataFileWithRecords,
   DataRecord,
   GetDataQuery,
   GetStationsQuery,
   PostDataFile,
   PostDataPayload,
+  PostDataRecord,
+  ProjectManager,
   RefreshToken,
   Station,
   StationDataFile,
+  StationWithDataFiles,
 } from './interfaces';
 import {IterableResponse} from './iterable_response';
 import {RequestError} from './make_request';
@@ -18,10 +23,14 @@ import {RequestError} from './make_request';
 const LOGGERNET_PLATFORM = 'loggernet';
 const TRACE_PLATFORM = 'trace';
 
-function createClient(platform = LOGGERNET_PLATFORM): Client {
+function createClient(
+  platform: string | null = null,
+  options: ClientOptions | null = null,
+): Client {
   return new Client(
     getRefreshToken(),
-    platform,
+    platform || LOGGERNET_PLATFORM,
+    options || {},
   );
 }
 
@@ -35,17 +44,22 @@ export {
   TRACE_PLATFORM,
 
   // Interfaces
+  ClientOptions,
   DataFile,
   DataFileHeaders,
+  DataFileWithRecords,
   DataRecord,
   GetDataQuery,
   GetStationsQuery,
   IterableResponse,
   PostDataFile,
   PostDataPayload,
+  PostDataRecord,
+  ProjectManager,
   RefreshToken,
   Station,
   StationDataFile,
+  StationWithDataFiles,
 
   // Errors
   RequestError,

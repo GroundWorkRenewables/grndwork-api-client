@@ -1,19 +1,12 @@
-export interface RequestOptions {
-  url: string;
-  token: string;
-  method?: string;
-  query?: Record<string, any>;
-  headers?: Record<string, any>;
-  body?: Record<string, any>;
-}
-
 export interface RefreshToken {
   subject: string;
   token: string;
 }
 
-export interface AccessToken {
-  token: string;
+export interface ClientOptions {
+  request_timeout?: number;
+  request_retries?: number;
+  request_backoff?: number;
 }
 
 export type DataValue = number | string | boolean | null;
@@ -40,16 +33,22 @@ export interface DataFileHeaders {
 
 export interface DataFile {
   source: string;
+  source_start_timestamp: string | null;
+  source_end_timestamp: string | null;
   filename: string;
   is_stale: boolean;
   headers: DataFileHeaders;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DataFileWithRecords extends DataFile {
   records?: Array<DataRecord>;
 }
 
-export interface StationDataFile {
-  filename: string;
-  is_stale: boolean;
-  headers: DataFileHeaders;
+export interface ProjectManager {
+  full_name: string;
+  email: string;
 }
 
 export interface Station {
@@ -61,13 +60,33 @@ export interface Station {
   station_uuid: string;
   station_full_name: string;
   description: string;
+  model: string;
+  type: string;
+  status: string;
+  project_manager: ProjectManager | null;
+  maintenance_frequency: string;
+  maintenance_log: string;
+  location_region: string;
   latitude: number;
   longitude: number;
   altitude: number;
-  timezone_offset: number | null;
+  timezone_offset: number;
   start_timestamp: string | null;
   end_timestamp: string | null;
   data_file_prefix: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StationDataFile {
+  filename: string;
+  is_stale: boolean;
+  headers: DataFileHeaders;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StationWithDataFiles extends Station {
   data_files: Array<StationDataFile>;
 }
 
@@ -87,16 +106,9 @@ export interface GetDataQuery {
   filename?: string;
   limit?: number;
   offset?: number;
+  records_limit?: number;
   records_before?: string;
   records_after?: string;
-  records_limit?: number;
-}
-
-export interface GetQCQuery {
-  filename: string;
-  before?: string;
-  after?: string;
-  limit?: number;
 }
 
 export interface PostDataRecord {

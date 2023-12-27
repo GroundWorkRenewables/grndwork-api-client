@@ -1,143 +1,194 @@
-import {Response} from 'node-fetch';
-import {TOKENS_URL as API_URL} from '../src_js/grndwork_api_client/config';
+import * as undici from 'undici';
+import {API_URL} from '../src_js/grndwork_api_client/config';
 import {makePaginatedRequest} from '../src_js/grndwork_api_client/make_paginated_request';
-import {makeRequest} from '../src_js/grndwork_api_client/make_request';
+import {RequestError} from '../src_js/grndwork_api_client/make_request';
 
-jest.mock('../src_js/grndwork_api_client/make_request');
+const TEST_URL = `${API_URL}/v1/test`;
 
 describe('makePaginatedRequest', () => {
+  const TEST_PATH = new URL(TEST_URL).pathname;
+
+  let globalAgent: undici.Dispatcher;
+  let mockAgent: undici.MockAgent;
+  let apiMock: undici.MockPool;
+
   beforeEach(() => {
-    async function makeRequestMock(
-      options: {query?: {limit?: number, offset?: number}},
-    ): Promise<[Array<{id: number}>, Response]> {
-      const query = options.query || {};
-      const limit = query.limit || 100;
-      const offset = query.offset || 0;
+    globalAgent = undici.getGlobalDispatcher();
 
-      const first = offset + 1;
-      const last = Math.min(offset + limit, 165);
+    mockAgent = new undici.MockAgent();
+    mockAgent.disableNetConnect();
+    undici.setGlobalDispatcher(mockAgent);
 
-      return [
-        generateItems(first, last + 1),
-        new Response(undefined, {
-          headers: {
-            'Content-Range': `items ${first}-${last}/165`,
-          },
-        }),
-      ];
-    }
-
-    (makeRequest as jest.Mock).mockImplementation(makeRequestMock);
+    apiMock = mockAgent.get(API_URL);
   });
 
-  afterEach(() => jest.clearAllMocks());
+  afterEach(async () => {
+    undici.setGlobalDispatcher(globalAgent);
+    mockAgent.assertNoPendingInterceptors();
+    await mockAgent.close();
+  });
 
   it('makes requests', async () => {
+    apiMock.intercept({
+      path: TEST_PATH,
+      query: {limit: 100, offset: 0},
+    })
+    .reply(replyCallback);
+
+    apiMock.intercept({
+      path: TEST_PATH,
+      query: {limit: 100, offset: 100},
+    })
+    .reply(replyCallback);
+
     const results = await consumeItems(makePaginatedRequest({
-      url: API_URL,
-      token: 'auth token',
-    }, 100));
-
-    const {mock} = (makeRequest as jest.Mock);
-
-    expect(mock.calls.length).toEqual(2);
-    expect(mock.calls[0][0].query).toEqual({limit: 100, offset: 0});
-    expect(mock.calls[1][0].query).toEqual({limit: 100, offset: 100});
+      url: TEST_URL,
+      page_size: 100,
+    }));
 
     expect(results).toEqual(generateItems(1, 166));
   });
 
   it('makes requests with limit', async () => {
+    apiMock.intercept({
+      path: TEST_PATH,
+      query: {limit: 100, offset: 0},
+    })
+    .reply(replyCallback);
+
+    apiMock.intercept({
+      path: TEST_PATH,
+      query: {limit: 55, offset: 100},
+    })
+    .reply(replyCallback);
+
     const results = await consumeItems(makePaginatedRequest({
-      url: API_URL,
-      token: 'auth token',
-      query: {
-        limit: 155,
-      },
-    }, 100));
-
-    const {mock} = (makeRequest as jest.Mock);
-
-    expect(mock.calls.length).toEqual(2);
-    expect(mock.calls[0][0].query).toEqual({limit: 100, offset: 0});
-    expect(mock.calls[1][0].query).toEqual({limit: 55, offset: 100});
+      url: TEST_URL,
+      query: {limit: 155},
+      page_size: 100,
+    }));
 
     expect(results).toEqual(generateItems(1, 156));
   });
 
   it('makes requests with offset', async () => {
+    apiMock.intercept({
+      path: TEST_PATH,
+      query: {limit: 100, offset: 5},
+    })
+    .reply(replyCallback);
+
+    apiMock.intercept({
+      path: TEST_PATH,
+      query: {limit: 55, offset: 105},
+    })
+    .reply(replyCallback);
+
     const results = await consumeItems(makePaginatedRequest({
-      url: API_URL,
-      token: 'auth token',
-      query: {
-        limit: 155,
-        offset: 5,
-      },
-    }, 100));
-
-    const {mock} = (makeRequest as jest.Mock);
-
-    expect(mock.calls.length).toEqual(2);
-    expect(mock.calls[0][0].query).toEqual({limit: 100, offset: 5});
-    expect(mock.calls[1][0].query).toEqual({limit: 55, offset: 105});
+      url: TEST_URL,
+      query: {limit: 155, offset: 5},
+      page_size: 100,
+    }));
 
     expect(results).toEqual(generateItems(6, 161));
   });
 
   it('makes requests with page size', async () => {
+    apiMock.intercept({
+      path: TEST_PATH,
+      query: {limit: 50, offset: 0},
+    })
+    .reply(replyCallback);
+
+    apiMock.intercept({
+      path: TEST_PATH,
+      query: {limit: 50, offset: 50},
+    })
+    .reply(replyCallback);
+
+    apiMock.intercept({
+      path: TEST_PATH,
+      query: {limit: 50, offset: 100},
+    })
+    .reply(replyCallback);
+
+    apiMock.intercept({
+      path: TEST_PATH,
+      query: {limit: 50, offset: 150},
+    })
+    .reply(replyCallback);
+
     const results = await consumeItems(makePaginatedRequest({
-      url: API_URL,
-      token: 'auth token',
-      query: {
-        limit: 155,
-        offset: 5,
-      },
-    }, 50));
+      url: TEST_URL,
+      page_size: 50,
+    }));
 
-    const {mock} = (makeRequest as jest.Mock);
-
-    expect(mock.calls.length).toEqual(4);
-    expect(mock.calls[0][0].query).toEqual({limit: 50, offset: 5});
-    expect(mock.calls[1][0].query).toEqual({limit: 50, offset: 55});
-    expect(mock.calls[2][0].query).toEqual({limit: 50, offset: 105});
-    expect(mock.calls[3][0].query).toEqual({limit: 5, offset: 155});
-
-    expect(results).toEqual(generateItems(6, 161));
+    expect(results).toEqual(generateItems(1, 166));
   });
 
   it('handles empty results', async () => {
-    (makeRequest as jest.Mock).mockResolvedValue([[], new Response()]);
+    apiMock.intercept({
+      path: TEST_PATH,
+      query: {limit: 100, offset: 0},
+    })
+    .reply(200, []);
 
     const results = await consumeItems(makePaginatedRequest({
-      url: API_URL,
-      token: 'auth token',
-    }, 100));
+      url: TEST_URL,
+      page_size: 100,
+    }));
 
     expect(results).toEqual([]);
   });
 
   it('throws when invalid content range', async () => {
-    (makeRequest as jest.Mock).mockResolvedValue([
-      generateItems(1, 101),
-      new Response(undefined, {
-        headers: {
-          'Content-Range': 'items 1-100/165',
-        },
-      }),
-    ]);
+    apiMock.intercept({
+      path: TEST_PATH,
+      query: {limit: 100, offset: 100},
+    })
+    .reply(200, generateItems(101, 166), {
+      headers: {
+        'content-range': 'items 1-100/165',
+      },
+    });
 
-    await expect(() => consumeItems(makePaginatedRequest({
-      url: API_URL,
-      token: 'auth token',
-    }, 100))).rejects.toThrow(new Error('Invalid content range'));
-
-    const {mock} = (makeRequest as jest.Mock);
-
-    expect(mock.calls.length).toEqual(2);
-    expect(mock.calls[0][0].query).toEqual({limit: 100, offset: 0});
-    expect(mock.calls[1][0].query).toEqual({limit: 100, offset: 100});
+    await expect(
+      () => consumeItems(makePaginatedRequest({
+        url: TEST_URL,
+        query: {limit: 100, offset: 100},
+        page_size: 100,
+      })),
+    ).rejects.toThrow(new RequestError('Invalid content range'));
   });
 });
+
+function replyCallback(options: {path: string}): {
+  statusCode: number,
+  data: string,
+  responseOptions: {
+    headers: Record<string, string>,
+  },
+} {
+  const query = new URL(options.path, API_URL).searchParams;
+
+  const limit = parseInt(query.get('limit') || '100', 10);
+  const offset = parseInt(query.get('offset') || '0', 10);
+
+  const first = offset + 1;
+  const last = Math.min(offset + limit, 165);
+
+  return {
+    statusCode: 200,
+    data: JSON.stringify(
+      generateItems(first, last + 1),
+    ),
+    responseOptions: {
+      headers: {
+        'content-range': `items ${first}-${last}/165`,
+      },
+    },
+  };
+}
 
 function generateItems(start: number, end: number): Array<{id: number}> {
   const items = [];

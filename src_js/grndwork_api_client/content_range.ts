@@ -1,3 +1,5 @@
+import {type Response} from './make_request';
+
 export class ContentRange {
   constructor(
     public readonly first: number,
@@ -6,8 +8,10 @@ export class ContentRange {
     public readonly unit: string,
   ) {}
 
-  public static parse(header: string): ContentRange {
-    if (header) {
+  public static parse(resp: Response): ContentRange {
+    const header = resp.headers['content-range'];
+
+    if (header && typeof header === 'string') {
       const result = /^(\w+) (\d+)-(\d+)\/(\d+)$/.exec(header);
 
       if (result) {
