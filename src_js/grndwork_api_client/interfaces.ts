@@ -1,3 +1,5 @@
+import {IterableResponse} from './iterable_response';
+
 export interface RefreshToken {
   subject: string;
   token: string;
@@ -42,8 +44,12 @@ export interface DataFile {
   updated_at: string;
 }
 
-export interface DataFileWithRecords extends DataFile {
+export interface DataFileWithRecordsArray extends DataFile {
   records?: Array<DataRecord>;
+}
+
+export interface DataFileWithRecords extends DataFile {
+  records: IterableResponse<DataRecord>;
 }
 
 export interface ProjectManager {
@@ -98,7 +104,7 @@ export interface GetStationsQuery {
   offset?: number;
 }
 
-export interface GetDataQuery {
+export interface GetDataFilesQuery {
   client?: string;
   site?: string;
   gateway?: string;
@@ -106,9 +112,26 @@ export interface GetDataQuery {
   filename?: string;
   limit?: number;
   offset?: number;
+}
+
+export interface GetDataQuery extends GetDataFilesQuery {
   records_limit?: number;
   records_before?: string;
   records_after?: string;
+}
+
+export interface GetDataRecordsQuery {
+  filename: string;
+  limit?: number;
+  before?: string;
+  after?: string;
+}
+
+export interface GetDataQCQuery {
+  filename: string;
+  limit?: number;
+  before?: string;
+  after?: string;
 }
 
 export interface PostDataRecord {

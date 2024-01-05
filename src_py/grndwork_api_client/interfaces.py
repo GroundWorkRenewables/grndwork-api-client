@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, TypedDict, Union
+from typing import Dict, Iterator, List, Optional, TypedDict, Union
 
 
 class RefreshToken(TypedDict):
@@ -52,8 +52,8 @@ class DataFile(TypedDict):
     updated_at: str
 
 
-class DataFileWithRecords(DataFile, total=False):
-    records: List[DataRecord]
+class DataFileWithRecords(DataFile):
+    records: Iterator[DataRecord]
 
 
 class ProjectManager:
@@ -108,7 +108,7 @@ class GetStationsQuery(TypedDict, total=False):
     offset: Optional[int]
 
 
-class GetDataQuery(TypedDict, total=False):
+class GetDataFilesQuery(TypedDict, total=False):
     client: Optional[str]
     site: Optional[str]
     gateway: Optional[str]
@@ -116,9 +116,32 @@ class GetDataQuery(TypedDict, total=False):
     filename: Optional[str]
     limit: Optional[int]
     offset: Optional[int]
+
+
+class GetDataQuery(GetDataFilesQuery, total=False):
     records_limit: Optional[int]
     records_before: Optional[str]
     records_after: Optional[str]
+
+
+class _GetDataRecordsQueryRequired(TypedDict):
+    filename: str
+
+
+class GetDataRecordsQuery(_GetDataRecordsQueryRequired, total=False):
+    limit: Optional[int]
+    before: Optional[str]
+    after: Optional[str]
+
+
+class _GetDataQCQueryRequired(TypedDict):
+    filename: str
+
+
+class GetDataQCQuery(_GetDataQCQueryRequired, total=False):
+    limit: Optional[int]
+    before: Optional[str]
+    after: Optional[str]
 
 
 class PostDataRecord(TypedDict):

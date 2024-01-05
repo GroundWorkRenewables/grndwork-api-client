@@ -241,29 +241,322 @@ Stations are returned in alphabetical order by station name.
 ```
 
 ---
-### Get Data
+### Get Data Files
 
-Provides the ability to get data
+Provides the ability to get data files
 
 __JavaScript__:
 ```typescript
-client.getData(
-    query?: GetDataQuery | null,
+client.getDataFiles(
+    query?: GetDataFilesQuery | null,
+    options?: {
+        page_size?: number | null,
+    },
+): IterableResponse<DataFile>
+```
+
+__Python__:
+```python
+client.get_data_files(
+    query: GetDataFilesQuery | None,
+    *,
+    page_size: int | None,
+) -> Iterator[DataFile]
+```
+
+Takes an optional get data files query object as an argument and returns a list of data files.
+
+#### Get Data Files Query
+
+  | Param | Type | Description |
+  |---|---|---|
+  | filename | string | Only return data files with name or name matching pattern |
+  | station | string | Only return data files for station with UUID, name, or name matching pattern |
+  | site | string | Only return data files for site with UUID, name, or name matching pattern |
+  | client | string | Only return data files for client with UUID, name, or name matching pattern |
+  | limit | number | Maximum number of files to return |
+  | offset | number | Number of files to skip over before returning results |
+
+##### Pattern Matching
+
+Parameters that support patterns can use a wildcard `*` at the beginning and/or end of the string.
+
+Pattern matching is case insensitive.
+
+For example:
+
+__JavaScript__:
+```typescript
+const dataFiles = await client.getDataFiles(
+    {filename: '*_OneMin.dat'},
+).toArray();
+```
+
+__Python__:
+```python
+data_files = list(client.get_data_files(
+    {'filename': '*_OneMin.dat'},
+))
+```
+
+Would return all one minute data files.
+
+#### Options
+
+##### Page Size
+
+You can set an optional page size to control the number of files returned per request from the API.
+( min: 1, max: 100, default: 100 )
+
+__JavaScript__:
+```typescript
+const dataFiles = await client.getDataFiles(
+    null,
+    {page_size: 50},
+).toArray();
+```
+
+__Python__:
+```python
+data_files = list(client.get_data_files(
+    None,
+    page_size=50,
+))
+```
+
+#### Return Values
+
+Data files are returned in alphabetical order by filename.
+
+##### Sample Output
+
+```json
+[
+  {
+    "source": "station:9a8ebbee-ddd1-4071-b17f-356f42867b5e",
+    "source_start_timestamp": "2020-01-01 00:00:00",
+    "source_end_timestamp": "2020-12-31 23:59:59",
+    "filename": "Test_OneMin.dat",
+    "is_stale": false,
+    "headers": {
+      "columns": ["Ambient_Temp"],
+      "units": ["Deg_C"],
+      "processing": ["Avg"]
+    },
+    "created_at": "2020-01-12T15:31:35.338369Z",
+    "updated_at": "2021-01-08T22:10:36.904328Z"
+  }
+]
+```
+
+---
+### Get Data Records
+
+Provides the ability to get data records for a given data file
+
+__JavaScript__:
+```typescript
+client.getDataRecords(
+    query: GetDataRecordsQuery,
     options?: {
         include_qc_flags?: boolean | null,
         page_size?: number | null,
     },
-): IterableResponse<DataFileWithRecords>
+): IterableResponse<DataRecord>
+```
+
+__Python__:
+```python
+client.get_data_records(
+    query: GetDataRecordsQuery,
+    *,
+    include_qc_flags: bool | None,
+    page_size: int | None,
+) -> Iterator[DataRecord]
+```
+
+Takes a required get data records query object as an argument and returns a list of data records.
+
+#### Get Data Records Query
+
+  | Param | Type | Description |
+  |---|---|---|
+  | filename | string | Data file name to return records for *required* |
+  | limit | number | Maximum number of records to return ( default: 1 when before and after are not set ) |
+  | before | timestamp | Only return records at or before timestamp ( format: `YYYY-MM-DD hh:mm:ss` ) |
+  | after | timestamp | Only return records at or after timestamp ( format: `YYYY-MM-DD hh:mm:ss` ) |
+
+#### Options
+
+##### Include QC Flags
+
+By default each record will include the qc flags that apply to that data record. This behavior can be disabled.
+
+For example:
+
+__JavaScript__:
+```typescript
+const dataRecords = await client.getDataRecords(
+    {filename: 'Test_OneMin.dat'},
+    {include_qc_flags: false},
+).toArray();
+```
+
+__Python__:
+```python
+data_records = list(client.get_data_records(
+    {'filename': 'Test_OneMin.dat'},
+    include_qc_flags=False,
+))
+```
+
+Would return records without qc flags.
+
+##### Page Size
+
+You can set an optional page size to control the number of records returned per request from the API.
+( min: 1, max: 1500, default: 1500 )
+
+__JavaScript__:
+```typescript
+const dataRecords = await client.getDataRecords(
+    {filename: 'Test_OneMin.dat'},
+    {page_size: 60},
+).toArray();
+```
+
+__Python__:
+```python
+data_records = list(client.get_data_records(
+    {'filename': 'Test_OneMin.dat'},
+    page_size=60,
+))
+```
+
+#### Return Values
+
+Data records are returned in reverse chronological order starting at the most recent timestamp.
+
+##### Sample Output
+
+```json
+[
+  {
+    "timestamp": "2020-01-01 00:00:00",
+    "record_num": 1000,
+    "data": {
+      "Ambient_Temp": 50
+    },
+    "qc_flags": {
+      "Ambient_Temp": 1
+    }
+  }
+]
+```
+
+---
+### Get Data QC
+
+Provides the ability to get only the qc flags for a given data file
+
+__JavaScript__:
+```typescript
+client.getDataQC(
+    query: GetDataQCQuery,
+    options?: {
+        page_size?: number | null,
+    },
+): IterableResponse<QCRecord>
+```
+
+__Python__:
+```python
+client.get_data_qc(
+    query: GetDataQCQuery,
+    *,
+    page_size: int | None,
+) -> Iterator[QCRecord]
+```
+
+Takes a required get data qc query object as an argument and returns a list of qc records.
+
+#### Get Data QC Query
+
+  | Param | Type | Description |
+  |---|---|---|
+  | filename | string | Data file name to return records for *required* |
+  | limit | number | Maximum number of records to return ( default: 1 when before and after are not set ) |
+  | before | timestamp | Only return records at or before timestamp ( format: `YYYY-MM-DD hh:mm:ss` ) |
+  | after | timestamp | Only return records at or after timestamp ( format: `YYYY-MM-DD hh:mm:ss` ) |
+
+#### Options
+
+##### Page Size
+
+You can set an optional page size to control the number of records returned per request from the API.
+( min: 1, max: 1500, default: 1500 )
+
+__JavaScript__:
+```typescript
+const qcRecords = await client.getDataQC(
+    {filename: 'Test_OneMin.dat'},
+    {page_size: 60},
+).toArray();
+```
+
+__Python__:
+```python
+qc_records = list(client.get_data_qc(
+    {'filename': 'Test_OneMin.dat'},
+    page_size=60,
+))
+```
+
+#### Return Values
+
+QC records are returned in reverse chronological order starting at the most recent timestamp.
+
+##### Sample Output
+
+```json
+[
+  {
+    "timestamp": "2020-01-01 00:00:00",
+    "qc_flags": {
+      "Ambient_Temp": 1
+    }
+  }
+]
+```
+
+---
+### Get Data (Advanced)
+
+Provides the ability to get both data files and records for those files via a nested iterator
+
+__JavaScript__:
+```typescript
+client.getData(
+    query?: GetDataFilesQuery | GetDataQuery | null,
+    options?: {
+        include_data_records?: boolean | null,
+        include_qc_flags?: boolean | null,
+        file_page_size?: number | null,
+        record_page_size?: number | null,
+    },
+): IterableResponse<DataFile> | IterableResponse<DataFileWithRecords>
 ```
 
 __Python__:
 ```python
 client.get_data(
-    query: GetDataQuery | None,
+    query: GetDataFilesQuery | GetDataQuery | None,
     *,
+    include_data_records: bool | None,
     include_qc_flags: bool | None,
-    page_size: int | None,
-) -> Iterator[DataFileWithRecords]
+    file_page_size: int | None,
+    record_page_size: int | None,
+) -> Iterator[DataFile] | Iterator[DataFileWithRecords]
 ```
 
 Takes an optional get data query object as an argument and returns a list of data files.
@@ -278,7 +571,7 @@ Takes an optional get data query object as an argument and returns a list of dat
   | client | string | Only return data files for client with UUID, name, or name matching pattern |
   | limit | number | Maximum number of files to return |
   | offset | number | Number of files to skip over before returning results |
-  | records_limit | number | Maximum number of records to return per file ( min: 0, max: 1500, default: 0 ) |
+  | records_limit | number | Maximum number of records to return per file ( default: 1 when before and after are not set ) |
   | records_before | timestamp | Only return records at or before timestamp ( format: `YYYY-MM-DD hh:mm:ss` ) |
   | records_after | timestamp | Only return records at or after timestamp ( format: `YYYY-MM-DD hh:mm:ss` ) |
 
@@ -308,6 +601,33 @@ Would return all one minute data files.
 
 #### Options
 
+##### Include Data Records
+
+When this option is set true, data records are returned for each data file in reverse chronological order starting at the most recent timestamp.
+
+For example:
+
+__JavaScript__:
+```typescript
+for await (const dataFile of client.getData(
+    null,
+    {include_data_records: true},
+)) {
+    const dataRecords = await dataFile.records.toArray();
+}
+```
+
+__Python__:
+```python
+for data_file in client.get_data(
+    None,
+    include_data_records=True,
+):
+    data_records = list(data_file['records'])
+```
+
+Would return data files with records.
+
 ##### Include QC Flags
 
 By default each record will include the qc flags that apply to that data record. This behavior can be disabled.
@@ -318,7 +638,10 @@ __JavaScript__:
 ```typescript
 for await (const dataFile of client.getData(
     null,
-    {include_qc_flags: false},
+    {
+        include_data_records: true,
+        include_qc_flags: false,
+    },
 )) {
     const dataRecords = await dataFile.records.toArray();
 }
@@ -328,6 +651,7 @@ __Python__:
 ```python
 for data_file in client.get_data(
     None,
+    include_data_records=True,
     include_qc_flags=False,
 ):
     data_records = list(data_file['records'])
@@ -335,7 +659,7 @@ for data_file in client.get_data(
 
 Would return records without qc flags.
 
-##### Page Size
+##### File Page Size
 
 You can set an optional page size to control the number of files returned per request from the API.
 ( min: 1, max: 100, default: 100 )
@@ -344,7 +668,7 @@ __JavaScript__:
 ```typescript
 const dataFiles = await client.getData(
     null,
-    {page_size: 50},
+    {file_page_size: 50},
 ).toArray();
 ```
 
@@ -352,7 +676,28 @@ __Python__:
 ```python
 data_files = list(client.get_data(
     None,
-    page_size=50,
+    file_page_size=50,
+))
+```
+
+##### Record Page Size
+
+You can set an optional page size to control the number of records returned per request from the API.
+( min: 1, max: 1500, default: 1500 )
+
+__JavaScript__:
+```typescript
+const dataFiles = await client.getData(
+    null,
+    {record_page_size: 60},
+).toArray();
+```
+
+__Python__:
+```python
+data_files = list(client.get_data(
+    None,
+    record_page_size=60,
 ))
 ```
 
