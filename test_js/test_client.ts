@@ -7,6 +7,7 @@ import {
   QC_URL,
   STATIONS_URL,
 } from '../src_js/grndwork_api_client/config';
+import {DataRecord} from '../src_js/grndwork_api_client/interfaces';
 
 jest.mock('../src_js/grndwork_api_client/access_tokens');
 
@@ -98,6 +99,366 @@ describe('Client', () => {
     });
   });
 
+  describe('getDataFiles', () => {
+    const DATA_PATH = new URL(DATA_URL).pathname;
+
+    it('gets read:data access token', async () => {
+      apiMock.intercept({
+        path: ignoreQueryString(DATA_PATH),
+        headers: {Authorization: 'Bearer access_token'},
+      })
+      .reply(200, []);
+
+      await client.getDataFiles().toArray();
+
+      expect(getAccessToken).toHaveBeenCalledWith(
+        refreshToken,
+        'platform',
+        'read:data',
+      );
+    });
+
+    it('makes get data request with defaults', async () => {
+      apiMock.intercept({
+        path: DATA_PATH,
+        query: {limit: 100, offset: 0, records_limit: 0},
+      })
+      .reply(200, []);
+
+      await client.getDataFiles().toArray();
+    });
+
+    it('makes get data request with query', async () => {
+      apiMock.intercept({
+        path: DATA_PATH,
+        query: {limit: 10, offset: 0, records_limit: 0},
+      })
+      .reply(200, []);
+
+      await client.getDataFiles(
+        {limit: 10},
+      ).toArray();
+    });
+
+    it('makes get data request with page size', async () => {
+      apiMock.intercept({
+        path: DATA_PATH,
+        query: {limit: 50, offset: 0, records_limit: 0},
+      })
+      .reply(200, []);
+
+      await client.getDataFiles(
+        null,
+        {page_size: 50},
+      ).toArray();
+    });
+  });
+
+  describe('getDataRecords', () => {
+    const DATA_PATH = new URL(DATA_URL).pathname;
+    const QC_PATH = new URL(QC_URL).pathname;
+
+    it('gets read:data access token', async () => {
+      apiMock.intercept({
+        path: ignoreQueryString(DATA_PATH),
+        headers: {Authorization: 'Bearer access_token'},
+      })
+      .reply(200, []);
+
+      apiMock.intercept({
+        path: ignoreQueryString(QC_PATH),
+      })
+      .reply(200, []);
+
+      await client.getDataRecords(
+        {filename: 'Test_OneMin.dat'},
+      ).toArray();
+
+      expect(getAccessToken).toHaveBeenCalledWith(
+        refreshToken,
+        'platform',
+        'read:data',
+      );
+    });
+
+    it('makes get data request with defaults', async () => {
+      apiMock.intercept({
+        path: DATA_PATH,
+        query: {
+          filename: 'Test_OneMin.dat',
+          limit: 1,
+          records_limit: 1,
+        },
+      })
+      .reply(200, []);
+
+      apiMock.intercept({
+        path: ignoreQueryString(QC_PATH),
+      })
+      .reply(200, []);
+
+      await client.getDataRecords(
+        {filename: 'Test_OneMin.dat'},
+      ).toArray();
+    });
+
+    it('makes get data request with query', async () => {
+      apiMock.intercept({
+        path: DATA_PATH,
+        query: {
+          filename: 'Test_OneMin.dat',
+          limit: 1,
+          records_limit: 100,
+        },
+      })
+      .reply(200, []);
+
+      apiMock.intercept({
+        path: ignoreQueryString(QC_PATH),
+      })
+      .reply(200, []);
+
+      await client.getDataRecords(
+        {filename: 'Test_OneMin.dat', limit: 100},
+      ).toArray();
+    });
+
+    it('makes get data request with page size', async () => {
+      apiMock.intercept({
+        path: DATA_PATH,
+        query: {
+          filename: 'Test_OneMin.dat',
+          limit: 1,
+          records_limit: 50,
+        },
+      })
+      .reply(200, []);
+
+      apiMock.intercept({
+        path: ignoreQueryString(QC_PATH),
+      })
+      .reply(200, []);
+
+      await client.getDataRecords(
+        {filename: 'Test_OneMin.dat', limit: 100},
+        {page_size: 50},
+      ).toArray();
+    });
+
+    it('gets read:qc access token', async () => {
+      apiMock.intercept({
+        path: ignoreQueryString(DATA_PATH),
+      })
+      .reply(200, []);
+
+      apiMock.intercept({
+        path: ignoreQueryString(QC_PATH),
+        headers: {Authorization: 'Bearer access_token'},
+      })
+      .reply(200, []);
+
+      await client.getDataRecords(
+        {filename: 'Test_OneMin.dat'},
+      ).toArray();
+
+      expect(getAccessToken).toHaveBeenCalledWith(
+        refreshToken,
+        'platform',
+        'read:qc',
+      );
+    });
+
+    it('does not get read:qc access token when disabled', async () => {
+      apiMock.intercept({
+        path: ignoreQueryString(DATA_PATH),
+      })
+      .reply(200, []);
+
+      await client.getDataRecords(
+        {filename: 'Test_OneMin.dat'},
+        {include_qc_flags: false},
+      ).toArray();
+
+      expect(getAccessToken).not.toHaveBeenCalledWith(
+        refreshToken,
+        'platform',
+        'read:qc',
+      );
+    });
+
+    it('makes get qc request with defaults', async () => {
+      apiMock.intercept({
+        path: ignoreQueryString(DATA_PATH),
+      })
+      .reply(200, []);
+
+      apiMock.intercept({
+        path: QC_PATH,
+        query: {
+          filename: 'Test_OneMin.dat',
+          limit: 1,
+        },
+      })
+      .reply(200, []);
+
+      await client.getDataRecords(
+        {filename: 'Test_OneMin.dat'},
+      ).toArray();
+    });
+
+    it('makes get qc request with query', async () => {
+      apiMock.intercept({
+        path: ignoreQueryString(DATA_PATH),
+      })
+      .reply(200, []);
+
+      apiMock.intercept({
+        path: QC_PATH,
+        query: {
+          filename: 'Test_OneMin.dat',
+          limit: 100,
+        },
+      })
+      .reply(200, []);
+
+      await client.getDataRecords(
+        {filename: 'Test_OneMin.dat', limit: 100},
+      ).toArray();
+    });
+
+    it('makes get qc request with page size', async () => {
+      apiMock.intercept({
+        path: ignoreQueryString(DATA_PATH),
+      })
+      .reply(200, []);
+
+      apiMock.intercept({
+        path: QC_PATH,
+        query: {
+          filename: 'Test_OneMin.dat',
+          limit: 50,
+        },
+      })
+      .reply(200, []);
+
+      await client.getDataRecords(
+        {filename: 'Test_OneMin.dat', limit: 100},
+        {page_size: 50},
+      ).toArray();
+    });
+
+    it('combines data and qc', async () => {
+      apiMock.intercept({
+        path: ignoreQueryString(DATA_PATH),
+      })
+      .reply(200, [{
+        records: [{
+          timestamp: '2020-01-01 00:02:00',
+          record_num: 2,
+          data: {SOME_KEY: 'VALUE_2'},
+        }, {
+          timestamp: '2020-01-01 00:01:00',
+          record_num: 1,
+          data: {SOME_KEY: 'VALUE_1'},
+        }],
+      }]);
+
+      apiMock.intercept({
+        path: ignoreQueryString(QC_PATH),
+      })
+      .reply(200, [{
+        timestamp: '2020-01-01 00:01:00',
+        qc_flags: {SOME_KEY: 'FLAG_2'},
+      }, {
+        timestamp: '2020-01-01 00:00:00',
+        qc_flags: {SOME_KEY: 'FLAG_1'},
+      }]);
+
+      const results = await client.getDataRecords(
+        {filename: 'Test_OneMin.dat', limit: 100},
+      ).toArray();
+
+      expect(results).toEqual([{
+        timestamp: '2020-01-01 00:02:00',
+        record_num: 2,
+        data: {SOME_KEY: 'VALUE_2'},
+      }, {
+        timestamp: '2020-01-01 00:01:00',
+        record_num: 1,
+        data: {SOME_KEY: 'VALUE_1'},
+        qc_flags: {SOME_KEY: 'FLAG_2'},
+      }]);
+    });
+  });
+
+  describe('getDataQC', () => {
+    const QC_PATH = new URL(QC_URL).pathname;
+
+    it('gets read:qc access token', async () => {
+      apiMock.intercept({
+        path: ignoreQueryString(QC_PATH),
+        headers: {Authorization: 'Bearer access_token'},
+      })
+      .reply(200, []);
+
+      await client.getDataQC(
+        {filename: 'Test_OneMin.dat'},
+      ).toArray();
+
+      expect(getAccessToken).toHaveBeenCalledWith(
+        refreshToken,
+        'platform',
+        'read:qc',
+      );
+    });
+
+    it('makes get qc request with defaults', async () => {
+      apiMock.intercept({
+        path: QC_PATH,
+        query: {
+          filename: 'Test_OneMin.dat',
+          limit: 1,
+        },
+      })
+      .reply(200, []);
+
+      await client.getDataQC(
+        {filename: 'Test_OneMin.dat'},
+      ).toArray();
+    });
+
+    it('makes get qc request with query', async () => {
+      apiMock.intercept({
+        path: QC_PATH,
+        query: {
+          filename: 'Test_OneMin.dat',
+          limit: 100,
+        },
+      })
+      .reply(200, []);
+
+      await client.getDataQC(
+        {filename: 'Test_OneMin.dat', limit: 100},
+      ).toArray();
+    });
+
+    it('makes get qc request with page size', async () => {
+      apiMock.intercept({
+        path: QC_PATH,
+        query: {
+          filename: 'Test_OneMin.dat',
+          limit: 50,
+        },
+      })
+      .reply(200, []);
+
+      await client.getDataQC(
+        {filename: 'Test_OneMin.dat', limit: 100},
+        {page_size: 50},
+      ).toArray();
+    });
+  });
+
   describe('getData', () => {
     const DATA_PATH = new URL(DATA_URL).pathname;
     const QC_PATH = new URL(QC_URL).pathname;
@@ -121,7 +482,7 @@ describe('Client', () => {
     it('makes get data request with defaults', async () => {
       apiMock.intercept({
         path: DATA_PATH,
-        query: {limit: 100, offset: 0},
+        query: {limit: 100, offset: 0, records_limit: 0},
       })
       .reply(200, []);
 
@@ -131,7 +492,7 @@ describe('Client', () => {
     it('makes get data request with query', async () => {
       apiMock.intercept({
         path: DATA_PATH,
-        query: {limit: 10, offset: 0},
+        query: {limit: 10, offset: 0, records_limit: 0},
       })
       .reply(200, []);
 
@@ -143,25 +504,156 @@ describe('Client', () => {
     it('makes get data request with page size', async () => {
       apiMock.intercept({
         path: DATA_PATH,
-        query: {limit: 50, offset: 0},
+        query: {limit: 50, offset: 0, records_limit: 0},
       })
       .reply(200, []);
 
       await client.getData(
         null,
-        {page_size: 50},
+        {file_page_size: 50},
       ).toArray();
     });
 
+    it('makes get data request per file with defaults when requesting records', async () => {
+      apiMock.intercept({
+        path: DATA_PATH,
+        query: {limit: 100, offset: 0, records_limit: 0},
+      })
+      .reply(200, [{
+        filename: 'Test_OneMin.dat',
+      }], {
+        headers: {
+          'content-range': 'items 1-1/1',
+        },
+      });
+
+      apiMock.intercept({
+        path: DATA_PATH,
+        query: {
+          filename: 'Test_OneMin.dat',
+          limit: 1,
+          records_limit: 1,
+        },
+      })
+      .reply(200, []);
+
+      apiMock.intercept({
+        path: ignoreQueryString(QC_PATH),
+      })
+      .reply(200, []);
+
+      for await (const dataFile of client.getData(
+        null,
+        {include_data_records: true},
+      )) {
+        await dataFile.records.toArray();
+      }
+    });
+
+    it('makes get data request per file with query when requesting records', async () => {
+      apiMock.intercept({
+        path: DATA_PATH,
+        query: {limit: 100, offset: 0, records_limit: 0},
+      })
+      .reply(200, [{
+        filename: 'Test_OneMin.dat',
+      }], {
+        headers: {
+          'content-range': 'items 1-1/1',
+        },
+      });
+
+      apiMock.intercept({
+        path: DATA_PATH,
+        query: {
+          filename: 'Test_OneMin.dat',
+          limit: 1,
+          records_limit: 100,
+        },
+      })
+      .reply(200, []);
+
+      apiMock.intercept({
+        path: ignoreQueryString(QC_PATH),
+      })
+      .reply(200, []);
+
+      for await (const dataFile of client.getData(
+        {records_limit: 100},
+        {include_data_records: true},
+      )) {
+        await dataFile.records.toArray();
+      }
+    });
+
+    it('makes get data request per file with page size when requesting records', async () => {
+      apiMock.intercept({
+        path: DATA_PATH,
+        query: {limit: 100, offset: 0, records_limit: 0},
+      })
+      .reply(200, [{
+        filename: 'Test_OneMin.dat',
+      }], {
+        headers: {
+          'content-range': 'items 1-1/1',
+        },
+      });
+
+      apiMock.intercept({
+        path: DATA_PATH,
+        query: {
+          filename: 'Test_OneMin.dat',
+          limit: 1,
+          records_limit: 50,
+        },
+      })
+      .reply(200, []);
+
+      apiMock.intercept({
+        path: ignoreQueryString(QC_PATH),
+      })
+      .reply(200, []);
+
+      for await (const dataFile of client.getData(
+        {records_limit: 100},
+        {
+          include_data_records: true,
+          record_page_size: 50,
+        },
+      )) {
+        await dataFile.records.toArray();
+      }
+    });
+
     it('gets read:qc access token when requesting records', async () => {
+      apiMock.intercept({
+        path: DATA_PATH,
+        query: {limit: 100, offset: 0, records_limit: 0},
+      })
+      .reply(200, [{
+        filename: 'Test_OneMin.dat',
+      }], {
+        headers: {
+          'content-range': 'items 1-1/1',
+        },
+      });
+
       apiMock.intercept({
         path: ignoreQueryString(DATA_PATH),
       })
       .reply(200, []);
 
-      await client.getData(
-        {records_limit: 1},
-      ).toArray();
+      apiMock.intercept({
+        path: ignoreQueryString(QC_PATH),
+      })
+      .reply(200, []);
+
+      for await (const dataFile of client.getData(
+        null,
+        {include_data_records: true},
+      )) {
+        await dataFile.records.toArray();
+      }
 
       expect(getAccessToken).toHaveBeenCalledWith(
         refreshToken,
@@ -172,14 +664,31 @@ describe('Client', () => {
 
     it('does not get read:qc access token when disabled', async () => {
       apiMock.intercept({
+        path: DATA_PATH,
+        query: {limit: 100, offset: 0, records_limit: 0},
+      })
+      .reply(200, [{
+        filename: 'Test_OneMin.dat',
+      }], {
+        headers: {
+          'content-range': 'items 1-1/1',
+        },
+      });
+
+      apiMock.intercept({
         path: ignoreQueryString(DATA_PATH),
       })
       .reply(200, []);
 
-      await client.getData(
-        {records_limit: 1},
-        {include_qc_flags: false},
-      ).toArray();
+      for await (const dataFile of client.getData(
+        null,
+        {
+          include_data_records: true,
+          include_qc_flags: false,
+        },
+      )) {
+        await dataFile.records.toArray();
+      }
 
       expect(getAccessToken).not.toHaveBeenCalledWith(
         refreshToken,
@@ -188,24 +697,13 @@ describe('Client', () => {
       );
     });
 
-    it('makes get qc requests per data file', async () => {
+    it('makes get qc request per file with defaults when requesting records', async () => {
       apiMock.intercept({
         path: DATA_PATH,
-        query: {limit: 100, offset: 0, records_limit: 1},
+        query: {limit: 100, offset: 0, records_limit: 0},
       })
       .reply(200, [{
-        source: 'station:uuid',
         filename: 'Test_OneMin.dat',
-        is_stale: false,
-        headers: {
-          columns: [],
-          units: [],
-        },
-        records: [{
-          timestamp: '2020-01-01 00:00:00',
-          record_num: 1,
-          data: {SOME_KEY: 'VALUE'},
-        }],
       }], {
         headers: {
           'content-range': 'items 1-1/1',
@@ -213,37 +711,157 @@ describe('Client', () => {
       });
 
       apiMock.intercept({
+        path: ignoreQueryString(DATA_PATH),
+      })
+      .reply(200, []);
+
+      apiMock.intercept({
         path: QC_PATH,
         query: {
           filename: 'Test_OneMin.dat',
-          limit: 1500,
-          before: '2020-01-01 00:00:00',
-          after: '2020-01-01 00:00:00',
+          limit: 1,
         },
       })
+      .reply(200, []);
+
+      for await (const dataFile of client.getData(
+        null,
+        {include_data_records: true},
+      )) {
+        await dataFile.records.toArray();
+      }
+    });
+
+    it('makes get qc request per file with query when requesting records', async () => {
+      apiMock.intercept({
+        path: DATA_PATH,
+        query: {limit: 100, offset: 0, records_limit: 0},
+      })
       .reply(200, [{
-        timestamp: '2020-01-01 00:00:00',
-        qc_flags: {SOME_KEY: 'FLAG'},
+        filename: 'Test_OneMin.dat',
+      }], {
+        headers: {
+          'content-range': 'items 1-1/1',
+        },
+      });
+
+      apiMock.intercept({
+        path: ignoreQueryString(DATA_PATH),
+      })
+      .reply(200, []);
+
+      apiMock.intercept({
+        path: QC_PATH,
+        query: {
+          filename: 'Test_OneMin.dat',
+          limit: 100,
+        },
+      })
+      .reply(200, []);
+
+      for await (const dataFile of client.getData(
+        {records_limit: 100},
+        {include_data_records: true},
+      )) {
+        await dataFile.records.toArray();
+      }
+    });
+
+    it('makes get qc request per file with page size when requesting records', async () => {
+      apiMock.intercept({
+        path: DATA_PATH,
+        query: {limit: 100, offset: 0, records_limit: 0},
+      })
+      .reply(200, [{
+        filename: 'Test_OneMin.dat',
+      }], {
+        headers: {
+          'content-range': 'items 1-1/1',
+        },
+      });
+
+      apiMock.intercept({
+        path: ignoreQueryString(DATA_PATH),
+      })
+      .reply(200, []);
+
+      apiMock.intercept({
+        path: QC_PATH,
+        query: {
+          filename: 'Test_OneMin.dat',
+          limit: 50,
+        },
+      })
+      .reply(200, []);
+
+      for await (const dataFile of client.getData(
+        {records_limit: 100},
+        {
+          include_data_records: true,
+          record_page_size: 50,
+        },
+      )) {
+        await dataFile.records.toArray();
+      }
+    });
+
+    it('combines data and qc when requesting records', async () => {
+      apiMock.intercept({
+        path: DATA_PATH,
+        query: {limit: 100, offset: 0, records_limit: 0},
+      })
+      .reply(200, [{
+        filename: 'Test_OneMin.dat',
+      }], {
+        headers: {
+          'content-range': 'items 1-1/1',
+        },
+      });
+
+      apiMock.intercept({
+        path: ignoreQueryString(DATA_PATH),
+      })
+      .reply(200, [{
+        records: [{
+          timestamp: '2020-01-01 00:02:00',
+          record_num: 2,
+          data: {SOME_KEY: 'VALUE_2'},
+        }, {
+          timestamp: '2020-01-01 00:01:00',
+          record_num: 1,
+          data: {SOME_KEY: 'VALUE_1'},
+        }],
       }]);
 
-      const results = await client.getData(
-        {records_limit: 1},
-      ).toArray();
+      apiMock.intercept({
+        path: ignoreQueryString(QC_PATH),
+      })
+      .reply(200, [{
+        timestamp: '2020-01-01 00:01:00',
+        qc_flags: {SOME_KEY: 'FLAG_2'},
+      }, {
+        timestamp: '2020-01-01 00:00:00',
+        qc_flags: {SOME_KEY: 'FLAG_1'},
+      }]);
+
+      let results: Array<DataRecord> = [];
+
+      for await (const dataFile of client.getData(
+        {records_limit: 100},
+        {include_data_records: true},
+      )) {
+        results = await dataFile.records.toArray();
+      }
 
       expect(results).toEqual([{
-        source: 'station:uuid',
-        filename: 'Test_OneMin.dat',
-        is_stale: false,
-        headers: {
-          columns: [],
-          units: [],
-        },
-        records: [{
-          timestamp: '2020-01-01 00:00:00',
-          record_num: 1,
-          data: {SOME_KEY: 'VALUE'},
-          qc_flags: {SOME_KEY: 'FLAG'},
-        }],
+        timestamp: '2020-01-01 00:02:00',
+        record_num: 2,
+        data: {SOME_KEY: 'VALUE_2'},
+      }, {
+        timestamp: '2020-01-01 00:01:00',
+        record_num: 1,
+        data: {SOME_KEY: 'VALUE_1'},
+        qc_flags: {SOME_KEY: 'FLAG_2'},
       }]);
     });
   });
