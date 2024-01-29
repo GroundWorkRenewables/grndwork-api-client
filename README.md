@@ -241,6 +241,217 @@ Stations are returned in alphabetical order by station name.
 ```
 
 ---
+### Get Reports
+
+Provides the ability to get reports
+
+__JavaScript__:
+```typescript
+client.getReports(
+    query?: GetReportsQuery | null,
+    options?: {
+        page_size?: number | null,
+    },
+): IterableResponse<Report>
+```
+
+__Python__:
+```python
+client.get_reports(
+    query: GetReportsQuery | None,
+    *,
+    page_size: int | None,
+) -> Iterator[Report]
+```
+
+Takes an optional get reports query object as an argument and returns a list of reports.
+
+#### Get Reports Query
+
+  | Param | Type | Description |
+  |---|---|---|
+  | station | string | Only return reports for station with UUID, name, or name matching pattern |
+  | site | string | Only return reports for site with UUID, name, or name matching pattern |
+  | client | string | Only return reports for client with UUID, name, or name matching pattern |
+  | before | date | Only return reports that end on or before date ( format: `YYYY-MM-DD` ) |
+  | after | date | Only return reports that start on or after date ( format: `YYYY-MM-DD` ) |
+  | limit | number | Maximum number of reports to return |
+  | offset | number | Number of reports to skip over before returning results |
+
+##### Pattern Matching
+
+Parameters that support patterns can use a wildcard `*` at the beginning and/or end of the string.
+
+Pattern matching is case insensitive.
+
+For example:
+
+__JavaScript__:
+```typescript
+const reports = await client.getReports(
+    {station: 'Test*'},
+).toArray();
+```
+
+__Python__:
+```python
+reports = list(client.get_reports(
+    {'station': 'Test*'},
+))
+```
+
+Would return all reports for stations whose name starts with `Test`.
+
+#### Options
+
+##### Page Size
+
+You can set an optional page size to control the number of reports returned per request from the API.
+( min: 1, max: 100, default: 100 )
+
+__JavaScript__:
+```typescript
+const reports = await client.getReports(
+    null,
+    {page_size: 50},
+).toArray();
+```
+
+__Python__:
+```python
+reports = list(client.get_reports(
+    None,
+    page_size=50,
+))
+```
+
+#### Return Values
+
+Reports are returned in reverse chronological order.
+
+##### Sample Output
+
+```json
+[
+  {
+    "key": "GR_SRMReport_TEST_TestStation_3a810e02-3d29-4730-9325-41246046e3ac.pdf",
+    "package_name": "GR_SRMReport_TEST_TestStation_2020-12-31",
+    "kind": "legacy-solar-resource-measurement-station-report",
+    "station_uuid": "9a8ebbee-ddd1-4071-b17f-356f42867b5e",
+    "start_date": "2020-01-01",
+    "end_date": "2020-12-31",
+    "status": "COMPLETE",
+    "has_pdf": true,
+    "published_at": "2021-02-14T23:46:11.827148Z",
+    "created_at": "2020-01-12T15:31:35.338369Z",
+    "updated_at": "2021-01-08T22:10:36.904328Z",
+    "data_exports": [
+        {
+            "key": "TEST_TestStation_OneMin_4fcb5527-2b84-4b49-9623-9ffb0a0f8517.dat",
+            "filename": "Test_OneMin.dat",
+            "format": "",
+            "format_options": {},
+            "headers": {
+              "columns": ["Ambient_Temp"],
+              "units": ["Deg_C"],
+              "processing": ["Avg"]
+            },
+            "start_timestamp": "2020-01-01 00:00:00",
+            "end_timestamp": "2020-12-31 23:59:59",
+            "record_count": 525600,
+            "status": "COMPLETE",
+            "created_at": "2020-01-12T15:31:35.338369Z",
+            "updated_at": "2021-01-08T22:10:36.904328Z"
+        }
+    ],
+    "files": [
+        {
+            "key": "GR_HourlyDataAggregation_TEST_TestStation_078d4a86-8145-4ef4-82c4-cdf81834306f.csv",
+            "filename": "GR_HourlyDataAggregation_TEST_TestStation.csv",
+            "description": "",
+            "type": "",
+            "created_at": "2020-01-12T15:31:35.338369Z",
+            "updated_at": "2021-01-08T22:10:36.904328Z"
+        }
+    ]
+  }
+]
+```
+
+---
+### Download Report
+
+Provides the ability to download a report package to a local folder
+
+__JavaScript__:
+```typescript
+client.downloadReport(
+    report: Report,
+    options?: {
+        destination_folder?: string | null,
+        max_concurrency?: number | null,
+    },
+): Promise<Array<string>>
+```
+
+__Python__:
+```python
+client.download_report(
+    report: Report,
+    *,
+    destination_folder: str | None,
+    max_concurrency: int | None,
+) -> List[str]
+```
+
+Takes a report object as an argument, downloads all files for report and returns a list of files downloaded.
+
+#### Options
+
+##### Destination Folder
+
+You can set a destination folder for the report files, otherwise the current working directory is used.
+
+__JavaScript__:
+```typescript
+const downloadedFiles = await client.downloadReport(
+    report,
+    {destination_folder: '/tmp'},
+);
+```
+
+__Python__:
+```python
+downloaded_files = client.download_report(
+    report,
+    destination_folder='/tmp',
+))
+```
+
+##### Max Concurrency
+
+You can set a max concurrency for how many files to downloaded in parallel.
+( min: 1, default: 10 )
+
+__JavaScript__:
+```typescript
+const downloadedFiles = await client.downloadReport(
+    report,
+    {max_concurrency: 1},
+);
+```
+
+__Python__:
+```python
+downloaded_files = client.download_report(
+    report,
+    max_concurrency=1,
+))
+```
+
+For the python client, threads are used for concurrency, to disable the use of threads set value to 1.
+
+---
 ### Get Data Files
 
 Provides the ability to get data files

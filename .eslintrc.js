@@ -40,6 +40,12 @@ module.exports = {
     ],
     'no-this-before-super': 'error',
     'no-underscore-dangle': 'off',
+    'operator-linebreak': ['error', 'after', {
+      overrides: {
+        '=': 'none',
+        ':': 'ignore',
+      },
+    }],
     'prefer-destructuring': ['error', {
       VariableDeclarator: {
         array: false,
