@@ -1,3 +1,8 @@
+from os import getcwd
+from os.path import join as join_path
+from tempfile import gettempdir
+from typing import Callable, Iterable, List, TypeVar
+
 import pytest
 from responses import RequestsMock
 from responses.matchers import header_matcher, json_params_matcher, query_param_matcher
@@ -6,9 +11,14 @@ from src_py.grndwork_api_client.access_tokens import get_access_token as _get_ac
 from src_py.grndwork_api_client.client import Client
 from src_py.grndwork_api_client.config import (
     DATA_URL,
+    EXPORTS_URL,
+    FILES_URL,
     QC_URL,
+    REPORTS_URL,
     STATIONS_URL,
 )
+from src_py.grndwork_api_client.download_file import download_file as _download_file
+from src_py.grndwork_api_client.run_concurrently import run_concurrently as _run_concurrently
 
 
 def describe_client():
@@ -23,6 +33,22 @@ def describe_client():
             target='src_py.grndwork_api_client.client.get_access_token',
             spec=_get_access_token,
             return_value='access_token',
+        )
+
+    @pytest.fixture(name='run_concurrently', autouse=True)
+    def fixture_run_concurrently(mocker):
+        return mocker.patch(
+            target='src_py.grndwork_api_client.client.run_concurrently',
+            spec=_run_concurrently,
+            side_effect=run_concurrently_mock,
+        )
+
+    @pytest.fixture(name='download_file', autouse=True)
+    def fixture_download_file(mocker):
+        return mocker.patch(
+            target='src_py.grndwork_api_client.client.download_file',
+            spec=_download_file,
+            side_effect=lambda url, dest, timeout: dest,
         )
 
     @pytest.fixture(name='api_mock', autouse=True)
@@ -88,6 +114,270 @@ def describe_client():
             list(client.get_stations(
                 page_size=50,
             ))
+
+    def describe_get_reports():
+        def it_gets_read_reports_access_token(client, get_access_token, api_mock):
+            api_mock.get(
+                url=REPORTS_URL,
+                match=[header_matcher({'Authorization': 'Bearer access_token'})],
+                status=200,
+                json=[],
+            )
+
+            list(client.get_reports())
+
+            assert get_access_token.called
+
+            (_, kwargs) = get_access_token.call_args_list[0]
+
+            assert kwargs == {
+                'refresh_token': refresh_token,
+                'platform': 'platform',
+                'scope': 'read:reports',
+            }
+
+        def it_makes_get_reports_request_with_defaults(client, api_mock):
+            api_mock.get(
+                url=REPORTS_URL,
+                match=[query_param_matcher({'limit': 100, 'offset': 0})],
+                status=200,
+                json=[],
+            )
+
+            list(client.get_reports())
+
+        def it_makes_get_reports_request_with_query(client, api_mock):
+            api_mock.get(
+                url=REPORTS_URL,
+                match=[query_param_matcher({'limit': 10, 'offset': 0})],
+                status=200,
+                json=[],
+            )
+
+            list(client.get_reports(
+                {'limit': 10},
+            ))
+
+        def it_makes_get_reports_request_with_page_size(client, api_mock):
+            api_mock.get(
+                url=REPORTS_URL,
+                match=[query_param_matcher({'limit': 50, 'offset': 0})],
+                status=200,
+                json=[],
+            )
+
+            list(client.get_reports(
+                page_size=50,
+            ))
+
+    def describe_download_report():
+        def it_gets_read_reports_access_token(client, get_access_token, api_mock):
+            api_mock.get(
+                url=f'{REPORTS_URL}/TEST_KEY.pdf',
+                match=[header_matcher({'Authorization': 'Bearer access_token'})],
+                status=200,
+                json={'url': 'report url'},
+            )
+
+            client.download_report(
+                {
+                    'key': 'TEST_KEY.pdf',
+                    'has_pdf': True,
+                    'data_exports': [],
+                    'files': [],
+                },
+            )
+
+            assert get_access_token.called
+
+            (_, kwargs) = get_access_token.call_args_list[0]
+
+            assert kwargs == {
+                'refresh_token': refresh_token,
+                'platform': 'platform',
+                'scope': 'read:reports',
+            }
+
+        def it_makes_request_for_report_url(client, api_mock):
+            api_mock.get(
+                url=f'{REPORTS_URL}/TEST_KEY.pdf',
+                status=200,
+                json={'url': 'report url'},
+            )
+
+            client.download_report(
+                {
+                    'key': 'TEST_KEY.pdf',
+                    'has_pdf': True,
+                    'data_exports': [],
+                    'files': [],
+                },
+            )
+
+        def it_does_not_make_request_for_report_without_pdf(client):
+            client.download_report(
+                {
+                    'key': 'TEST_KEY.pdf',
+                    'has_pdf': False,
+                    'data_exports': [],
+                    'files': [],
+                },
+            )
+
+        def it_makes_request_for_data_export_and_file_urls(client, api_mock):
+            api_mock.get(
+                url=f'{REPORTS_URL}/TEST_KEY_1.pdf',
+                status=200,
+                json={'url': 'report url'},
+            )
+
+            api_mock.get(
+                url=f'{EXPORTS_URL}/TEST_KEY_2.csv',
+                status=200,
+                json={'url': 'export url'},
+            )
+
+            api_mock.get(
+                url=f'{FILES_URL}/TEST_KEY_3.zip',
+                status=200,
+                json={'url': 'file url'},
+            )
+
+            client.download_report(
+                {
+                    'key': 'TEST_KEY_1.pdf',
+                    'has_pdf': True,
+                    'data_exports': [
+                        {'key': 'TEST_KEY_2.csv'},
+                    ],
+                    'files': [
+                        {'key': 'TEST_KEY_3.zip'},
+                    ],
+                },
+            )
+
+        def it_downloads_report(client, download_file, api_mock):
+            api_mock.get(
+                url=f'{REPORTS_URL}/TEST_KEY.pdf',
+                status=200,
+                json={'url': 'report url'},
+            )
+
+            client.download_report(
+                {
+                    'key': 'TEST_KEY.pdf',
+                    'has_pdf': True,
+                    'data_exports': [],
+                    'files': [],
+                },
+            )
+
+            assert download_file.called
+
+            (args, _) = download_file.call_args_list[0]
+
+            assert args == (
+                'report url',
+                join_path(getcwd(), 'TEST_KEY.pdf'),
+            )
+
+        def it_downloads_report_as_package(client, download_file, api_mock):
+            api_mock.get(
+                url=f'{REPORTS_URL}/TEST_KEY.pdf',
+                status=200,
+                json={'url': 'report url'},
+            )
+
+            client.download_report(
+                {
+                    'key': 'TEST_KEY.pdf',
+                    'package_name': 'TEST_REPORT',
+                    'has_pdf': True,
+                    'data_exports': [],
+                    'files': [],
+                },
+            )
+
+            assert download_file.called
+
+            (args, _) = download_file.call_args_list[0]
+
+            assert args == (
+                'report url',
+                join_path(getcwd(), 'TEST_REPORT', 'TEST_KEY.pdf'),
+            )
+
+        def it_downloads_package_to_destination_folder(client, download_file, api_mock):
+            api_mock.get(
+                url=f'{REPORTS_URL}/TEST_KEY.pdf',
+                status=200,
+                json={'url': 'report url'},
+            )
+
+            client.download_report(
+                {
+                    'key': 'TEST_KEY.pdf',
+                    'package_name': 'TEST_REPORT',
+                    'has_pdf': True,
+                    'data_exports': [],
+                    'files': [],
+                },
+                destination_folder=gettempdir(),
+            )
+
+            assert download_file.called
+
+            (args, _) = download_file.call_args_list[0]
+
+            assert args == (
+                'report url',
+                join_path(gettempdir(), 'TEST_REPORT', 'TEST_KEY.pdf'),
+            )
+
+        def it_downloads_files_concurrently(client, run_concurrently, api_mock):
+            api_mock.get(
+                url=f'{REPORTS_URL}/TEST_KEY.pdf',
+                status=200,
+                json={'url': 'report url'},
+            )
+
+            client.download_report(
+                {
+                    'key': 'TEST_KEY.pdf',
+                    'has_pdf': True,
+                    'data_exports': [],
+                    'files': [],
+                },
+            )
+
+            assert run_concurrently.called
+
+            (_, kwargs) = run_concurrently.call_args_list[0]
+
+            assert kwargs.get('max_concurrency') == 10
+
+        def it_downloads_files_with_max_concurrency(client, run_concurrently, api_mock):
+            api_mock.get(
+                url=f'{REPORTS_URL}/TEST_KEY.pdf',
+                status=200,
+                json={'url': 'report url'},
+            )
+
+            client.download_report(
+                {
+                    'key': 'TEST_KEY.pdf',
+                    'has_pdf': True,
+                    'data_exports': [],
+                    'files': [],
+                },
+                max_concurrency=1,
+            )
+
+            assert run_concurrently.called
+
+            (_, kwargs) = run_concurrently.call_args_list[0]
+
+            assert kwargs.get('max_concurrency') == 1
 
     def describe_get_data_files():
         def it_gets_read_data_access_token(get_access_token, api_mock, client):
@@ -936,3 +1226,18 @@ def describe_client():
             client.post_data(
                 payload=payload,
             )
+
+
+_T = TypeVar('_T')
+_K = TypeVar('_K')
+
+
+def run_concurrently_mock(
+    func: Callable[[_T], _K],
+    iterable: Iterable[_T],
+    *,
+    max_concurrency: int,
+) -> List[_K]:
+    return [
+        func(value) for value in iterable
+    ]

@@ -1,11 +1,17 @@
+from os import getcwd
+from os.path import join as join_path
 from typing import Any, cast, Iterator, List, Literal, Optional, overload, Tuple, Union
 
 from .access_tokens import get_access_token
 from .config import (
     DATA_URL,
+    EXPORTS_URL,
+    FILES_URL,
     QC_URL,
+    REPORTS_URL,
     STATIONS_URL,
 )
+from .download_file import download_file
 from .interfaces import (
     ClientOptions,
     DataFile,
@@ -15,14 +21,18 @@ from .interfaces import (
     GetDataQCQuery,
     GetDataQuery,
     GetDataRecordsQuery,
+    GetReportsQuery,
     GetStationsQuery,
     PostDataPayload,
     QCRecord,
     RefreshToken,
+    Report,
     StationWithDataFiles,
 )
 from .make_paginated_request import make_paginated_request
 from .make_request import HttpMethod, make_request, Response
+from .run_concurrently import run_concurrently
+from .utils import strip_uuid
 
 
 class Client():
@@ -52,6 +62,60 @@ class Client():
         )
 
         return iterator
+
+    def get_reports(
+        self,
+        query: Optional[GetReportsQuery] = None,
+        *,
+        page_size: Optional[int] = None,
+    ) -> Iterator[Report]:
+        iterator = self._request_reports(
+            query=query or {},
+            page_size=page_size or 100,
+        )
+
+        return iterator
+
+    def download_report(
+        self,
+        report: Report,
+        *,
+        destination_folder: Optional[str] = None,
+        max_concurrency: Optional[int] = None,
+    ) -> List[str]:
+        destination = join_path(
+            destination_folder or getcwd(),
+            report.get('package_name') or '',
+        )
+
+        files_to_download: List[Tuple[str, str]] = []
+
+        if report.get('has_pdf') is not False:
+            files_to_download.append((
+                f'{REPORTS_URL}/{report["key"]}',
+                join_path(destination, strip_uuid(report['key'])),
+            ))
+
+        for data_export in report['data_exports']:
+            files_to_download.append((
+                f'{EXPORTS_URL}/{data_export["key"]}',
+                join_path(destination, strip_uuid(data_export['key'])),
+            ))
+
+        for report_file in report['files']:
+            files_to_download.append((
+                f'{FILES_URL}/{report_file["key"]}',
+                join_path(destination, strip_uuid(report_file['key'])),
+            ))
+
+        result = self._download_report_files(
+            files_to_download,
+            max_concurrency=max_concurrency or 10,
+        )
+
+        return [
+            file for file in result if isinstance(file, str)
+        ]
 
     def get_data_files(
         self,
@@ -185,6 +249,81 @@ class Client():
         ))
 
         return iterator
+
+    def _request_reports(
+        self,
+        *,
+        query: GetReportsQuery,
+        page_size: int,
+    ) -> Iterator[Report]:
+        access_token = get_access_token(
+            refresh_token=self._refresh_token,
+            platform=self._platform,
+            scope='read:reports',
+        )
+
+        iterator = cast(Iterator[Report], self._make_paginated_request(
+            url=REPORTS_URL,
+            token=access_token,
+            query=query,
+            page_size=page_size,
+        ))
+
+        for report in iterator:
+            if report.get('status') == 'COMPLETE':
+                yield {
+                    **report,
+                    'data_exports': [
+                        data_export for data_export in report.get('data_exports') or [] if (
+                            data_export.get('status') == 'COMPLETE' and
+                            data_export.get('record_count') != 0
+                        )
+                    ],
+                    'files': [
+                        report_file for report_file in report.get('files') or [] if (
+                            report_file.get('type') == 'report_document'
+                        )
+                    ],
+                }
+
+    def _download_report_files(
+        self,
+        files_to_download: List[Tuple[str, str]],
+        *,
+        max_concurrency: int,
+    ) -> List[Optional[str]]:
+        access_token = get_access_token(
+            refresh_token=self._refresh_token,
+            platform=self._platform,
+            scope='read:reports',
+        )
+
+        def download_report_file(
+            file_to_download: Tuple[str, str],
+        ) -> Optional[str]:
+            url, destination = file_to_download
+
+            resp = self._make_request(
+                url=url,
+                token=access_token,
+            )[0]
+
+            result: Optional[str] = None
+
+            if resp and resp.get('url'):
+                result = download_file(
+                    resp['url'],
+                    destination,
+                    timeout=self._options.get('request_timeout'),
+                )
+
+            return result
+
+        return run_concurrently(
+            download_report_file,
+            files_to_download,
+            max_concurrency=max_concurrency,
+        )
 
     def _request_data_files(
         self,

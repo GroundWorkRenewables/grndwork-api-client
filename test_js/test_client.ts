@@ -1,15 +1,30 @@
+import {tmpdir} from 'node:os';
+import {join as joinPath} from 'node:path';
+import {cwd as getcwd} from 'node:process';
 import * as undici from 'undici';
 import {getAccessToken} from '../src_js/grndwork_api_client/access_tokens';
 import {Client} from '../src_js/grndwork_api_client/client';
 import {
   API_URL,
   DATA_URL,
+  EXPORTS_URL,
+  FILES_URL,
   QC_URL,
+  REPORTS_URL,
   STATIONS_URL,
 } from '../src_js/grndwork_api_client/config';
-import {DataRecord} from '../src_js/grndwork_api_client/interfaces';
+import {downloadFile} from '../src_js/grndwork_api_client/download_file';
+import {
+  DataExport,
+  DataRecord,
+  Report,
+  ReportFile,
+} from '../src_js/grndwork_api_client/interfaces';
+import {runConcurrently} from '../src_js/grndwork_api_client/run_concurrently';
 
 jest.mock('../src_js/grndwork_api_client/access_tokens');
+jest.mock('../src_js/grndwork_api_client/download_file');
+jest.mock('../src_js/grndwork_api_client/run_concurrently');
 
 describe('Client', () => {
   const refreshToken = {
@@ -24,6 +39,8 @@ describe('Client', () => {
 
   beforeEach(() => {
     (getAccessToken as jest.Mock).mockResolvedValue('access_token');
+    (runConcurrently as jest.Mock).mockImplementation(runConcurrentlyMock);
+    (downloadFile as jest.Mock).mockImplementation((url, dest) => Promise.resolve(dest));
 
     globalAgent = undici.getGlobalDispatcher();
 
@@ -96,6 +113,261 @@ describe('Client', () => {
         null,
         {page_size: 50},
       ).toArray();
+    });
+  });
+
+  describe('getReports', () => {
+    const REPORTS_PATH = new URL(REPORTS_URL).pathname;
+
+    it('gets read:reports access token', async () => {
+      apiMock.intercept({
+        path: ignoreQueryString(REPORTS_PATH),
+        headers: {Authorization: 'Bearer access_token'},
+      })
+      .reply(200, []);
+
+      await client.getReports().toArray();
+
+      expect(getAccessToken).toHaveBeenCalledWith(
+        refreshToken,
+        'platform',
+        'read:reports',
+      );
+    });
+
+    it('makes get reports request with defaults', async () => {
+      apiMock.intercept({
+        path: REPORTS_PATH,
+        query: {limit: 100, offset: 0},
+      })
+      .reply(200, []);
+
+      await client.getReports().toArray();
+    });
+
+    it('makes get reports request with query', async () => {
+      apiMock.intercept({
+        path: REPORTS_PATH,
+        query: {limit: 10, offset: 0},
+      })
+      .reply(200, []);
+
+      await client.getReports(
+        {limit: 10},
+      ).toArray();
+    });
+
+    it('makes get reports request with page size', async () => {
+      apiMock.intercept({
+        path: REPORTS_PATH,
+        query: {limit: 50, offset: 0},
+      })
+      .reply(200, []);
+
+      await client.getReports(
+        null,
+        {page_size: 50},
+      ).toArray();
+    });
+  });
+
+  describe('downloadReport', () => {
+    const REPORTS_PATH = new URL(REPORTS_URL).pathname;
+    const EXPORTS_PATH = new URL(EXPORTS_URL).pathname;
+    const FILES_PATH = new URL(FILES_URL).pathname;
+
+    it('gets read:reports access token', async () => {
+      apiMock.intercept({
+        path: `${REPORTS_PATH}/TEST_KEY.pdf`,
+        headers: {Authorization: 'Bearer access_token'},
+      })
+      .reply(200, {});
+
+      await client.downloadReport(
+        {
+          key: 'TEST_KEY.pdf',
+          has_pdf: true,
+          data_exports: [] as Array<DataExport>,
+          files: [] as Array<ReportFile>,
+        } as Report,
+      );
+
+      expect(getAccessToken).toHaveBeenCalledWith(
+        refreshToken,
+        'platform',
+        'read:reports',
+      );
+    });
+
+    it('makes request for report url', async () => {
+      apiMock.intercept({
+        path: `${REPORTS_PATH}/TEST_KEY.pdf`,
+      })
+      .reply(200, {url: 'report url'});
+
+      await client.downloadReport(
+        {
+          key: 'TEST_KEY.pdf',
+          has_pdf: true,
+          data_exports: [] as Array<DataExport>,
+          files: [] as Array<ReportFile>,
+        } as Report,
+      );
+    });
+
+    it('does not make request for report without pdf', async () => {
+      await client.downloadReport(
+        {
+          key: 'TEST_KEY.pdf',
+          has_pdf: false,
+          data_exports: [] as Array<DataExport>,
+          files: [] as Array<ReportFile>,
+        } as Report,
+      );
+    });
+
+    it('makes request for data export and file urls', async () => {
+      apiMock.intercept({
+        path: `${REPORTS_PATH}/TEST_KEY_1.pdf`,
+      })
+      .reply(200, {url: 'report url'});
+
+      apiMock.intercept({
+        path: `${EXPORTS_PATH}/TEST_KEY_2.csv`,
+      })
+      .reply(200, {url: 'export url'});
+
+      apiMock.intercept({
+        path: `${FILES_PATH}/TEST_KEY_3.zip`,
+      })
+      .reply(200, {url: 'file url'});
+
+      await client.downloadReport(
+        {
+          key: 'TEST_KEY_1.pdf',
+          has_pdf: true,
+          data_exports: [
+            {key: 'TEST_KEY_2.csv'} as DataExport,
+          ],
+          files: [
+            {key: 'TEST_KEY_3.zip'} as ReportFile,
+          ],
+        } as Report,
+      );
+    });
+
+    it('downloads report', async () => {
+      apiMock.intercept({
+        path: `${REPORTS_PATH}/TEST_KEY.pdf`,
+      })
+      .reply(200, {url: 'report url'});
+
+      await client.downloadReport(
+        {
+          key: 'TEST_KEY.pdf',
+          has_pdf: true,
+          data_exports: [] as Array<DataExport>,
+          files: [] as Array<ReportFile>,
+        } as Report,
+      );
+
+      expect(downloadFile).toHaveBeenCalledWith(
+        'report url',
+        joinPath(getcwd(), 'TEST_KEY.pdf'),
+        {timeout: undefined},
+      );
+    });
+
+    it('downloads report as package', async () => {
+      apiMock.intercept({
+        path: `${REPORTS_PATH}/TEST_KEY.pdf`,
+      })
+      .reply(200, {url: 'report url'});
+
+      await client.downloadReport(
+        {
+          key: 'TEST_KEY.pdf',
+          package_name: 'TEST_REPORT',
+          has_pdf: true,
+          data_exports: [] as Array<DataExport>,
+          files: [] as Array<ReportFile>,
+        } as Report,
+      );
+
+      expect(downloadFile).toHaveBeenCalledWith(
+        'report url',
+        joinPath(getcwd(), 'TEST_REPORT', 'TEST_KEY.pdf'),
+        {timeout: undefined},
+      );
+    });
+
+    it('downloads package to destination folder', async () => {
+      apiMock.intercept({
+        path: `${REPORTS_PATH}/TEST_KEY.pdf`,
+      })
+      .reply(200, {url: 'report url'});
+
+      await client.downloadReport(
+        {
+          key: 'TEST_KEY.pdf',
+          package_name: 'TEST_REPORT',
+          has_pdf: true,
+          data_exports: [] as Array<DataExport>,
+          files: [] as Array<ReportFile>,
+        } as Report,
+        {destination_folder: tmpdir()},
+      );
+
+      expect(downloadFile).toHaveBeenCalledWith(
+        'report url',
+        joinPath(tmpdir(), 'TEST_REPORT', 'TEST_KEY.pdf'),
+        {timeout: undefined},
+      );
+    });
+
+    it('downloads files concurrently', async () => {
+      apiMock.intercept({
+        path: `${REPORTS_PATH}/TEST_KEY.pdf`,
+      })
+      .reply(200, {url: 'report url'});
+
+      await client.downloadReport(
+        {
+          key: 'TEST_KEY.pdf',
+          has_pdf: true,
+          data_exports: [] as Array<DataExport>,
+          files: [] as Array<ReportFile>,
+        } as Report,
+      );
+
+      expect(runConcurrently).toHaveBeenCalledWith(
+        expect.any(Function),
+        expect.any(Array),
+        10,
+      );
+    });
+
+    it('downloads files with max concurrency', async () => {
+      apiMock.intercept({
+        path: `${REPORTS_PATH}/TEST_KEY.pdf`,
+      })
+      .reply(200, {url: 'report url'});
+
+      await client.downloadReport(
+        {
+          key: 'TEST_KEY.pdf',
+          has_pdf: true,
+          data_exports: [] as Array<DataExport>,
+          files: [] as Array<ReportFile>,
+        } as Report,
+        {max_concurrency: 1},
+      );
+
+      expect(runConcurrently).toHaveBeenCalledWith(
+        expect.any(Function),
+        expect.any(Array),
+        1,
+      );
     });
   });
 
@@ -910,6 +1182,19 @@ describe('Client', () => {
     });
   });
 });
+
+async function runConcurrentlyMock<T, K>(
+  func: (arg: T) => Promise<K>,
+  iterable: Iterable<T>,
+): Promise<Array<K>> {
+  const results: Array<K> = [];
+
+  for (const value of iterable) {
+    results.push(await func(value));
+  }
+
+  return results;
+}
 
 function ignoreQueryString(path: string): (uri: string) => boolean {
   return uri => (uri.split('?').shift() === path);

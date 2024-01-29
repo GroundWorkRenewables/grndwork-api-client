@@ -1,4 +1,4 @@
-from typing import Dict, Iterator, List, Optional, TypedDict, Union
+from typing import Any, Dict, Iterator, List, Optional, TypedDict, Union
 
 
 class RefreshToken(TypedDict):
@@ -100,10 +100,59 @@ class StationWithDataFiles(Station):
     data_files: List[StationDataFile]
 
 
+class DataExport(TypedDict):
+    key: str
+    filename: str
+    format: str  # noqa: A003
+    format_options: Dict[str, Any]
+    headers: DataFileHeaders
+    start_timestamp: str
+    end_timestamp: str
+    record_count: int
+    status: str
+    created_at: str
+    updated_at: str
+
+
+class ReportFile(TypedDict):
+    key: str
+    type: str  # noqa: A003
+    filename: str
+    description: str
+    created_at: str
+    updated_at: str
+
+
+class Report(TypedDict):
+    key: str
+    package_name: str
+    kind: str
+    station_uuid: str
+    start_date: str
+    end_date: str
+    status: str
+    has_pdf: bool
+    published_at: str
+    created_at: str
+    updated_at: str
+    data_exports: List[DataExport]
+    files: List[ReportFile]
+
+
 class GetStationsQuery(TypedDict, total=False):
     client: Optional[str]
     site: Optional[str]
     station: Optional[str]
+    limit: Optional[int]
+    offset: Optional[int]
+
+
+class GetReportsQuery(TypedDict, total=False):
+    client: Optional[str]
+    site: Optional[str]
+    station: Optional[str]
+    before: Optional[str]
+    after: Optional[str]
     limit: Optional[int]
     offset: Optional[int]
 

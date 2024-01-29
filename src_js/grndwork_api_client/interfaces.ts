@@ -96,10 +96,59 @@ export interface StationWithDataFiles extends Station {
   data_files: Array<StationDataFile>;
 }
 
+export interface DataExport {
+  key: string;
+  filename: string;
+  format: string;
+  format_options: Record<string, any>;
+  headers: DataFileHeaders;
+  start_timestamp: string;
+  end_timestamp: string;
+  record_count: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReportFile {
+  key: string;
+  type: string;
+  filename: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Report {
+  key: string;
+  package_name: string;
+  kind: string;
+  station_uuid: string;
+  start_date: string;
+  end_date: string;
+  status: string;
+  has_pdf: boolean;
+  published_at: string;
+  created_at: string;
+  updated_at: string;
+  data_exports: Array<DataExport>;
+  files: Array<ReportFile>;
+}
+
 export interface GetStationsQuery {
   client?: string;
   site?: string;
   station?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface GetReportsQuery {
+  client?: string;
+  site?: string;
+  station?: string;
+  before?: string;
+  after?: string;
   limit?: number;
   offset?: number;
 }

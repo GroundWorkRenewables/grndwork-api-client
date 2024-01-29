@@ -1,9 +1,15 @@
+import {join as joinPath} from 'node:path';
+import {cwd as getcwd} from 'node:process';
 import {getAccessToken} from './access_tokens';
 import {
   DATA_URL,
+  EXPORTS_URL,
+  FILES_URL,
   QC_URL,
+  REPORTS_URL,
   STATIONS_URL,
 } from './config';
+import {downloadFile} from './download_file';
 import {
   ClientOptions,
   DataFile,
@@ -14,15 +20,19 @@ import {
   GetDataQCQuery,
   GetDataQuery,
   GetDataRecordsQuery,
+  GetReportsQuery,
   GetStationsQuery,
   PostDataPayload,
   QCRecord,
   RefreshToken,
+  Report,
   StationWithDataFiles,
 } from './interfaces';
 import {IterableResponse} from './iterable_response';
 import {makePaginatedRequest} from './make_paginated_request';
 import {HttpMethod, makeRequest, Response} from './make_request';
+import {runConcurrently} from './run_concurrently';
+import {stripUUID} from './utils';
 
 export class Client {
   constructor(
@@ -43,6 +53,65 @@ export class Client {
     );
 
     return new IterableResponse(iterator);
+  }
+
+  public getReports(
+    query: GetReportsQuery | null = null,
+    options: {
+      page_size?: number,
+    } = {},
+  ): IterableResponse<Report> {
+    const iterator = this._requestReports(
+      query || {},
+      options.page_size || 100,
+    );
+
+    return new IterableResponse(iterator);
+  }
+
+  public async downloadReport(
+    report: Report,
+    options: {
+      destination_folder?: string,
+      max_concurrency?: number,
+    } = {},
+  ): Promise<Array<string>> {
+    const destination = joinPath(
+      options.destination_folder || getcwd(),
+      report.package_name || '',
+    );
+
+    const filesToDownload: Array<[string, string]> = [];
+
+    if (report.has_pdf !== false) {
+      filesToDownload.push([
+        `${REPORTS_URL}/${report.key}`,
+        joinPath(destination, stripUUID(report.key)),
+      ]);
+    }
+
+    for (const dataExport of report.data_exports) {
+      filesToDownload.push([
+        `${EXPORTS_URL}/${dataExport.key}`,
+        joinPath(destination, stripUUID(dataExport.key)),
+      ]);
+    }
+
+    for (const reportFile of report.files) {
+      filesToDownload.push([
+        `${FILES_URL}/${reportFile.key}`,
+        joinPath(destination, stripUUID(reportFile.key)),
+      ]);
+    }
+
+    const result = await this._downloadReportFiles(
+      filesToDownload,
+      options.max_concurrency || 10,
+    );
+
+    return result.filter((file): file is string => (
+      typeof file === 'string'
+    ));
   }
 
   public getDataFiles(
@@ -175,6 +244,80 @@ export class Client {
       query,
       page_size: pageSize,
     });
+  }
+
+  private async* _requestReports(
+    query: GetReportsQuery,
+    pageSize: number,
+  ): AsyncIterableIterator<Report> {
+    const accessToken = await getAccessToken(
+      this._refreshToken,
+      this._platform,
+      'read:reports',
+    );
+
+    const iterator = this._makePaginatedRequest<Report>({
+      url: REPORTS_URL,
+      token: accessToken,
+      query,
+      page_size: pageSize,
+    });
+
+    for await (const report of iterator) {
+      if (report.status === 'COMPLETE') {
+        yield {
+          ...report,
+          data_exports: (report.data_exports || []).filter(dataExport => (
+            dataExport.status === 'COMPLETE' &&
+            dataExport.record_count !== 0
+          )),
+          files: (report.files || []).filter(reportFile => (
+            reportFile.type === 'report_document'
+          )),
+        };
+      }
+    }
+  }
+
+  private async _downloadReportFiles(
+    filesToDownload: Array<[string, string]>,
+    maxConcurrency: number,
+  ): Promise<Array<string | null>> {
+    const accessToken = await getAccessToken(
+      this._refreshToken,
+      this._platform,
+      'read:reports',
+    );
+
+    async function downloadReportFile(
+      this: Client,
+      fileToDownload: [string, string],
+    ): Promise<string | null> {
+      const [url, destination] = fileToDownload;
+
+      const resp = (await this._makeRequest<{url: string}>({
+        url,
+        token: accessToken,
+      }))[0];
+
+      let result: string | null = null;
+
+      if (resp && resp.url) {
+        result = await downloadFile(
+          resp.url,
+          destination,
+          {timeout: this._options.request_timeout},
+        );
+      }
+
+      return result;
+    }
+
+    return runConcurrently(
+      downloadReportFile.bind(this),
+      filesToDownload,
+      maxConcurrency,
+    );
   }
 
   private async* _requestDataFiles(
