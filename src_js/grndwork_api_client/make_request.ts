@@ -34,7 +34,7 @@ export async function makeRequest<T>(
   };
 
   if (options.token) {
-    fetchOptions.headers.Authorization = `Bearer ${ options.token }`;
+    fetchOptions.headers.Authorization = `Bearer ${options.token}`;
   }
 
   if (options.body) {

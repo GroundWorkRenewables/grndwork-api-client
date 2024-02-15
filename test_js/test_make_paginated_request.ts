@@ -21,7 +21,7 @@ describe('makePaginatedRequest', () => {
         generateItems(first, last + 1),
         new Response(undefined, {
           headers: {
-            'Content-Range': `items ${ first }-${ last }/165`,
+            'Content-Range': `items ${first}-${last}/165`,
           },
         }),
       ];

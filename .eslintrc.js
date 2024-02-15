@@ -50,7 +50,6 @@ module.exports = {
       enforceForRenamedProperties: false,
     }],
     'strict': ['error', 'global'],
-    'template-curly-spacing': ['error', 'always'],
 
     'import/named': 'error',
     'import/order': ['error', {

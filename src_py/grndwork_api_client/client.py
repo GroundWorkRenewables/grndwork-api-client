@@ -126,7 +126,7 @@ class Client():
                 )[0])
 
                 yield {
-                    **data_file,  # type: ignore
+                    **data_file,
                     'records': combine_data_and_qc_records(records, results),
                 }
 

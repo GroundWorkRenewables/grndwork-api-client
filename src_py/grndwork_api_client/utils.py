@@ -18,7 +18,7 @@ def combine_data_and_qc_records(
 
     return [
         {
-            **record,  # type: ignore
+            **record,
             'qc_flags': qc_flags_by_timestamp.get(record['timestamp'], {}),
         } for record in data_records
     ]

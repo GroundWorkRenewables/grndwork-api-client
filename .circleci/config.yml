@@ -1,9 +1,14 @@
 version: 2.1
 
 jobs:
-  test:
+  test-node:
+    parameters:
+      node-version:
+        type: string
+
     docker:
-      - image: cimg/python:3.9-node
+      - image: cimg/node:<< parameters.node-version >>
+
     steps:
       - checkout
 
@@ -12,6 +17,43 @@ jobs:
           keys:
             - node-packages-v1-{{ checksum "package-lock.json" }}
             - node-packages-v1-
+
+      - run:
+          name: Install test dependencies
+          command: |
+            npm install --engine-strict
+            npm install --no-save jest-junit
+
+      - save_cache:
+          name: Save node package cache
+          key: node-packages-v1-{{ checksum "package-lock.json" }}
+          paths:
+            - ~/.npm/
+
+      - run:
+          name: Run tests
+          command: |
+            mkdir -p ./test-results/junit
+
+            npx eslint ./
+            npx jest --ci --runInBand --reporters=default --reporters=jest-junit
+          environment:
+            JEST_JUNIT_OUTPUT_DIR: ./test-results/junit/
+            JEST_JUNIT_OUTPUT_NAME: jest-results.xml
+
+      - store_test_results:
+          path: ./test-results/
+
+  test-python:
+    parameters:
+      python-version:
+        type: string
+
+    docker:
+      - image: cimg/python:<< parameters.python-version >>
+
+    steps:
+      - checkout
 
       - restore_cache:
           name: Restore python package cache
@@ -22,15 +64,7 @@ jobs:
       - run:
           name: Install test dependencies
           command: |
-            npm install
             pipenv sync --dev
-            npm install --no-save jest-junit
-
-      - save_cache:
-          name: Save node package cache
-          key: node-packages-v1-{{ checksum "package-lock.json" }}
-          paths:
-            - ~/.npm/
 
       - save_cache:
           name: Save python package cache
@@ -41,21 +75,16 @@ jobs:
       - run:
           name: Run tests
           command: |
-            mkdir -p ./test-results/junit
-
-            npm run pretest
-            npm run test:jest -- --ci --runInBand --reporters=default --reporters=jest-junit
-            npm run test:pytest -- --junitxml=./test-results/junit/pytest-results.xml
-          environment:
-            JEST_JUNIT_OUTPUT_DIR: ./test-results/junit/
-            JEST_JUNIT_OUTPUT_NAME: jest-results.xml
+            pipenv run flake8
+            pipenv run mypy src_py/grndwork_api_client
+            pipenv run python3 -m pytest
 
       - store_test_results:
           path: ./test-results/
 
   build:
     docker:
-      - image: cimg/python:3.9-node
+      - image: cimg/python:3.10-node
 
     steps:
       - checkout
@@ -118,14 +147,32 @@ jobs:
 workflows:
   main:
     jobs:
-      - test:
+      - test-node:
+          matrix:
+            parameters:
+              node-version:
+                - "18.19"
+                - "20.11"
+                - "21.6"
+          filters:
+            tags:
+              only: /v[0-9].*/
+
+      - test-python:
+          matrix:
+            parameters:
+              python-version:
+                - "3.10"
+                - "3.11"
+                - "3.12"
           filters:
             tags:
               only: /v[0-9].*/
 
       - build:
           requires:
-            - test
+            - test-node
+            - test-python
           filters:
             tags:
               only: /v[0-9].*/
