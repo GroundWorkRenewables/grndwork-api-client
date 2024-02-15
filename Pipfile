@@ -3,12 +3,9 @@ name = "pypi"
 url = "https://pypi.org/simple"
 verify_ssl = true
 
-[requires]
-python_version = "3.9"
-
 [packages]
-pyjwt = "~=2.4"
-requests = "~=2.27"
+pyjwt = "~=2.8"
+requests = "~=2.31"
 
 [dev-packages]
 build = "*"
@@ -30,7 +27,7 @@ pep8-naming = "*"
 pytest = "*"
 pytest-cov = "*"
 pytest-describe = "*"
-pytest-freezegun = "*"
+pytest-freezer = "*"
 pytest-mock = "*"
 pytest-notifier = "*"
 twine = "*"

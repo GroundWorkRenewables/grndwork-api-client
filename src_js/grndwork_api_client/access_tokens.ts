@@ -14,7 +14,7 @@ export async function getAccessToken(
   platform: string,
   scope: string,
 ): Promise<string> {
-  const cacheKey = `${ platform }:${ scope }`;
+  const cacheKey = `${platform}:${scope}`;
 
   let accessToken = accessTokenCache[cacheKey];
 
