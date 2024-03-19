@@ -1,21 +1,7 @@
-import {
-  DataRecord,
-  QCRecord,
-  QCValue,
-} from './interfaces';
-
-export function combineDataAndQCRecords(
-  dataRecords: Array<DataRecord>,
-  qcRecords: Array<QCRecord>,
-): Array<DataRecord> {
-  const qcFlagsByTimestamp: Record<string, Record<string, QCValue>> = {};
-
-  for (const record of qcRecords) {
-    qcFlagsByTimestamp[record.timestamp] = record.qc_flags;
+export function stripUUID(value: string | null | undefined): string {
+  if (value) {
+    return value.replace(/_?\w{8}-\w{4}-\w{4}-\w{4}-\w{12}/, '');
   }
 
-  return dataRecords.map(record => ({
-    ...record,
-    qc_flags: qcFlagsByTimestamp[record.timestamp] || {},
-  }));
+  return '';
 }

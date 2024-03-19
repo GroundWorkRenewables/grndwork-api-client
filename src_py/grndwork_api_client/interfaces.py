@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, TypedDict, Union
+from typing import Any, Dict, Iterator, List, Optional, TypedDict, Union
 
 
 class RefreshToken(TypedDict):
@@ -6,8 +6,10 @@ class RefreshToken(TypedDict):
     token: str
 
 
-class AccessToken(TypedDict):
-    token: str
+class ClientOptions(TypedDict, total=False):
+    request_timeout: float
+    request_retries: int
+    request_backoff: float
 
 
 DataValue = Union[float, int, str, bool, None]
@@ -39,21 +41,24 @@ class DataFileHeaders(_DataFileHeadersRequired, total=False):
     processing: List[str]
 
 
-class _DataFileRequired(TypedDict):
+class DataFile(TypedDict):
     source: str
+    source_start_timestamp: str | None
+    source_end_timestamp: str | None
     filename: str
     is_stale: bool
     headers: DataFileHeaders
+    created_at: str
+    updated_at: str
 
 
-class DataFile(_DataFileRequired, total=False):
-    records: List[DataRecord]
+class DataFileWithRecords(DataFile):
+    records: Iterator[DataRecord]
 
 
-class StationDataFile(TypedDict):
-    filename: str
-    is_stale: bool
-    headers: DataFileHeaders
+class ProjectManager:
+    full_name: str
+    email: str
 
 
 class Station(TypedDict):
@@ -65,45 +70,127 @@ class Station(TypedDict):
     station_uuid: str
     station_full_name: str
     description: str
-    latitude: int
-    longitude: int
-    altitude: int
-    timezone_offset: Optional[int]
-    start_timestamp: Optional[str]
-    end_timestamp: Optional[str]
+    model: str
+    type: str  # noqa: A003
+    status: str
+    project_manager: ProjectManager | None
+    maintenance_frequency: str
+    maintenance_log: str
+    location_region: str
+    latitude: float
+    longitude: float
+    altitude: float
+    timezone_offset: int
+    start_timestamp: str | None
+    end_timestamp: str | None
     data_file_prefix: str
+    created_at: str
+    updated_at: str
+
+
+class StationDataFile(TypedDict):
+    filename: str
+    is_stale: bool
+    headers: DataFileHeaders
+    created_at: str
+    updated_at: str
+
+
+class StationWithDataFiles(Station):
     data_files: List[StationDataFile]
 
 
+class DataExport(TypedDict):
+    key: str
+    filename: str
+    format: str  # noqa: A003
+    format_options: Dict[str, Any]
+    headers: DataFileHeaders
+    start_timestamp: str
+    end_timestamp: str
+    record_count: int
+    status: str
+    created_at: str
+    updated_at: str
+
+
+class ReportFile(TypedDict):
+    key: str
+    type: str  # noqa: A003
+    filename: str
+    description: str
+    created_at: str
+    updated_at: str
+
+
+class Report(TypedDict):
+    key: str
+    package_name: str
+    kind: str
+    station_uuid: str
+    start_date: str
+    end_date: str
+    status: str
+    has_pdf: bool
+    published_at: str
+    created_at: str
+    updated_at: str
+    data_exports: List[DataExport]
+    files: List[ReportFile]
+
+
 class GetStationsQuery(TypedDict, total=False):
-    client: str
-    site: str
-    station: str
-    limit: int
-    offset: int
+    client: Optional[str]
+    site: Optional[str]
+    station: Optional[str]
+    limit: Optional[int]
+    offset: Optional[int]
 
 
-class GetDataQuery(TypedDict, total=False):
-    client: str
-    site: str
-    gateway: str
-    station: str
+class GetReportsQuery(TypedDict, total=False):
+    client: Optional[str]
+    site: Optional[str]
+    station: Optional[str]
+    before: Optional[str]
+    after: Optional[str]
+    limit: Optional[int]
+    offset: Optional[int]
+
+
+class GetDataFilesQuery(TypedDict, total=False):
+    client: Optional[str]
+    site: Optional[str]
+    gateway: Optional[str]
+    station: Optional[str]
+    filename: Optional[str]
+    limit: Optional[int]
+    offset: Optional[int]
+
+
+class GetDataQuery(GetDataFilesQuery, total=False):
+    records_limit: Optional[int]
+    records_before: Optional[str]
+    records_after: Optional[str]
+
+
+class _GetDataRecordsQueryRequired(TypedDict):
     filename: str
-    limit: int
-    offset: int
-    records_before: str
-    records_after: str
-    records_limit: int
 
 
-class _GetQCQueryRequired(TypedDict):
+class GetDataRecordsQuery(_GetDataRecordsQueryRequired, total=False):
+    limit: Optional[int]
+    before: Optional[str]
+    after: Optional[str]
+
+
+class _GetDataQCQueryRequired(TypedDict):
     filename: str
 
 
-class GetQCQuery(_GetQCQueryRequired, total=False):
-    before: str
-    after: str
-    limit: int
+class GetDataQCQuery(_GetDataQCQueryRequired, total=False):
+    limit: Optional[int]
+    before: Optional[str]
+    after: Optional[str]
 
 
 class PostDataRecord(TypedDict):
@@ -117,8 +204,8 @@ class _PostDataFileRequired(TypedDict):
 
 
 class PostDataFile(_PostDataFileRequired, total=False):
-    headers: DataFileHeaders
-    records: List[PostDataRecord]
+    headers: Optional[DataFileHeaders]
+    records: Optional[List[PostDataRecord]]
 
 
 class _PostDataPayloadRequired(TypedDict):
@@ -127,4 +214,4 @@ class _PostDataPayloadRequired(TypedDict):
 
 
 class PostDataPayload(_PostDataPayloadRequired, total=False):
-    overwrite: bool
+    overwrite: Optional[bool]

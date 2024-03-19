@@ -1,41 +1,52 @@
 import {ContentRange} from './content_range';
-import {RequestOptions} from './interfaces';
-import {makeRequest} from './make_request';
+import {makeRequest, RequestError} from './make_request';
 
 export async function* makePaginatedRequest<T>(
-  options: RequestOptions,
-  pageSize: number,
+  options: {
+    url: string,
+    token?: string,
+    headers?: Record<string, any>,
+    query?: Record<string, any>,
+    page_size: number,
+    timeout?: number,
+    retries?: number,
+    backoff?: number,
+  },
 ): AsyncIterableIterator<T> {
   const query = options.query || {};
   let limit = query.limit || null;
   let offset = query.offset || 0;
 
   while (true) {
-    const [results, resp] = await makeRequest<Array<T>>({
-      ...options,
-      method: 'GET',
+    const [payload, resp] = await makeRequest<Array<T>>({
+      url: options.url,
+      token: options.token,
+      headers: options.headers,
       query: {
         ...query,
-        limit: limit ? Math.min(limit, pageSize) : pageSize,
+        limit: limit ? Math.min(limit, options.page_size) : options.page_size,
         offset,
       },
+      timeout: options.timeout,
+      retries: options.retries,
+      backoff: options.backoff,
     });
 
-    if (results.length) {
-      yield* results;
+    if (payload.length) {
+      yield* payload;
     } else {
       break;
     }
 
     if (limit) {
-      limit -= results.length;
+      limit -= payload.length;
 
       if (limit <= 0) {
         break;
       }
     }
 
-    const contentRange = ContentRange.parse(resp.headers.get('content-range') || '');
+    const contentRange = ContentRange.parse(resp);
 
     if (offset < contentRange.last) {
       offset = contentRange.last;
@@ -44,7 +55,7 @@ export async function* makePaginatedRequest<T>(
         break;
       }
     } else {
-      throw new Error('Invalid content range');
+      throw new RequestError('Invalid content range');
     }
   }
 }

@@ -1,153 +1,138 @@
-import json
-
 import pytest
-import requests as _requests
-from src_py.grndwork_api_client.config import TOKENS_URL as API_URL
+from responses import RequestsMock
+from responses.matchers import header_matcher, json_params_matcher, query_param_matcher
+from responses.registries import OrderedRegistry
+from src_py.grndwork_api_client.config import API_URL
 from src_py.grndwork_api_client.make_request import make_request, RequestError
 
-
-@pytest.fixture(name='requests', autouse=True)
-def fixture_requests(mocker):
-    return mocker.patch(
-        target='src_py.grndwork_api_client.make_request.requests',
-        spec=_requests,
-        **{
-            'request.return_value': mocker.MagicMock(**{
-                'status_code': 200,
-                'headers': {
-                    'Content-Type': 'application/json',
-                },
-                'json.return_value': {
-                    'token': 'access_token',
-                },
-            }),
-            'RequestException': _requests.RequestException,
-        },
-    )
+TEST_URL = f'{API_URL}/v1/test'
 
 
 def describe_make_request():
-    def it_makes_request_with_auth_token(requests):
-        make_request(
-            url=API_URL,
-            token='auth token',
+    @pytest.fixture(name='api_mock', autouse=True)
+    def fixture_api_mock():
+        with RequestsMock(registry=OrderedRegistry) as api_mock:
+            yield api_mock
+
+    def it_makes_request_with_token(api_mock):
+        api_mock.get(
+            url=TEST_URL,
+            match=[header_matcher({'Authorization': 'Bearer auth_token'})],
+            status=200,
+            json={},
         )
 
-        assert requests.request.call_count == 1
-
-        (_, kwargs) = requests.request.call_args
-
-        assert kwargs.get('url') == API_URL
-        assert kwargs.get('method') == 'GET'
-
-        assert kwargs.get('headers') == {
-            'Authorization': 'Bearer auth token',
-        }
-
-        assert kwargs.get('params') == {}
-
-    def it_makes_request_with_query_params(requests):
         make_request(
-            url=API_URL,
-            token='auth token',
-            query={
-                'limit': 10,
-            },
+            url=TEST_URL,
+            token='auth_token',
         )
 
-        assert requests.request.call_count == 1
-
-        (_, kwargs) = requests.request.call_args
-
-        assert kwargs.get('params') == {
-            'limit': 10,
-        }
-
-    def it_makes_request_with_method(requests):
-        make_request(
-            url=API_URL,
-            token='auth token',
-            method='POST',
+    def it_makes_request_with_additional_headers(api_mock):
+        api_mock.get(
+            url=TEST_URL,
+            match=[header_matcher({'X-Test': 'test_value'})],
+            status=200,
+            json={},
         )
 
-        assert requests.request.call_count == 1
-
-        (_, kwargs) = requests.request.call_args
-
-        assert kwargs.get('method') == 'POST'
-
-    def it_makes_request_with_body(requests):
         make_request(
-            url=API_URL,
-            token='auth token',
-            method='POST',
-            body={
-                'test': 'test',
-            },
-        )
-
-        assert requests.request.call_count == 1
-
-        (_, kwargs) = requests.request.call_args
-
-        assert kwargs.get('headers') == {
-            'Authorization': 'Bearer auth token',
-            'Content-Type': 'application/json',
-        }
-
-        assert kwargs.get('data') == json.dumps({
-            'test': 'test',
-        })
-
-    def it_makes_request_with_additional_headers(requests):
-        make_request(
-            url=API_URL,
-            token='auth token',
-            method='POST',
+            url=TEST_URL,
             headers={
                 'X-Test': 'test_value',
             },
+        )
+
+    def it_makes_request_with_query(api_mock):
+        api_mock.get(
+            url=TEST_URL,
+            match=[query_param_matcher({'limit': 10})],
+            status=200,
+            json={},
+        )
+
+        make_request(
+            url=TEST_URL,
+            query={'limit': 10},
+        )
+
+    def it_makes_request_with_method(api_mock):
+        api_mock.post(
+            url=TEST_URL,
+            status=201,
+            json={},
+        )
+
+        make_request(
+            url=TEST_URL,
+            method='POST',
+        )
+
+    def it_makes_request_with_body(api_mock):
+        api_mock.post(
+            url=TEST_URL,
+            match=[json_params_matcher({'test': 'value'})],
+            status=201,
+            json={},
+        )
+
+        make_request(
+            url=TEST_URL,
+            method='POST',
             body={
-                'test': 'test',
+                'test': 'value',
             },
         )
 
-        assert requests.request.call_count == 1
-
-        (_, kwargs) = requests.request.call_args
-
-        assert kwargs.get('headers') == {
-            'Authorization': 'Bearer auth token',
-            'Content-Type': 'application/json',
-            'X-Test': 'test_value',
-        }
-
-    def it_raises_error_when_bad_request(requests):
-        requests.request.return_value.status_code = 400
+    def it_raises_error_when_bad_request(api_mock):
+        api_mock.get(
+            url=TEST_URL,
+            status=400,
+            json={},
+        )
 
         with pytest.raises(RequestError, match='Bad Request'):
             make_request(
-                url=API_URL,
-                token='auth token',
+                url=TEST_URL,
             )
 
-    def it_raises_error_when_bad_response_body(requests):
-        requests.request.return_value.json.side_effect = _requests.JSONDecodeError('Invalid', '', 0)
+    def it_raises_error_with_response_body(api_mock):
+        api_mock.get(
+            url=TEST_URL,
+            status=400,
+            json={'message': 'Invalid'},
+        )
+
+        with pytest.raises(RequestError, match='Invalid'):
+            make_request(
+                url=TEST_URL,
+            )
+
+    def it_raises_error_when_bad_response_body(api_mock):
+        api_mock.get(
+            url=TEST_URL,
+            status=200,
+            body='Invalid',
+        )
 
         with pytest.raises(RequestError, match='Failed to parse response payload'):
             make_request(
-                url=API_URL,
-                token='auth token',
+                url=TEST_URL,
             )
 
-    def it_returns_payload_and_response(requests):
-        payload, resp = make_request(
-            url=API_URL,
-            token='auth token',
+    def it_returns_payload_and_response(api_mock):
+        api_mock.get(
+            url=TEST_URL,
+            status=200,
+            headers={
+                'X-Test': 'test_value',
+            },
+            json={'test': 'value'},
         )
 
-        assert payload == {
-            'token': 'access_token',
-        }
+        payload, resp = make_request(
+            url=TEST_URL,
+        )
 
-        assert resp.headers.get('Content-Type') == 'application/json'
+        assert payload == {'test': 'value'}
+        assert resp['status_code'] == 200
+        assert resp['headers'].get('x-test') == 'test_value'

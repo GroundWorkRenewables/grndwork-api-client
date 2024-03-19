@@ -1,24 +1,8 @@
-from typing import Dict, List
-
-from .interfaces import (
-    DataRecord,
-    QCRecord,
-    QCValue,
-)
+import re
 
 
-def combine_data_and_qc_records(
-    data_records: List[DataRecord],
-    qc_records: List[QCRecord],
-) -> List[DataRecord]:
-    qc_flags_by_timestamp: Dict[str, Dict[str, QCValue]] = {}
+def strip_uuid(value: str | None) -> str:
+    if value:
+        return re.sub(r'_?\w{8}-\w{4}-\w{4}-\w{4}-\w{12}', '', value)
 
-    for record in qc_records:
-        qc_flags_by_timestamp[record['timestamp']] = record['qc_flags']
-
-    return [
-        {
-            **record,
-            'qc_flags': qc_flags_by_timestamp.get(record['timestamp'], {}),
-        } for record in data_records
-    ]
+    return ''
