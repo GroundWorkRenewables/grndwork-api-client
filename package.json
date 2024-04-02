@@ -32,26 +32,26 @@
   },
   "dependencies": {
     "jsonwebtoken": "^9.0.2",
-    "undici": "^6.6.2"
+    "undici": "^6.11.1"
   },
   "devDependencies": {
     "@types/jest": "29.5.12",
-    "@types/jsonwebtoken": "9.0.5",
-    "@types/node": "18.19.17",
-    "@typescript-eslint/eslint-plugin": "6.21.0",
-    "@typescript-eslint/parser": "6.21.0",
-    "eslint": "8.56.0",
-    "eslint-config-airbnb-typescript": "17.1.0",
+    "@types/jsonwebtoken": "9.0.6",
+    "@types/node": "20.12.3",
+    "@typescript-eslint/eslint-plugin": "7.5.0",
+    "@typescript-eslint/parser": "7.5.0",
+    "eslint": "8.57.0",
+    "eslint-config-airbnb-typescript": "18.0.0",
     "eslint-plugin-import": "2.29.1",
     "jest": "29.7.0",
     "jest-simple-dot-reporter": "1.0.5",
     "node-notifier": "10.0.1",
-    "nodemon": "3.0.3",
+    "nodemon": "3.1.0",
     "replace": "1.2.2",
     "rimraf": "5.0.5",
     "ts-jest": "29.1.2",
     "ts-node": "10.9.2",
-    "typescript": "5.3.3",
-    "updates": "15.1.2"
+    "typescript": "5.4.3",
+    "updates": "16.0.0"
   }
 }
