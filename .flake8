@@ -1,0 +1,13 @@
+[flake8]
+allow-untyped-defs = True
+application-import-names = engine
+avoid-escape = False
+format = pylint
+extend-exclude = node_modules
+extend-ignore = ANN101,ANN102,E722,P101,P102,P103
+import-order-style = google
+inline-quotes = single
+max-line-length = 100
+multiline-quotes = '''
+noqa-require-code = True
+pytest-parametrize-names-type = csv

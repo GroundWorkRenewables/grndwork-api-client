@@ -6,12 +6,12 @@
     "experimentalDecorators": true,
     "incremental": true,
     "module": "commonjs",
-    "outDir": "./lib",
+    "outDir": "./dist_js",
     "sourceMap": true,
     "strict": true,
     "target": "es2019",
   },
   "include": [
-    "src/**/*"
+    "src_js/**/*"
   ],
 }

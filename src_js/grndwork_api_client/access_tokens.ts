@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import {TOKENS_URL} from './config';
-import {makeRequest} from './makeRequest';
 import {RefreshToken} from './interfaces';
+import {makeRequest} from './make_request';
 
 let accessTokenCache: Record<string, string> = {};
 
@@ -14,24 +14,24 @@ export async function getAccessToken(
   platform: string,
   scope: string,
 ): Promise<string> {
-  const cacheKey = `${ platform }:${ scope }`;
+  const cacheKey = `${platform}:${scope}`;
 
-  let accessToken: string = accessTokenCache[cacheKey];
+  let accessToken = accessTokenCache[cacheKey];
 
   if (!accessToken || hasExpired(accessToken)) {
-    accessToken = await createAccessToken(refreshToken, platform, scope);
+    accessToken = await requestAccessToken(refreshToken, platform, scope);
     accessTokenCache[cacheKey] = accessToken;
   }
 
   return accessToken;
 }
 
-async function createAccessToken(
+async function requestAccessToken(
   refreshToken: RefreshToken,
   platform: string,
   scope: string,
 ): Promise<string> {
-  const {token: accessToken} = await makeRequest<{token: string}>({
+  const result = (await makeRequest<{token: string}>({
     url: TOKENS_URL,
     method: 'POST',
     token: refreshToken.token,
@@ -40,14 +40,13 @@ async function createAccessToken(
       platform,
       scope,
     },
-  });
+  }))[0];
 
-  return accessToken;
+  return result.token;
 }
 
 function hasExpired(token: string): boolean {
   const {exp: expiration} = (jwt.decode(token) || {}) as {exp?: number};
-
   const now = Math.floor(Date.now() / 1000);
 
   if (expiration && now - expiration >= 0) {

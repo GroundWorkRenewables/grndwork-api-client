@@ -1,4 +1,4 @@
-lib/
+dist_js/
 *.d.ts
 .eslintrc.js
 jest.config.js

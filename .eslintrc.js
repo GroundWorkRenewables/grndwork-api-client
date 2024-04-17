@@ -7,6 +7,7 @@ module.exports = {
     warnOnUnsupportedTypeScriptVersion: false,
   },
   extends: [
+    'airbnb-base',
     'airbnb-typescript/base',
     'plugin:@typescript-eslint/recommended',
   ],
@@ -22,6 +23,9 @@ module.exports = {
     'handle-callback-err': 'error',
     'no-await-in-loop': 'off',
     'no-class-assign': 'error',
+    'no-constant-condition': ['error', {
+      checkLoops: false,
+    }],
     'no-continue': 'off',
     'no-mixed-operators': ['error', {
       allowSamePrecedence: true,
@@ -36,12 +40,18 @@ module.exports = {
     ],
     'no-this-before-super': 'error',
     'no-underscore-dangle': 'off',
+    'operator-linebreak': ['error', 'after', {
+      overrides: {
+        '=': 'none',
+        ':': 'ignore',
+      },
+    }],
     'prefer-destructuring': ['error', {
-      'VariableDeclarator': {
+      VariableDeclarator: {
         array: false,
         object: true,
       },
-      'AssignmentExpression': {
+      AssignmentExpression: {
         array: false,
         object: true,
       }
@@ -49,9 +59,19 @@ module.exports = {
       enforceForRenamedProperties: false,
     }],
     'strict': ['error', 'global'],
-    'template-curly-spacing': ['error', 'always'],
 
     'import/named': 'error',
+    'import/no-extraneous-dependencies': ['error', {
+      devDependencies: true,
+      optionalDependencies: false,
+    }],
+    'import/order': ['error', {
+      groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index', 'object', 'type'],
+      alphabetize: {
+        order: 'asc',
+        caseInsensitive: true,
+      },
+    }],
     'import/prefer-default-export': 'off',
 
     '@typescript-eslint/array-type': ['error', {
@@ -62,7 +82,7 @@ module.exports = {
       allowExpressions: true,
     }],
     '@typescript-eslint/explicit-member-accessibility': ['error', {
-      'overrides': {
+      overrides: {
         constructors: 'no-public',
       }
     }],
