@@ -200,3 +200,8 @@ export interface PostDataPayload {
   files: Array<PostDataFile>;
   overwrite?: boolean;
 }
+
+export interface RequestErrorMessage {
+  field?: string;
+  message?: string;
+}

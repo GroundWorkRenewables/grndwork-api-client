@@ -2,6 +2,7 @@ from typing import Optional
 
 from .client import Client
 from .config import get_refresh_token
+from .errors import AuthError, RequestError
 from .interfaces import (
     ClientOptions,
     DataFile,
@@ -23,7 +24,6 @@ from .interfaces import (
     StationDataFile,
     StationWithDataFiles,
 )
-from .make_request import RequestError
 
 LOGGERNET_PLATFORM = 'loggernet'
 TRACE_PLATFORM = 'trace'
@@ -70,5 +70,6 @@ __all__ = [
     'StationWithDataFiles',
 
     # Errors
+    'AuthError',
     'RequestError',
 ]

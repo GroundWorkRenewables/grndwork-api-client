@@ -5,8 +5,8 @@ from responses import RequestsMock
 from responses.matchers import query_param_matcher
 from responses.registries import OrderedRegistry
 from src_py.grndwork_api_client.config import API_URL
+from src_py.grndwork_api_client.errors import RequestError
 from src_py.grndwork_api_client.make_paginated_request import make_paginated_request
-from src_py.grndwork_api_client.make_request import RequestError
 
 TEST_URL = f'{API_URL}/v1/test'
 

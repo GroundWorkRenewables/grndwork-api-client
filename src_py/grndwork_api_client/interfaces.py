@@ -215,3 +215,8 @@ class _PostDataPayloadRequired(TypedDict):
 
 class PostDataPayload(_PostDataPayloadRequired, total=False):
     overwrite: Optional[bool]
+
+
+class RequestErrorMessage(TypedDict, total=False):
+    field: str
+    message: str

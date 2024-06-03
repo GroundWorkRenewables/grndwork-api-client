@@ -1,9 +1,14 @@
 from http.client import responses as status_codes
 import json
 from time import sleep
-from typing import Any, Dict, List, Literal, MutableMapping, Optional, Tuple, TypedDict, Union
+from typing import Any, cast, Dict, List, Literal, MutableMapping, Optional, Tuple, TypedDict, Union
 
 from requests import HTTPError, request, RequestException
+
+from .config import TOKENS_URL
+from .errors import AuthError, RequestError
+from .interfaces import RequestErrorMessage
+
 
 HttpMethod = Union[Literal['GET'], Literal['POST']]
 ResponseHeaders = Dict[str, str]
@@ -12,23 +17,6 @@ ResponseHeaders = Dict[str, str]
 class Response(TypedDict):
     status_code: int
     headers: ResponseHeaders
-
-
-class ErrorMessage(TypedDict):
-    field: str
-    message: str
-
-
-class RequestError(Exception):
-    errors: List[ErrorMessage]
-
-    def __init__(
-        self,
-        message: str,
-        errors: Optional[List[ErrorMessage]] = None,
-    ) -> None:
-        super().__init__(message)
-        self.errors = errors or []
 
 
 def make_request(
@@ -74,13 +62,21 @@ def make_request(
             resp.raise_for_status()
 
         except HTTPError as err:
-            if method == 'GET' and retries > 0 and should_retry(err.response.status_code):
+            status_code, error_message, errors = parse_error_response(err)
+
+            if status_code == 401:
+                raise AuthError('Unauthorized')
+
+            if status_code == 400 and url == TOKENS_URL:
+                raise AuthError(error_message, errors)
+
+            if retries > 0 and should_retry(status_code):
                 wait(backoff)
                 retries -= 1
                 backoff *= 2
                 continue
 
-            raise RequestError(*parse_error_response(err))
+            raise RequestError(error_message, errors)
 
         except RequestException:
             raise RequestError('Failed to make request')
@@ -104,13 +100,24 @@ def wait(delay: float) -> None:
     sleep(delay)
 
 
-def parse_error_response(err: HTTPError) -> Tuple[str, List[ErrorMessage]]:
-    try:
-        payload = err.response.json()
-    except RequestException:
-        payload = {}
+def parse_error_response(
+    error: HTTPError,
+) -> Tuple[int, str, List[RequestErrorMessage]]:
+    status_code = error.response.status_code
 
-    return (
-        payload.get('message') or status_codes[err.response.status_code] or 'Unknown response',
-        payload.get('errors') or [],
-    )
+    try:
+        body = error.response.json()
+    except RequestException:
+        body = {}
+
+    error_message = body.get('message') or ''
+    errors = cast(List[RequestErrorMessage], body.get('errors') or [])
+
+    if status_code == 400 and len(errors) == 1 and not errors[0].get('field'):
+        error_message = errors[0].get('message') or ''
+        errors = []
+
+    if not error_message:
+        error_message = status_codes[status_code] or 'Unknown response'
+
+    return status_code, error_message, errors
