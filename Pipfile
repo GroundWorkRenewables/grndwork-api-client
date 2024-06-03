@@ -5,7 +5,7 @@ verify_ssl = true
 
 [packages]
 pyjwt = "~=2.8"
-requests = "~=2.31"
+requests = "~=2.32"
 
 [dev-packages]
 build = "*"
