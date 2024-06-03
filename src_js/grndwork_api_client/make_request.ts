@@ -1,5 +1,8 @@
 import {STATUS_CODES} from 'http';
 import * as undici from 'undici';
+import {TOKENS_URL} from './config';
+import {AuthError, RequestError} from './errors';
+import {RequestErrorMessage} from './interfaces';
 
 export type HttpMethod = 'GET' | 'POST';
 export type ResponseHeaders = Record<string, string | Array<string> | undefined>;
@@ -7,20 +10,6 @@ export type ResponseHeaders = Record<string, string | Array<string> | undefined>
 export interface Response {
   status_code: number;
   headers: ResponseHeaders;
-}
-
-export interface ErrorMessage {
-  field: string;
-  message: string;
-}
-
-export class RequestError extends Error {
-  constructor(
-    message: string,
-    public readonly errors: Array<ErrorMessage> = [],
-  ) {
-    super(message);
-  }
 }
 
 export async function makeRequest<T>(
@@ -75,14 +64,24 @@ export async function makeRequest<T>(
       });
     } catch (err) {
       if (err instanceof undici.errors.ResponseStatusCodeError) {
-        if (method === 'GET' && retries > 0 && shouldRetry(err.statusCode)) {
+        const [statusCode, errorMessage, errors] = parseErrorResponse(err);
+
+        if (statusCode === 401) {
+          throw new AuthError('Unauthorized');
+        }
+
+        if (statusCode === 400 && options.url === TOKENS_URL) {
+          throw new AuthError(errorMessage, errors);
+        }
+
+        if (retries > 0 && shouldRetry(statusCode)) {
           await wait(backoff);
           retries -= 1;
           backoff *= 2;
           continue;
         }
 
-        throw new RequestError(...parseErrorResponse(err));
+        throw new RequestError(errorMessage, errors);
       }
 
       if (err instanceof undici.errors.UndiciError) {
@@ -118,15 +117,27 @@ function wait(delay: number): Promise<void> {
 }
 
 function parseErrorResponse(
-  err: undici.errors.ResponseStatusCodeError,
-): [string, Array<ErrorMessage>] {
-  const payload = (err.body || {}) as {
-    message?: string,
-    errors?: Array<ErrorMessage>,
-  };
+  error: undici.errors.ResponseStatusCodeError,
+): [number, string, Array<RequestErrorMessage>] {
+  const {statusCode} = error;
 
-  return [
-    payload.message || STATUS_CODES[err.statusCode] || 'Unknown response',
-    payload.errors || [],
-  ];
+  let {body} = error;
+
+  if (!body || typeof body === 'string') {
+    body = {message: body};
+  }
+
+  let errorMessage = body.message || '';
+  let errors = (body.errors || []) as Array<RequestErrorMessage>;
+
+  if (statusCode === 400 && errors.length === 1 && !errors[0].field) {
+    errorMessage = errors[0].message || '';
+    errors = [];
+  }
+
+  if (!errorMessage) {
+    errorMessage = STATUS_CODES[statusCode] || 'Unknown response';
+  }
+
+  return [statusCode, errorMessage, errors];
 }

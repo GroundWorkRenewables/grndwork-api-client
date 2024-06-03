@@ -1,5 +1,6 @@
 import {Client} from './client';
 import {getRefreshToken} from './config';
+import {AuthError, RequestError} from './errors';
 import {
   ClientOptions,
   DataFile,
@@ -22,7 +23,6 @@ import {
   StationWithDataFiles,
 } from './interfaces';
 import {IterableResponse} from './iterable_response';
-import {RequestError} from './make_request';
 
 const LOGGERNET_PLATFORM = 'loggernet';
 const TRACE_PLATFORM = 'trace';
@@ -70,5 +70,6 @@ export {
   StationWithDataFiles,
 
   // Errors
+  AuthError,
   RequestError,
 };

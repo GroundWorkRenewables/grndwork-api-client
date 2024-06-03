@@ -1,11 +1,13 @@
 import * as undici from 'undici';
-import {API_URL} from '../src_js/grndwork_api_client/config';
-import {makeRequest, RequestError} from '../src_js/grndwork_api_client/make_request';
+import {API_URL, TOKENS_URL} from '../src_js/grndwork_api_client/config';
+import {AuthError, RequestError} from '../src_js/grndwork_api_client/errors';
+import {makeRequest} from '../src_js/grndwork_api_client/make_request';
 
 const TEST_URL = `${API_URL}/v1/test`;
 
 describe('makeRequest', () => {
   const TEST_PATH = new URL(TEST_URL).pathname;
+  const TOKENS_PATH = new URL(TOKENS_URL).pathname;
 
   let globalAgent: undici.Dispatcher;
   let mockAgent: undici.MockAgent;
@@ -98,11 +100,24 @@ describe('makeRequest', () => {
     });
   });
 
+  it('throws error when unauthorized', async () => {
+    apiMock.intercept({
+      path: TEST_PATH,
+    })
+    .reply(401);
+
+    await expect(
+      () => makeRequest({
+        url: TEST_URL,
+      }),
+    ).rejects.toThrow(new AuthError('Unauthorized'));
+  });
+
   it('throws error when bad request', async () => {
     apiMock.intercept({
       path: TEST_PATH,
     })
-    .reply(400, {});
+    .reply(400);
 
     await expect(
       () => makeRequest({
@@ -111,11 +126,28 @@ describe('makeRequest', () => {
     ).rejects.toThrow(new RequestError('Bad Request'));
   });
 
+  it('throws error when bad request for token', async () => {
+    apiMock.intercept({
+      path: TOKENS_PATH,
+      method: 'POST',
+    })
+    .reply(400);
+
+    await expect(
+      () => makeRequest({
+        url: TOKENS_URL,
+        method: 'POST',
+      }),
+    ).rejects.toThrow(new AuthError('Bad Request'));
+  });
+
   it('throws error with response body', async () => {
     apiMock.intercept({
       path: TEST_PATH,
     })
-    .reply(400, {message: 'Invalid'}, {
+    .reply(400, {
+      message: 'Invalid',
+    }, {
       headers: {
         'content-type': 'application/json',
       },
@@ -126,6 +158,54 @@ describe('makeRequest', () => {
         url: TEST_URL,
       }),
     ).rejects.toThrow(new RequestError('Invalid'));
+  });
+
+  it('throws error with error message', async () => {
+    apiMock.intercept({
+      path: TEST_PATH,
+    })
+    .reply(400, {
+      message: 'Bad Request',
+      errors: [{
+        message: 'Invalid',
+      }],
+    }, {
+      headers: {
+        'content-type': 'application/json',
+      },
+    });
+
+    await expect(
+      () => makeRequest({
+        url: TEST_URL,
+      }),
+    ).rejects.toThrow(new RequestError('Invalid'));
+  });
+
+  it('throws error with field error message', async () => {
+    apiMock.intercept({
+      path: TEST_PATH,
+    })
+    .reply(400, {
+      message: 'Bad Request',
+      errors: [{
+        field: 'prop',
+        message: 'Is required',
+      }],
+    }, {
+      headers: {
+        'content-type': 'application/json',
+      },
+    });
+
+    await expect(
+      () => makeRequest({
+        url: TEST_URL,
+      }),
+    ).rejects.toThrow(new RequestError('Bad Request', [{
+      field: 'prop',
+      message: 'Is required',
+    }]));
   });
 
   it('throws error when bad response body', async () => {

@@ -2,8 +2,9 @@ import pytest
 from responses import RequestsMock
 from responses.matchers import header_matcher, json_params_matcher, query_param_matcher
 from responses.registries import OrderedRegistry
-from src_py.grndwork_api_client.config import API_URL
-from src_py.grndwork_api_client.make_request import make_request, RequestError
+from src_py.grndwork_api_client.config import API_URL, TOKENS_URL
+from src_py.grndwork_api_client.errors import AuthError, RequestError
+from src_py.grndwork_api_client.make_request import make_request
 
 TEST_URL = f'{API_URL}/v1/test'
 
@@ -83,11 +84,21 @@ def describe_make_request():
             },
         )
 
+    def it_raises_error_when_unauthorized(api_mock):
+        api_mock.get(
+            url=TEST_URL,
+            status=401,
+        )
+
+        with pytest.raises(AuthError, match='Unauthorized'):
+            make_request(
+                url=TEST_URL,
+            )
+
     def it_raises_error_when_bad_request(api_mock):
         api_mock.get(
             url=TEST_URL,
             status=400,
-            json={},
         )
 
         with pytest.raises(RequestError, match='Bad Request'):
@@ -95,14 +106,63 @@ def describe_make_request():
                 url=TEST_URL,
             )
 
+    def it_raises_error_when_bad_request_for_token(api_mock):
+        api_mock.post(
+            url=TOKENS_URL,
+            status=400,
+        )
+
+        with pytest.raises(AuthError, match='Bad Request'):
+            make_request(
+                url=TOKENS_URL,
+                method='POST',
+            )
+
     def it_raises_error_with_response_body(api_mock):
         api_mock.get(
             url=TEST_URL,
             status=400,
-            json={'message': 'Invalid'},
+            json={
+                'message': 'Invalid',
+            },
         )
 
         with pytest.raises(RequestError, match='Invalid'):
+            make_request(
+                url=TEST_URL,
+            )
+
+    def it_raises_error_with_error_message(api_mock):
+        api_mock.get(
+            url=TEST_URL,
+            status=400,
+            json={
+                'message': 'Bad Request',
+                'errors': [{
+                    'message': 'Invalid',
+                }],
+            },
+        )
+
+        with pytest.raises(RequestError, match='Invalid'):
+            make_request(
+                url=TEST_URL,
+            )
+
+    def it_raises_error_with_field_error_message(api_mock):
+        api_mock.get(
+            url=TEST_URL,
+            status=400,
+            json={
+                'message': 'Bad Request',
+                'errors': [{
+                    'field': 'prop',
+                    'message': 'Is required',
+                }],
+            },
+        )
+
+        with pytest.raises(RequestError, match='Bad Request\nField "prop" is required'):
             make_request(
                 url=TEST_URL,
             )

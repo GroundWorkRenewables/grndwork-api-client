@@ -1,5 +1,6 @@
 import {ContentRange} from './content_range';
-import {makeRequest, RequestError} from './make_request';
+import {RequestError} from './errors';
+import {makeRequest} from './make_request';
 
 export async function* makePaginatedRequest<T>(
   options: {

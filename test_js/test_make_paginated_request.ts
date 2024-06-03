@@ -1,7 +1,7 @@
 import * as undici from 'undici';
 import {API_URL} from '../src_js/grndwork_api_client/config';
+import {RequestError} from '../src_js/grndwork_api_client/errors';
 import {makePaginatedRequest} from '../src_js/grndwork_api_client/make_paginated_request';
-import {RequestError} from '../src_js/grndwork_api_client/make_request';
 
 const TEST_URL = `${API_URL}/v1/test`;
 

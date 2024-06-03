@@ -1,7 +1,8 @@
 from typing import Any, Iterator, MutableMapping, Optional
 
 from .content_range import ContentRange
-from .make_request import make_request, RequestError
+from .errors import RequestError
+from .make_request import make_request
 
 
 def make_paginated_request(

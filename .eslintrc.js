@@ -21,6 +21,7 @@ module.exports = {
     'class-methods-use-this': 'off',
     'constructor-super': 'error',
     'handle-callback-err': 'error',
+    'max-classes-per-file': 'off',
     'no-await-in-loop': 'off',
     'no-class-assign': 'error',
     'no-constant-condition': ['error', {
@@ -53,7 +54,7 @@ module.exports = {
       },
       AssignmentExpression: {
         array: false,
-        object: true,
+        object: false,
       }
     }, {
       enforceForRenamedProperties: false,
