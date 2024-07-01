@@ -102,7 +102,7 @@ Takes an optional platform string and options object and returns an API client i
   |---|---|---|
   | request_timeout | number | Seconds to wait between responses from server ( default: 30.0 ) |
   | request_retries | number | Number of times to retry failed request to server ( default: 3 ) |
-  | request_backoff | number | Seconds to wait between retries to server ( default: 30.0 ) |
+  | request_backoff | number | Seconds to wait between retries to server ( default: 5.0 ) |
 
 ---
 ### Get Stations

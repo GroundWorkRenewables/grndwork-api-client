@@ -31,7 +31,7 @@ export async function makeRequest<T>(
   let {body} = options;
   const {timeout = 30.0} = options;
   let {retries = 3} = options;
-  let {backoff = 30.0} = options;
+  let {backoff = 5.0} = options;
 
   if (options.token) {
     headers.Authorization = `Bearer ${options.token}`;

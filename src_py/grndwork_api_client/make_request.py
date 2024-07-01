@@ -35,7 +35,7 @@ def make_request(
     headers = dict(headers) if headers else {}
     timeout = timeout if timeout is not None else 30.0
     retries = retries if retries is not None else 3
-    backoff = backoff if backoff is not None else 30.0
+    backoff = backoff if backoff is not None else 5.0
 
     if token:
         headers['Authorization'] = f'Bearer {token}'
