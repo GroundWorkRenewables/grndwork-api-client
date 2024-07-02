@@ -8,7 +8,9 @@ from requests import HTTPError, request, RequestException
 from .config import TOKENS_URL
 from .errors import AuthError, RequestError
 from .interfaces import RequestErrorMessage
+from .user_agent import get_user_agent
 
+USER_AGENT = get_user_agent()
 
 HttpMethod = Union[Literal['GET'], Literal['POST']]
 ResponseHeaders = Dict[str, str]
@@ -47,6 +49,8 @@ def make_request(
     if body is not None and not isinstance(body, str):
         headers['Content-Type'] = 'application/json'
         body = json.dumps(body)
+
+    headers['User-Agent'] = USER_AGENT
 
     while True:
         try:
