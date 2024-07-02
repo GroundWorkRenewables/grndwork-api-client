@@ -1,7 +1,8 @@
-import * as fs from 'fs';
+import {readFileSync} from 'node:fs';
+import {env} from 'node:process';
 import {RefreshToken} from './interfaces';
 
-export const API_URL = process.env.GROUNDWORK_API_URL || 'https://api.grndwork.com';
+export const API_URL = env.GROUNDWORK_API_URL || 'https://api.grndwork.com';
 
 export const TOKENS_URL = `${API_URL}/v1/tokens`;
 export const STATIONS_URL = `${API_URL}/v1/stations`;
@@ -16,10 +17,10 @@ export function getRefreshToken(): RefreshToken {
     GROUNDWORK_TOKEN_PATH,
     GROUNDWORK_SUBJECT,
     GROUNDWORK_TOKEN,
-  } = process.env;
+  } = env;
 
   if (GROUNDWORK_TOKEN_PATH) {
-    return JSON.parse(fs.readFileSync(GROUNDWORK_TOKEN_PATH, 'utf8'));
+    return JSON.parse(readFileSync(GROUNDWORK_TOKEN_PATH, 'utf8'));
   }
 
   if (GROUNDWORK_SUBJECT && GROUNDWORK_TOKEN) {
