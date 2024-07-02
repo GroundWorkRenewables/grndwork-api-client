@@ -23,6 +23,7 @@ import {
   StationWithDataFiles,
 } from './interfaces';
 import {IterableResponse} from './iterable_response';
+import {version} from './version';
 
 const LOGGERNET_PLATFORM = 'loggernet';
 const TRACE_PLATFORM = 'trace';
@@ -39,6 +40,8 @@ function createClient(
 }
 
 export {
+  version,
+
   // Api client
   createClient,
   Client,

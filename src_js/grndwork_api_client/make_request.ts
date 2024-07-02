@@ -3,6 +3,9 @@ import * as undici from 'undici';
 import {TOKENS_URL} from './config';
 import {AuthError, RequestError} from './errors';
 import {RequestErrorMessage} from './interfaces';
+import {getUserAgent} from './user_agent';
+
+const USER_AGENT = getUserAgent();
 
 export type HttpMethod = 'GET' | 'POST';
 export type ResponseHeaders = Record<string, string | Array<string> | undefined>;
@@ -49,6 +52,8 @@ export async function makeRequest<T>(
     headers['Content-Type'] = 'application/json';
     body = JSON.stringify(options.body);
   }
+
+  headers['User-Agent'] = USER_AGENT;
 
   let resp: undici.Dispatcher.ResponseData;
 

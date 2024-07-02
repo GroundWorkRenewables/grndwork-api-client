@@ -24,6 +24,7 @@ from .interfaces import (
     StationDataFile,
     StationWithDataFiles,
 )
+from .version import version
 
 LOGGERNET_PLATFORM = 'loggernet'
 TRACE_PLATFORM = 'trace'
@@ -41,6 +42,8 @@ def create_client(
 
 
 __all__ = [
+    'version',
+
     # Api client
     'create_client',
     'Client',
