@@ -1,4 +1,4 @@
-import {STATUS_CODES} from 'http';
+import {STATUS_CODES} from 'node:http';
 import * as undici from 'undici';
 import {TOKENS_URL} from './config';
 import {AuthError, RequestError} from './errors';
