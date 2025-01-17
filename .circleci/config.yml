@@ -151,9 +151,8 @@ workflows:
           matrix:
             parameters:
               node-version:
-                - "18.20"
-                - "20.15"
-                - "22.4"
+                - "20.18"
+                - "22.13"
           filters:
             tags:
               only: /v[0-9].*/
@@ -165,6 +164,7 @@ workflows:
                 - "3.10"
                 - "3.11"
                 - "3.12"
+                - "3.13"
           filters:
             tags:
               only: /v[0-9].*/

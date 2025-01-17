@@ -5,11 +5,11 @@
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "incremental": true,
-    "module": "commonjs",
+    "module": "node16",
     "outDir": "./dist_js",
     "sourceMap": true,
     "strict": true,
-    "target": "es2019",
+    "target": "es2023",
   },
   "include": [
     "src_js/**/*"
