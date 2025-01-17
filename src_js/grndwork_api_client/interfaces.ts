@@ -38,6 +38,9 @@ export interface DataFile {
   source_start_timestamp: string | null;
   source_end_timestamp: string | null;
   filename: string;
+  uuid: string;
+  start_timestamp: string | null;
+  end_timestamp: string | null;
   is_stale: boolean;
   headers: DataFileHeaders;
   created_at: string;
@@ -86,6 +89,9 @@ export interface Station {
 
 export interface StationDataFile {
   filename: string;
+  uuid: string;
+  start_timestamp: string | null;
+  end_timestamp: string | null;
   is_stale: boolean;
   headers: DataFileHeaders;
   created_at: string;
