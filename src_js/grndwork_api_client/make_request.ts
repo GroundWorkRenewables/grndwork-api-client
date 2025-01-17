@@ -55,20 +55,24 @@ export async function makeRequest<T>(
 
   headers['User-Agent'] = USER_AGENT;
 
+  const dispatcher = undici.getGlobalDispatcher().compose(
+    undici.interceptors.responseError(),
+  );
+
   let resp: undici.Dispatcher.ResponseData;
 
   while (true) {
     try {
       resp = await undici.request(url, {
+        dispatcher,
         method,
         headers,
         body,
         headersTimeout: timeout * 1000,
         bodyTimeout: timeout * 1000,
-        throwOnError: true,
       });
     } catch (err) {
-      if (err instanceof undici.errors.ResponseStatusCodeError) {
+      if (err instanceof undici.errors.ResponseError) {
         const [statusCode, errorMessage, errors] = parseErrorResponse(err);
 
         if (statusCode === 401) {
@@ -122,7 +126,7 @@ function wait(delay: number): Promise<void> {
 }
 
 function parseErrorResponse(
-  error: undici.errors.ResponseStatusCodeError,
+  error: undici.errors.ResponseError,
 ): [number, string, Array<RequestErrorMessage>] {
   const {statusCode} = error;
 

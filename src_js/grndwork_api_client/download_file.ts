@@ -20,12 +20,16 @@ export async function downloadFile(
 
   const {timeout = 30.0} = options;
 
+  const dispatcher = undici.getGlobalDispatcher().compose(
+    undici.interceptors.responseError(),
+  );
+
   try {
     await undici.stream(url, {
+      dispatcher,
       method: 'GET',
       headersTimeout: timeout * 1000,
       bodyTimeout: timeout * 1000,
-      throwOnError: true,
     }, () => (
       createWriteStream(destination)
     ));
