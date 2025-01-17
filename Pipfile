@@ -4,7 +4,7 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [packages]
-pyjwt = "~=2.8"
+pyjwt = "~=2.10"
 requests = "~=2.32"
 
 [dev-packages]
