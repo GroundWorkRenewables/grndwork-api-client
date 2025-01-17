@@ -46,6 +46,9 @@ class DataFile(TypedDict):
     source_start_timestamp: str | None
     source_end_timestamp: str | None
     filename: str
+    uuid: str
+    start_timestamp: str | None
+    end_timestamp: str | None
     is_stale: bool
     headers: DataFileHeaders
     created_at: str
@@ -90,6 +93,9 @@ class Station(TypedDict):
 
 class StationDataFile(TypedDict):
     filename: str
+    uuid: str
+    start_timestamp: str | None
+    end_timestamp: str | None
     is_stale: bool
     headers: DataFileHeaders
     created_at: str
