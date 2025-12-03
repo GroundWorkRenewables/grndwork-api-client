@@ -1,4 +1,4 @@
-![GroundView](https://user-images.githubusercontent.com/7266242/151395564-54000ba1-f7a4-4ea8-84b4-66367e14cc90.png)
+![GroundView](https://github.com/user-attachments/assets/c8311410-9ca0-4780-9a91-7e01bfb37da6)
 
 # GroundWork API Client
 
