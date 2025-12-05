@@ -14,6 +14,8 @@ FILES_URL = f'{API_URL}/v1/files'
 DATA_URL = f'{API_URL}/v1/data'
 QC_URL = f'{API_URL}/v1/qc'
 
+RECORD_COUNT_COMPRESSION_THRESHOLD = 100
+
 
 def get_refresh_token() -> RefreshToken:
     groundwork_token_path = os.environ.get('GROUNDWORK_TOKEN_PATH')

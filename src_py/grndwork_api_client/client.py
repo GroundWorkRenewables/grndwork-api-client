@@ -8,6 +8,7 @@ from .config import (
     EXPORTS_URL,
     FILES_URL,
     QC_URL,
+    RECORD_COUNT_COMPRESSION_THRESHOLD,
     REPORTS_URL,
     STATIONS_URL,
 )
@@ -231,11 +232,17 @@ class Client():
             scope='write:data',
         )
 
+        record_count = 0
+
+        for file in payload['files']:
+            record_count += len(file.get('records') or [])
+
         self._make_request(
             url=DATA_URL,
             method='POST',
             token=access_token,
             body=payload,
+            compress_body=record_count >= RECORD_COUNT_COMPRESSION_THRESHOLD,
         )
 
     def _request_stations(
@@ -551,6 +558,7 @@ class Client():
         token: Optional[str] = None,
         query: Any = None,
         body: Any = None,
+        compress_body: bool = False,
     ) -> Tuple[Any, Response]:
         return make_request(
             url=url,
@@ -558,6 +566,7 @@ class Client():
             token=token,
             query=query,
             body=body,
+            compress_body=compress_body,
             timeout=self._options.get('request_timeout'),
             retries=self._options.get('request_retries'),
             backoff=self._options.get('request_backoff'),

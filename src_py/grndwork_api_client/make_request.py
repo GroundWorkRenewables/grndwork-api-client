@@ -1,3 +1,4 @@
+import gzip
 from http.client import responses as status_codes
 import json
 from time import sleep
@@ -29,6 +30,7 @@ def make_request(
     headers: Optional[MutableMapping[str, Any]] = None,
     query: Any = None,
     body: Any = None,
+    compress_body: bool = False,
     timeout: Optional[float] = None,
     retries: Optional[int] = None,
     backoff: Optional[float] = None,
@@ -46,9 +48,14 @@ def make_request(
         key: value for key, value in (query or {}).items() if value is not None
     }
 
-    if body is not None and not isinstance(body, str):
-        headers['Content-Type'] = 'application/json'
-        body = json.dumps(body)
+    if body is not None:
+        if not isinstance(body, str):
+            headers['Content-Type'] = 'application/json'
+            body = json.dumps(body)
+
+        if compress_body:
+            headers['Content-Encoding'] = 'gzip'
+            body = gzip.compress(body.encode('utf-8'))
 
     headers['User-Agent'] = USER_AGENT
 
