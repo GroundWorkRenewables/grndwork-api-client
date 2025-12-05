@@ -6,6 +6,7 @@ import {
   EXPORTS_URL,
   FILES_URL,
   QC_URL,
+  RECORD_COUNT_COMPRESSION_THRESHOLD,
   REPORTS_URL,
   STATIONS_URL,
 } from './config';
@@ -229,11 +230,18 @@ export class Client {
       'write:data',
     );
 
+    let recordCount = 0;
+
+    for (const file of payload.files) {
+      recordCount += file.records?.length || 0;
+    }
+
     await this._makeRequest<void>({
       url: DATA_URL,
       method: 'POST',
       token: accessToken,
       body: payload,
+      compress_body: recordCount >= RECORD_COUNT_COMPRESSION_THRESHOLD,
     });
   }
 
@@ -559,6 +567,7 @@ export class Client {
       token?: string,
       query?: Record<string, any>,
       body?: any,
+      compress_body?: boolean,
     },
   ): Promise<[T, Response]> {
     return makeRequest<T>({

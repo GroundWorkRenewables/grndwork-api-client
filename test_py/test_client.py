@@ -1288,6 +1288,31 @@ def describe_client():
                 payload=payload,
             )
 
+        def describe_when_payload_record_count_exceeds_threshold():
+            def it_makes_post_data_request_with_compressed_payload(api_mock, client):
+                api_mock.post(
+                    url=DATA_URL,
+                    match=[header_matcher({
+                        'Content-Type': 'application/json',
+                        'Content-Encoding': 'gzip',
+                    })],
+                    status=201,
+                    json={},
+                )
+
+                client.post_data(
+                    payload={
+                        **payload,
+                        'files': [{
+                            'filename': 'Test1_OneMin.dat',
+                            'records': [{}] * 50,
+                        }, {
+                            'filename': 'Test2_OneMin.dat',
+                            'records': [{}] * 50,
+                        }],
+                    },
+                )
+
 
 _T = TypeVar('_T')
 _K = TypeVar('_K')

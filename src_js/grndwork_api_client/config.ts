@@ -12,6 +12,8 @@ export const FILES_URL = `${API_URL}/v1/files`;
 export const DATA_URL = `${API_URL}/v1/data`;
 export const QC_URL = `${API_URL}/v1/qc`;
 
+export const RECORD_COUNT_COMPRESSION_THRESHOLD = 100;
+
 export function getRefreshToken(): RefreshToken {
   const {
     GROUNDWORK_TOKEN_PATH,

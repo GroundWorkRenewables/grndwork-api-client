@@ -1,9 +1,13 @@
 import {STATUS_CODES} from 'node:http';
+import {promisify} from 'node:util';
+import * as zlib from 'node:zlib';
 import * as undici from 'undici';
 import {TOKENS_URL} from './config';
 import {AuthError, RequestError} from './errors';
 import {RequestErrorMessage} from './interfaces';
 import {getUserAgent} from './user_agent';
+
+const gzip = promisify(zlib.gzip);
 
 const USER_AGENT = getUserAgent();
 
@@ -23,6 +27,7 @@ export async function makeRequest<T>(
     headers?: Record<string, any>,
     query?: Record<string, any>,
     body?: any,
+    compress_body?: boolean,
     timeout?: number,
     retries?: number,
     backoff?: number,
@@ -48,9 +53,16 @@ export async function makeRequest<T>(
     });
   }
 
-  if (body !== undefined && typeof body !== 'string') {
-    headers['Content-Type'] = 'application/json';
-    body = JSON.stringify(options.body);
+  if (body !== undefined) {
+    if (typeof body !== 'string') {
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify(body);
+    }
+
+    if (options.compress_body) {
+      headers['Content-Encoding'] = 'gzip';
+      body = await gzip(body);
+    }
   }
 
   headers['User-Agent'] = USER_AGENT;

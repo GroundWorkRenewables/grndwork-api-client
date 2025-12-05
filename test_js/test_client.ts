@@ -1234,6 +1234,32 @@ describe('Client', () => {
         payload,
       );
     });
+
+    describe('when payload record count exceeds threshold', () => {
+      it('makes post data request with compressed payload', async () => {
+        apiMock.intercept({
+          path: DATA_PATH,
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Encoding': 'gzip',
+          },
+        })
+        .reply(201, {});
+
+        await client.postData({
+          ...payload,
+          files: [{
+            filename: 'Test1_OneMin.dat',
+            records: new Array(50),
+          }, {
+            filename: 'Test2_OneMin.dat',
+            records: new Array(50),
+          }],
+
+        });
+      });
+    });
   });
 });
 
