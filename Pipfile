@@ -21,7 +21,7 @@ flake8-logging-format = "*"
 flake8-noqa = "*"
 flake8-pytest-style = "*"
 flake8-quotes = "*"
-flake8-string-format = "*"
+flake8-string-format = {markers = "python_version < '3.14'", version = "*"}
 mypy = "*"
 pep8-naming = "*"
 pytest = "*"

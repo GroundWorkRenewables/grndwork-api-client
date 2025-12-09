@@ -13,7 +13,7 @@ class RequestError(Exception):
         message: str,
         errors: Optional[List[RequestErrorMessage]] = None,
     ) -> None:
-        super().__init__()
+        super().__init__(message, errors)
         self.name = type(self).__name__
         self.message = message
         self.errors = errors or []

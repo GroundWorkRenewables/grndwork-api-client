@@ -24,7 +24,7 @@ describe('getRefreshToken', () => {
     delete env.GROUNDWORK_TOKEN;
 
     expect(getRefreshToken()).toEqual(refreshToken);
-    expect(readFileSync).toBeCalledWith('GROUNDWORK_TOKEN_PATH', 'utf8');
+    expect(readFileSync).toHaveBeenCalledWith('GROUNDWORK_TOKEN_PATH', 'utf8');
   });
 
   it('returns refresh token when subject and token set', () => {
@@ -33,7 +33,7 @@ describe('getRefreshToken', () => {
     env.GROUNDWORK_TOKEN = refreshToken.token;
 
     expect(getRefreshToken()).toEqual(refreshToken);
-    expect(readFileSync).not.toBeCalled();
+    expect(readFileSync).not.toHaveBeenCalled();
   });
 
   it('throws when only subject set', () => {

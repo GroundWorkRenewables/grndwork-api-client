@@ -1,5 +1,9 @@
 version: 2.1
 
+orbs:
+  node: circleci/node@7
+  python: circleci/python@3
+
 jobs:
   test-node:
     parameters:
@@ -12,23 +16,12 @@ jobs:
     steps:
       - checkout
 
-      - restore_cache:
-          name: Restore node package cache
-          keys:
-            - node-packages-v1-{{ checksum "package-lock.json" }}
-            - node-packages-v1-
-
-      - run:
-          name: Install test dependencies
-          command: |
+      - node/install-packages:
+          pkg-manager: npm
+          include-branch-in-cache-key: false
+          override-ci-command: |
             npm install --engine-strict
             npm install --no-save jest-junit
-
-      - save_cache:
-          name: Save node package cache
-          key: node-packages-v1-{{ checksum "package-lock.json" }}
-          paths:
-            - ~/.npm/
 
       - run:
           name: Run tests
@@ -55,22 +48,11 @@ jobs:
     steps:
       - checkout
 
-      - restore_cache:
-          name: Restore python package cache
-          keys:
-            - python-packages-v1-{{ checksum "Pipfile.lock" }}
-            - python-packages-v1-
-
-      - run:
-          name: Install test dependencies
-          command: |
-            pipenv sync --dev
-
-      - save_cache:
-          name: Save python package cache
-          key: python-packages-v1-{{ checksum "Pipfile.lock" }}
-          paths:
-            - ~/.virtualenvs
+      - python/install-packages:
+          pkg-manager: pipenv
+          include-branch-in-cache-key: false
+          args: --dev --deploy --ignore-pipfile
+          cache-version: v0
 
       - run:
           name: Run tests
@@ -89,35 +71,14 @@ jobs:
     steps:
       - checkout
 
-      - restore_cache:
-          name: Restore node package cache
-          keys:
-            - node-packages-v1-{{ checksum "package-lock.json" }}
-            - node-packages-v1-
+      - node/install-packages:
+          pkg-manager: npm
+          include-branch-in-cache-key: false
 
-      - restore_cache:
-          name: Restore python package cache
-          keys:
-            - python-packages-v1-{{ checksum "Pipfile.lock" }}
-            - python-packages-v1-
-
-      - run:
-          name: Install build dependencies
-          command: |
-            npm install
-            pipenv sync --dev
-
-      - save_cache:
-          name: Save node package cache
-          key: node-packages-v1-{{ checksum "package-lock.json" }}
-          paths:
-            - ~/.npm/
-
-      - save_cache:
-          name: Save python package cache
-          key: python-packages-v1-{{ checksum "Pipfile.lock" }}
-          paths:
-            - ~/.virtualenvs
+      - python/install-packages:
+          pkg-manager: pipenv
+          include-branch-in-cache-key: false
+          args: --dev --deploy --ignore-pipfile
 
       - run:
           name: Run Build
@@ -151,11 +112,12 @@ workflows:
           matrix:
             parameters:
               node-version:
-                - "20.18"
-                - "22.13"
+                - "20.19"
+                - "22.21"
+                - "24.11"
           filters:
             tags:
-              only: /v[0-9].*/
+              only: /^v[0-9].*/
 
       - test-python:
           matrix:
@@ -165,9 +127,10 @@ workflows:
                 - "3.11"
                 - "3.12"
                 - "3.13"
+                - "3.14"
           filters:
             tags:
-              only: /v[0-9].*/
+              only: /^v[0-9].*/
 
       - build:
           requires:
@@ -175,4 +138,4 @@ workflows:
             - test-python
           filters:
             tags:
-              only: /v[0-9].*/
+              only: /^v[0-9].*/
