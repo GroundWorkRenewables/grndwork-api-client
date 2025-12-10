@@ -225,7 +225,6 @@ Stations are returned in alphabetical order by station name.
     "data_files": [
       {
         "filename": "Test_OneMin.dat",
-        "is_stale": false,
         "headers": {
           "columns": ["Ambient_Temp"],
           "units": ["Deg_C"],
@@ -548,7 +547,6 @@ Data files are returned in alphabetical order by filename.
     "source_start_timestamp": "2020-01-01 00:00:00",
     "source_end_timestamp": "2020-12-31 23:59:59",
     "filename": "Test_OneMin.dat",
-    "is_stale": false,
     "headers": {
       "columns": ["Ambient_Temp"],
       "units": ["Deg_C"],
@@ -925,7 +923,6 @@ Data files are returned in alphabetical order by filename.
     "source_start_timestamp": "2020-01-01 00:00:00",
     "source_end_timestamp": "2020-12-31 23:59:59",
     "filename": "Test_OneMin.dat",
-    "is_stale": false,
     "headers": {
       "columns": ["Ambient_Temp"],
       "units": ["Deg_C"],
@@ -986,4 +983,3 @@ Takes a post data payload object as an argument and uploads it to the cloud.
   | files[].records[].timestamp | timestamp | The timestamp of the data record in UTC ( format: `YYYY-MM-DD hh:mm:ss` ) |
   | files[].records[].record_num | number | Positive sequential number for records in file |
   | files[].records[].data | Record<string, any> | Data for record, keys should match `header.columns` |
-  | overwrite | boolean | Whether to overwrite existing data records when timestamps match |

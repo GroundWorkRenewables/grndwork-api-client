@@ -49,7 +49,6 @@ class DataFile(TypedDict):
     uuid: str
     start_timestamp: str | None
     end_timestamp: str | None
-    is_stale: bool
     headers: DataFileHeaders
     created_at: str
     updated_at: str
@@ -96,7 +95,6 @@ class StationDataFile(TypedDict):
     uuid: str
     start_timestamp: str | None
     end_timestamp: str | None
-    is_stale: bool
     headers: DataFileHeaders
     created_at: str
     updated_at: str
@@ -214,13 +212,9 @@ class PostDataFile(_PostDataFileRequired, total=False):
     records: Optional[List[PostDataRecord]]
 
 
-class _PostDataPayloadRequired(TypedDict):
+class PostDataPayload(TypedDict):
     source: str
     files: List[PostDataFile]
-
-
-class PostDataPayload(_PostDataPayloadRequired, total=False):
-    overwrite: Optional[bool]
 
 
 class RequestErrorMessage(TypedDict, total=False):

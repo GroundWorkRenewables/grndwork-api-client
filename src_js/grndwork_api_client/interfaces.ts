@@ -41,7 +41,6 @@ export interface DataFile {
   uuid: string;
   start_timestamp: string | null;
   end_timestamp: string | null;
-  is_stale: boolean;
   headers: DataFileHeaders;
   created_at: string;
   updated_at: string;
@@ -92,7 +91,6 @@ export interface StationDataFile {
   uuid: string;
   start_timestamp: string | null;
   end_timestamp: string | null;
-  is_stale: boolean;
   headers: DataFileHeaders;
   created_at: string;
   updated_at: string;
@@ -204,7 +202,6 @@ export interface PostDataFile {
 export interface PostDataPayload {
   source: string;
   files: Array<PostDataFile>;
-  overwrite?: boolean;
 }
 
 export interface RequestErrorMessage {
